@@ -1,7 +1,6 @@
 package com.minlish.app.presentation.screens.auth
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -17,7 +16,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -29,7 +27,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.ArrowForward
+import androidx.compose.material.icons.automirrored.outlined.ArrowForward
 import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Person
@@ -38,9 +36,11 @@ import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.res.painterResource
 import com.minlish.app.R
-
-private val startColor = Color(0xFF667EEA)
-private val endColor = Color(0xFF764BA2)
+import com.minlish.app.presentation.components.SecurityCheckList
+import com.minlish.app.ui.theme.MinlishGradient
+import com.minlish.app.ui.theme.MinlishOutline
+import com.minlish.app.ui.theme.MinlishPrimary
+import com.minlish.app.ui.theme.MinlishSurface
 
 @Composable
 fun RegisterScreen() {
@@ -48,6 +48,10 @@ fun RegisterScreen() {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
+
+    val hasMinLength = password.length >= 8
+    val hasUppercase = password.any {it.isUpperCase()}
+    val hasNumberOrSymbol = password.any {!it.isLetterOrDigit() || it.isDigit()}
 
     Column(
         modifier = Modifier
@@ -68,8 +72,18 @@ fun RegisterScreen() {
             onPasswordChange = {password = it},
             onToggleVisibility = {passwordVisible = !passwordVisible}
         )
+        SecurityCheckList(
+            hasMinLength = hasMinLength,
+            hasUppercase = hasUppercase,
+            hasNumberOrSymbol = hasNumberOrSymbol
+        )
         Spacer(modifier = Modifier.height(24.dp))
-        SignUpButton(onSignUpClick = {})
+        SignUpButton(
+            onSignUpClick = {} ,
+            hasMinLength = hasMinLength,
+            hasUppercase = hasUppercase,
+            hasNumberOrSymbol = hasNumberOrSymbol,
+        )
         Spacer(modifier = Modifier.height(24.dp))
         DividerWithText()
         Spacer(modifier = Modifier.height(16.dp))
@@ -81,10 +95,6 @@ fun RegisterScreen() {
 
 @Composable
 private fun BrandingSection() {
-    val colorBrush = Brush.linearGradient(
-        colors = listOf(startColor, endColor)
-    )
-
     Text(
         text = "MinList",
         fontSize = 48.sp,
@@ -92,7 +102,7 @@ private fun BrandingSection() {
         letterSpacing = (-0.5).sp,
         textAlign = TextAlign.Center,
         style = LocalTextStyle.current.copy(
-            brush = colorBrush
+            brush = MinlishGradient
         )
     )
 
@@ -124,13 +134,13 @@ private fun FullNameField(
             onValueChange = onFullNameChange,
             modifier = Modifier.fillMaxWidth(),
             placeholder = {
-                Text("e.g. Jane Doe", color = Color(0xFF767586))
+                Text("e.g. Jane Doe", color = MinlishOutline)
             },
             leadingIcon = {
                 Icon(
                     imageVector = Icons.Outlined.Person,
                     contentDescription = null,
-                    tint = Color(0xFF767586)
+                    tint = MinlishOutline
                 )
             },
             keyboardOptions = KeyboardOptions (
@@ -140,11 +150,11 @@ private fun FullNameField(
             singleLine = true,
             shape = RoundedCornerShape(size = 12.dp),
             colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = Color(0xFF4648D4),
-                unfocusedBorderColor = Color(0xFFC7C4D7),
+                focusedBorderColor = MinlishPrimary,
+                unfocusedBorderColor = MinlishSurface,
                 focusedContainerColor = Color.White,
                 unfocusedContainerColor = Color.White,
-                cursorColor = Color(0xFF4648D4)
+                cursorColor = MinlishPrimary
             )
         )
     }
@@ -168,13 +178,13 @@ private fun EmailField(
             onValueChange = onEmailChange,
             modifier = Modifier.fillMaxWidth(),
             placeholder = {
-                Text("you@example.com", color = Color(0xFF767586))
+                Text("you@example.com", color = MinlishOutline)
             },
             leadingIcon = {
                 Icon(
                     imageVector = Icons.Outlined.Email,
                     contentDescription = null,
-                    tint = Color(0xFF767586)
+                    tint = MinlishOutline
                 )
             },
             keyboardOptions = KeyboardOptions(
@@ -184,11 +194,11 @@ private fun EmailField(
             singleLine = true,
             shape = RoundedCornerShape(size = 12.dp),
             colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = Color(0xFF4648D4),
-                unfocusedBorderColor = Color(0xFFC7C4D7),
+                focusedBorderColor = MinlishPrimary,
+                unfocusedBorderColor = MinlishSurface,
                 focusedContainerColor = Color.White,
                 unfocusedContainerColor = Color.White,
-                cursorColor = Color(0xFF4648D4)
+                cursorColor = MinlishPrimary
             )
         )
     }
@@ -221,7 +231,7 @@ private fun PasswordField(
                 Icon(
                     imageVector = Icons.Outlined.Lock,
                     contentDescription = null,
-                    tint = Color(0xFF767586)
+                    tint = MinlishOutline
                 )
             },
             trailingIcon = {
@@ -230,7 +240,7 @@ private fun PasswordField(
                         imageVector = if (passwordVisible)
                             Icons.Outlined.Visibility else Icons.Outlined.VisibilityOff,
                         contentDescription = null,
-                        tint = Color(0xFF767586)
+                        tint = MinlishOutline
                     )
                 }
             },
@@ -242,11 +252,11 @@ private fun PasswordField(
             ),
             singleLine = true,
             colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = Color(0xFF4648D4),
-                unfocusedBorderColor = Color(0xFFC7C4D7),
+                focusedBorderColor = MinlishPrimary,
+                unfocusedBorderColor = MinlishSurface,
                 focusedContainerColor = Color.White,
                 unfocusedContainerColor = Color.White,
-                cursorColor = Color(0xFF4648D4)
+                cursorColor = MinlishPrimary
             )
         )
     }
@@ -254,41 +264,53 @@ private fun PasswordField(
 
 @Composable
 private fun SignUpButton(
+    hasMinLength: Boolean,
+    hasUppercase: Boolean,
+    hasNumberOrSymbol: Boolean,
     onSignUpClick: () -> Unit
 ) {
-    val colorBrush = Brush.linearGradient(
-        colors = listOf(
-            Color(0xFF667EEA),
-            Color(0xFF764BA2)
-        )
-    )
-
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(52.dp)
             .clip(RoundedCornerShape(12.dp))
-            .background(colorBrush)
+            .background(MinlishGradient)
             .clickable {onSignUpClick()},
-        contentAlignment = Alignment.Center
+        contentAlignment = Alignment.Center,
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        Button(
+            onClick = onSignUpClick,
+            modifier = Modifier.fillMaxSize(),
+            enabled = hasMinLength && hasUppercase && hasNumberOrSymbol,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color.Transparent,
+                disabledContentColor = Color.Transparent
+            ),
+            elevation = null
         ) {
-            Text(
-                text = "Sign Up",
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Medium,
-                color = Color.White,
-                letterSpacing = 0.1.sp
-            )
-            Icon(
-                imageVector = Icons.Outlined.ArrowForward,
-                contentDescription = null,
-                tint = Color.White,
-                modifier = Modifier.size(18.dp)
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = "Sign Up",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = if (hasMinLength && hasUppercase && hasNumberOrSymbol)
+                        Color.White
+                    else
+                        Color.White.copy(alpha = 0.5f)
+                )
+                Icon(
+                    imageVector = Icons.AutoMirrored.Outlined.ArrowForward,
+                    contentDescription = null,
+                    tint = if (hasMinLength && hasUppercase && hasNumberOrSymbol)
+                        Color.White
+                    else
+                        Color.White.copy(alpha = 0.5f),
+                    modifier = Modifier.size(18.dp)
+                )
+            }
         }
     }
 }
@@ -353,31 +375,6 @@ private fun GoogleButton(
 }
 
 @Composable
-private fun GoogleLogo() {
-    Canvas(modifier = Modifier.size(20.dp)) {
-        val w = size.width
-        val h = size.height
-
-        drawArc(
-            color = Color(0xFF4285F4),
-            startAngle = -90f,
-            sweepAngle = 180f,
-            useCenter = false,
-            size = androidx.compose.ui.geometry.Size(w, h),
-            style = androidx.compose.ui.graphics.drawscope.Stroke(width = w * 0.18f)
-        )
-        drawArc(
-            color = Color(0xFFEA4335),
-            startAngle = -90f,
-            sweepAngle = -180f,
-            useCenter = false,
-            size = androidx.compose.ui.geometry.Size(w, h),
-            style = androidx.compose.ui.graphics.drawscope.Stroke(width = w * 0.18f)
-        )
-    }
-}
-
-@Composable
 private fun SignInButton(
     onSignInClick: () -> Unit
 ) {
@@ -388,14 +385,14 @@ private fun SignInButton(
         Text(
             text = "Already have an account ?",
             fontSize = 14.sp,
-            color = Color(0xFF464554)
+            color = MinlishOutline
         )
         TextButton(onClick = onSignInClick) {
             Text(
                 text = "Log In",
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Medium,
-                color = Color(0xFF4648D4)
+                color = MinlishPrimary
 
             )
         }
