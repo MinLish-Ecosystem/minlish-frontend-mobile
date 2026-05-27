@@ -36,14 +36,18 @@ import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.res.painterResource
 import com.minlish.app.R
-import com.minlish.app.presentation.components.SecurityCheckList
+import com.minlish.app.presentation.screens.auth.components.ProgressHeader
+import com.minlish.app.presentation.screens.auth.components.SecurityCheckList
 import com.minlish.app.ui.theme.MinlishGradient
 import com.minlish.app.ui.theme.MinlishOutline
 import com.minlish.app.ui.theme.MinlishPrimary
 import com.minlish.app.ui.theme.MinlishSurface
 
 @Composable
-fun RegisterScreen() {
+fun RegisterScreen(
+    currentStep: Int = 1,
+    totalSteps: Int = 2,
+) {
     var fullName by remember {  mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -57,9 +61,15 @@ fun RegisterScreen() {
         modifier = Modifier
             .fillMaxSize()
             .padding(horizontal = 16.dp)
-            .padding(top = 64.dp),
+            .padding(top = 32.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        ProgressHeader(
+            currentStep = currentStep,
+            totalSteps = totalSteps,
+            onBackClick = null
+        )
+        Spacer(modifier = Modifier.height(20.dp))
         BrandingSection()
         Spacer(modifier = Modifier.height(40.dp))
         FullNameField(fullName = fullName, onFullNameChange = {fullName = it})
@@ -275,7 +285,7 @@ private fun SignUpButton(
             .height(52.dp)
             .clip(RoundedCornerShape(12.dp))
             .background(MinlishGradient)
-            .clickable {onSignUpClick()},
+            .clickable { onSignUpClick() },
         contentAlignment = Alignment.Center,
     ) {
         Button(

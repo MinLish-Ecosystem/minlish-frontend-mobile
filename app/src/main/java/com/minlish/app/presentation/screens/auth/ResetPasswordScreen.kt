@@ -1,6 +1,5 @@
 package com.minlish.app.presentation.screens.auth
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -20,7 +19,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.minlish.app.presentation.components.SecurityCheckList
+import com.minlish.app.presentation.screens.auth.components.SecurityCheckList
 import com.minlish.app.presentation.components.TopBar
 import com.minlish.app.ui.theme.*
 

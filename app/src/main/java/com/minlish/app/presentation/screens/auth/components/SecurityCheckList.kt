@@ -1,4 +1,4 @@
-package com.minlish.app.presentation.components
+package com.minlish.app.presentation.screens.auth.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
