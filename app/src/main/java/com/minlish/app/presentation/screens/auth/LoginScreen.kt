@@ -33,10 +33,13 @@ import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.res.painterResource
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.minlish.app.R
+import com.minlish.app.presentation.navigation.NavDestinations
+import com.minlish.app.presentation.screens.auth.LoginScreen
 import com.minlish.app.ui.theme.MinlishGradient
 import com.minlish.app.ui.theme.MinlishOnSurface
 import com.minlish.app.ui.theme.MinlishOutline
@@ -44,11 +47,23 @@ import com.minlish.app.ui.theme.MinlishPrimary
 import com.minlish.app.ui.theme.MinlishSurface
 
 @Composable
-fun LoginScreen(viewModel: AuthViewModel = viewModel()) {
+fun LoginScreen(
+    viewModel: AuthViewModel = viewModel(),
+    onLoginSuccess: () -> Unit,
+    onGoogleSignInClick: () -> Unit,
+    onForgotPasswordClick: () -> Unit,
+    onSignUpClick: () -> Unit
+) {
 
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
+
+    LaunchedEffect(viewModel.loginSuccess) {
+        if (viewModel.loginSuccess) {
+            onLoginSuccess()
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -65,16 +80,25 @@ fun LoginScreen(viewModel: AuthViewModel = viewModel()) {
             password = password,
             passwordVisible = passwordVisible,
             onPasswordChange = {password = it},
-            onToggleVisibility = {passwordVisible = !passwordVisible}
+            onToggleVisibility = {passwordVisible = !passwordVisible},
+            onForgotPasswordClick = {
+                onForgotPasswordClick()
+            }
         )
         Spacer(modifier = Modifier.height(24.dp))
-        SignInButton(onSignInClick = {})
+        SignInButton(onSignInClick = {
+            viewModel.login(email, password)
+        })
         Spacer(modifier = Modifier.height(24.dp))
         DividerWithText()
         Spacer(modifier = Modifier.height(16.dp))
-        GoogleButton(onGoogleSignInClick = {})
+        GoogleButton(onGoogleSignInClick = {
+            onGoogleSignInClick()
+        })
         Spacer(modifier = Modifier.height(32.dp))
-        SignUpButton(onSignUpClick = {})
+        SignUpButton(onSignUpClick = {
+            onSignUpClick()
+        })
     }
 }
 
@@ -151,7 +175,8 @@ private fun PasswordField(
     password: String,
     passwordVisible: Boolean,
     onPasswordChange: (String) -> Unit,
-    onToggleVisibility: () -> Unit
+    onToggleVisibility: () -> Unit,
+    onForgotPasswordClick: () -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
 
@@ -168,7 +193,9 @@ private fun PasswordField(
             )
 
             TextButton(
-                onClick = {},
+                onClick = {
+                    onForgotPasswordClick()
+                },
                 contentPadding = PaddingValues(0.dp)
             ) {
                 Text(
@@ -345,5 +372,11 @@ private fun SignUpButton(
 @Preview(showBackground = true)
 @Composable
 fun LoginScreenPreview() {
-    LoginScreen()
+    LoginScreen(
+        onLoginSuccess = {},
+        onForgotPasswordClick = {},
+        onSignUpClick = {},
+        onGoogleSignInClick = {}
+
+    )
 }

@@ -73,7 +73,8 @@ private val learningGoalOptions = listOf(
 fun LearningGoalScreen(
     currentStep: Int = 2,
     totalSteps: Int = 2,
-    onBackClick: () -> Unit = {}
+    onBackClick: () -> Unit = {},
+    onContinueClick: () -> Unit = {}
 ) {
     var selectedId by remember { mutableStateOf<String?>(null) }
 

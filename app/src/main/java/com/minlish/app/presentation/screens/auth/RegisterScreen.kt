@@ -33,8 +33,10 @@ import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.res.painterResource
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.minlish.app.R
 import com.minlish.app.presentation.screens.auth.components.ProgressHeader
 import com.minlish.app.presentation.screens.auth.components.SecurityCheckList
@@ -47,6 +49,9 @@ import com.minlish.app.ui.theme.MinlishSurface
 fun RegisterScreen(
     currentStep: Int = 1,
     totalSteps: Int = 2,
+    viewModel: AuthViewModel = viewModel(),
+    onRegisterSuccess: () -> Unit,
+    onSignInClick: () -> Unit
 ) {
     var fullName by remember {  mutableStateOf("") }
     var email by remember { mutableStateOf("") }
@@ -56,6 +61,12 @@ fun RegisterScreen(
     val hasMinLength = password.length >= 8
     val hasUppercase = password.any {it.isUpperCase()}
     val hasNumberOrSymbol = password.any {!it.isLetterOrDigit() || it.isDigit()}
+
+    LaunchedEffect(viewModel.registerSuccess) {
+        if (viewModel.registerSuccess) {
+            onRegisterSuccess()
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -89,7 +100,9 @@ fun RegisterScreen(
         )
         Spacer(modifier = Modifier.height(24.dp))
         SignUpButton(
-            onSignUpClick = {} ,
+            onSignUpClick = {
+                viewModel.register(fullName, password, email)
+            } ,
             hasMinLength = hasMinLength,
             hasUppercase = hasUppercase,
             hasNumberOrSymbol = hasNumberOrSymbol,
@@ -98,8 +111,10 @@ fun RegisterScreen(
         DividerWithText()
         Spacer(modifier = Modifier.height(16.dp))
         GoogleButton(onGoogleSignInClick = {})
-        Spacer(modifier = Modifier.height(32.dp))
-        SignInButton(onSignInClick = {})
+        Spacer(modifier = Modifier.height(24.dp))
+        SignInButton(onSignInClick = {
+            onSignInClick()
+        })
     }
 }
 
@@ -413,5 +428,8 @@ private fun SignInButton(
 @Preview(showBackground = true)
 @Composable
 fun RegisterScreenPreview() {
-    RegisterScreen()
+    RegisterScreen(
+        onRegisterSuccess = {},
+        onSignInClick = {}
+    )
 }

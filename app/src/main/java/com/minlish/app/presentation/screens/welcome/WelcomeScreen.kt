@@ -53,13 +53,13 @@ private val onBoardingPages = listOf(
     ),
     OnboardingPage(
         imageRes = R.drawable.illustration2_img,
-        title = "Learn Anywhere.\nAnytime.",
+        title = "Learn Anywhere, Anytime on Your Own Terms.",
         description = "Pocket-sized lessons that fit your schedule. Just 5 minutes a day is enough."
     ),
     OnboardingPage(
         imageRes = R.drawable.illustration3_img,
-        title = "Master Vocabulary Faster\nAnd Faster",
-        description = "Our AI-powered Smart SRS tracks your memory patterns to ensure you review words exactly when you need"
+        title = "Accelerate Your Vocabulary Mastery",
+        description = "Smart spacing, zero wasted effort. Review only the words you are about to forget."
     )
 )
 @Composable

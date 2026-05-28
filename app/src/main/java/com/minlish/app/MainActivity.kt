@@ -19,6 +19,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.unit.dp
 import com.minlish.app.presentation.components.AppHeader
+import com.minlish.app.presentation.navigation.AuthNavHost
 import com.minlish.app.ui.components.Footer
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -26,7 +27,9 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             MinLishMobileTheme {
-                MainScreen()
+                AuthNavHost(
+                    modifier = Modifier.fillMaxSize()
+                )
             }
         }
     }

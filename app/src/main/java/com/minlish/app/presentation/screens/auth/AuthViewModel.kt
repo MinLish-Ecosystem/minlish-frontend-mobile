@@ -15,6 +15,8 @@ class AuthViewModel: ViewModel() {
     var loginSuccess by mutableStateOf(false)
         private set
 
+    var registerSuccess by mutableStateOf(false)
+        private set
     fun login(email: String, password: String) {
         viewModelScope.launch {
             isLoading = true
@@ -26,6 +28,22 @@ class AuthViewModel: ViewModel() {
                 }
                 .onFailure { e ->
                     errorMessage = e.message ?: "Login Failed"
+                }
+            isLoading = false
+        }
+    }
+
+    fun register(fullName: String, password: String, email: String) {
+        viewModelScope.launch {
+            isLoading = true
+            errorMessage = null
+
+            repository.register(fullName, email, password)
+                .onSuccess {
+                    registerSuccess = true
+                }
+                .onFailure { e ->
+                    errorMessage = e.message ?: "Register Failed"
                 }
             isLoading = false
         }

@@ -59,7 +59,7 @@ fun ForgotPasswordScreen(
 private fun ForgotPasswordCard(
     email: String,
     onEmailChange: (String) -> Unit,
-    onSendResetLink: () -> Unit,
+    onSendResetLink: (String) -> Unit,
     onReturnToLogin: () -> Unit
 ) {
     Surface(
@@ -88,7 +88,9 @@ private fun ForgotPasswordCard(
                 contentAlignment = Alignment.Center
             ) {
                 Button(
-                    onClick = onSendResetLink,
+                    onClick = {
+                        onSendResetLink(email)
+                    },
                     modifier = Modifier.fillMaxSize(),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color.Transparent

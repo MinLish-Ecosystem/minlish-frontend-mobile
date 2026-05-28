@@ -4,6 +4,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.rememberScrollState
@@ -12,10 +13,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.Logout
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.outlined.Badge
 import androidx.compose.material.icons.outlined.Email
+import androidx.compose.material.icons.outlined.Logout
 import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.TrackChanges
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -32,6 +36,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -59,54 +64,87 @@ fun ProfileScreen(
     var dailyReviewTarget by remember { mutableIntStateOf(30) }
     val currentStreak = 14
 
+    var pushNotifications by remember { mutableStateOf(true) }
+    var reminderTime by remember { mutableStateOf("20:00") }
+    var darkMode by remember { mutableStateOf(false) }
+
     var currentRoute by remember { mutableStateOf("Profile") }
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MinlishSurface)
-            .verticalScroll(rememberScrollState())
-    ) {
-        AppHeader(
-            userName = userName,
-            userAvatarId = R.drawable.profile_img,
-            onNotificationClick = onNotificationClick,
-            onUserClick = onUserClick,
-        )
-        ProfileBannerSection(
-            userName = userName,
-            userLevel = userLevel,
-            joinYear = joinYear
-        )
-
-        Column(
-            modifier = Modifier.padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp)
-        ) {
-            Spacer(modifier = Modifier.height(8.dp))
-            PersonalInfoCard(
-                displayName = displayName,
-                email = email,
-                onDisplayNameChange = {displayName = it},
-                onEmailChange = {email = it}
+    Scaffold(
+        topBar = {
+            AppHeader(
+                userName = userName,
+                userAvatarId = R.drawable.profile_img,
+                onNotificationClick = onNotificationClick,
+                onUserClick = onUserClick,
             )
-            LearningGoalsCard(
-                selectedGoal = selectedGoal,
-                dailyWordTarget = dailyWordTarget,
-                dailyReviewTarget = dailyReviewTarget,
-                currentStreak = currentStreak,
-                onGoalChange = { selectedGoal = it },
-                onWordTargetChange = { dailyWordTarget = it },
-                onReviewTargetChange = { dailyReviewTarget = it }
+        },
+        containerColor = Color(0xFFF9FAFB),
+        bottomBar = {
+            Footer(
+                currentRoute = currentRoute,
+                onNavigate = { newRoute ->
+                    currentRoute = newRoute
+                }
             )
-            Spacer(modifier = Modifier.height(8.dp))
         }
+    ) {paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .background(MinlishSurface)
+        ) {
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState())
+            ) {
 
-        Footer(
-            currentRoute = currentRoute,
-            onNavigate = { newRoute ->
-                currentRoute = newRoute
+                ProfileBannerSection(
+                    userName = userName,
+                    userLevel = userLevel,
+                    joinYear = joinYear
+                )
+
+                Column(
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(24.dp)
+                ) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    PersonalInfoCard(
+                        displayName = displayName,
+                        email = email,
+                        onDisplayNameChange = { displayName = it },
+                        onEmailChange = { email = it }
+                    )
+                    LearningGoalsCard(
+                        selectedGoal = selectedGoal,
+                        dailyWordTarget = dailyWordTarget,
+                        dailyReviewTarget = dailyReviewTarget,
+                        currentStreak = currentStreak,
+                        onGoalChange = { selectedGoal = it },
+                        onWordTargetChange = { dailyWordTarget = it },
+                        onReviewTargetChange = { dailyReviewTarget = it }
+                    )
+
+                    AppSettingsCard(
+                        pushNotifications = pushNotifications,
+                        reminderTime = reminderTime,
+                        darkMode = darkMode,
+                        onPushNotificationsChange = { pushNotifications = it },
+                        onReminderTimeChange = { reminderTime = it },
+                        onLogOutClick = { }
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+                    SaveButton(                               // ← thêm dính đáy
+                        onSaveClick = {
+                            // TODO: gọi ProfileViewModel.save()
+                        }
+                    )
+                }
             }
-        )
+        }
     }
 }
 
@@ -529,6 +567,238 @@ private fun StreakBanner(currentStreak: Int) {
                     color = Color(0xFFF59E0B)
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun AppSettingsCard(
+    pushNotifications: Boolean,
+    reminderTime: String,
+    darkMode: Boolean,
+    onPushNotificationsChange: (Boolean) -> Unit,
+    onReminderTimeChange: (String) -> Unit,
+    onLogOutClick: () -> Unit
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        color = MinlishSurfaceLowest,
+        shadowElevation = 4.dp,
+        border = BorderStroke(1.dp, MinlishOutlineVariant.copy(0.2f))
+    ) {
+        Column(
+            modifier = Modifier.padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp)
+        ) {
+            ProfileCardHeader(
+                icon = Icons.Outlined.Settings,
+                title = "App Settings",
+                iconTint = Color(0xFF581C87)
+            )
+
+            SettingsToggleRow(
+                title = "Push Notifications",
+                subtitle =  "Daily reminders & streaks",
+                checked = pushNotifications,
+                onCheckedChange = onPushNotificationsChange,
+                activeColor = MinlishSuccess
+            )
+
+            SettingsTimeRow(
+                title = "Reminder Time",
+                subtitle = "When to send daily notification",
+                time = reminderTime,
+                onTimeChange = onReminderTimeChange
+            )
+
+            HorizontalDivider(color = Color(0xFFF3F4F6))
+            TextButton(
+                onClick = onLogOutClick,
+                modifier = Modifier.fillMaxWidth(),
+                contentPadding = PaddingValues(vertical = 8.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Outlined.Logout,
+                            contentDescription = null,
+                            tint = MinlishError,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Text(
+                            text = "Log Out",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = MinlishError
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SettingsToggleRow(
+    title: String,
+    subtitle: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    activeColor: Color
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(2.dp)
+        ) {
+            Text(
+                text = title,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium,
+                color = Color(0xFF111827)
+            )
+            Text(
+                text = subtitle,
+                fontSize = 14.sp,
+                color = MinlishOnSurfaceVariant
+            )
+        }
+
+        Switch(
+            checked = checked,
+            onCheckedChange = onCheckedChange,
+            colors = SwitchDefaults.colors(
+                checkedThumbColor = Color.White,
+                checkedTrackColor = activeColor,
+                uncheckedThumbColor = Color.White,
+                uncheckedTrackColor = Color(0xFFE5E7EB)
+            )
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SettingsTimeRow(
+    title: String,
+    subtitle: String,
+    time: String,
+    onTimeChange: (String) -> Unit
+) {
+    var showTimePicker by remember { mutableStateOf(false) }
+    var hour = time.split(":").getOrNull(0)?.toIntOrNull()?:20
+    var minute = time.split(":").getOrNull(1)?.toIntOrNull()?: 0
+
+    if (showTimePicker) {
+        val timePickerState = rememberTimePickerState(
+            initialHour = hour,
+            initialMinute = minute
+        )
+        AlertDialog(
+            onDismissRequest = {showTimePicker = false},
+            confirmButton = {
+                TextButton(onClick = {
+                    val h = timePickerState.hour.toString().padStart(2,'0')
+                    val m = timePickerState.minute.toString().padStart(2,'0')
+                    onTimeChange("$h:$m")
+                    showTimePicker = false
+                }) {
+                    Text("OK", color = MinlishPrimary)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = {showTimePicker = false}) {
+                    Text("Cancel", color = MinlishOnSurfaceVariant)
+                }
+            },
+            text = { TimePicker(state = timePickerState) }
+        )
+    }
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(2.dp)
+        ) {
+            Text(
+                text = title,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium,
+                color = Color(0xFF111827)
+            )
+            Text(
+                text = subtitle,
+                fontSize = 14.sp,
+                color = MinlishOnSurfaceVariant
+            )
+        }
+
+        Surface(
+            onClick = {showTimePicker = true},
+            shape = RoundedCornerShape(8.dp),
+            color = Color(0xFFF9FAFB),
+            border = BorderStroke(1.dp, MinlishOnSurfaceVariant.copy(alpha = 0.5f))
+        ) {
+            Text(
+                text = time,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Medium,
+                color = Color(0xFF111827),
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
+            )
+        }
+    }
+}
+
+@Composable
+private fun SaveButton(onSaveClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(
+                        Color.Transparent,
+                        Color(0xFFF9FAFB).copy(alpha = 0.9f),
+                        Color(0xFFF9FAFB)
+                    )
+                )
+            )
+            .padding(horizontal = 16.dp)
+            .padding(top = 16.dp, bottom = 24.dp)
+    ) {
+        Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(MinlishGradient)
+                    .clickable {onSaveClick()},
+                contentAlignment = Alignment.Center
+            ) {
+            Text(
+                text = "Save Changes",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = Color.White
+            )
         }
     }
 }
