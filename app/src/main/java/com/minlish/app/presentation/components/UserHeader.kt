@@ -69,7 +69,6 @@ fun AppHeader(
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
-
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
