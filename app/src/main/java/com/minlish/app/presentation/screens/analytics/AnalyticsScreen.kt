@@ -370,7 +370,7 @@ private fun MasteryDistributionCard(uiState: AnalyticsUiState) {
     val levels = listOf(
         uiState.masteryBeginner     to MinlishAccentCyan,
         uiState.masteryIntermediate to MinlishPrimary,
-        uiState.masteryAdvanded     to MinlishSecondary
+        uiState.masteryAdvanced     to MinlishSecondary
     )
 
     Card(
