@@ -19,7 +19,7 @@ class MainActivity : ComponentActivity() {
             MinLishMobileTheme {
                 AuthNavHost(
                     modifier = Modifier.fillMaxSize(),
-                    startDestination = "login"
+                    startDestination = "analytics"
                 )
             }
         }
