@@ -1,6 +1,5 @@
 package com.minlish.app.ui.theme
 
-import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
@@ -12,28 +11,41 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalContext
 
+// Dark scheme giữ màu baseline (chưa thiết kế dark mode cho MinLish)
 private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
+    primary   = Purple80,
     secondary = PurpleGrey80,
-    tertiary = Pink80
+    tertiary  = Pink80
 )
 
-private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
-
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
+// Light scheme dùng màu MinLish
+private val MinLishLightColorScheme = lightColorScheme(
+    primary              = MinlishPrimary,
+    onPrimary            = MinlishSurfaceLowest,
+    primaryContainer     = MinlishSecondaryContainer,
+    onPrimaryContainer   = MinlishInverseSurface,
+    inversePrimary       = MinlishInversePrimary,
+    secondary            = MinlishSecondary,
+    onSecondary          = MinlishOnSecondary,
+    secondaryContainer   = MinlishSecondaryContainer,
+    onSecondaryContainer = MinlishOnSecondaryContainer,
+    tertiary             = MinlishTertiary,
+    onTertiary           = MinlishOnTertiary,
+    tertiaryContainer    = MinlishTertiaryContainer,
+    background           = MinlishSurface,
+    onBackground         = MinlishOnSurface,
+    surface              = MinlishSurface,
+    onSurface            = MinlishOnSurface,
+    surfaceVariant       = MinlishSurfaceHighest,
+    onSurfaceVariant     = MinlishOnSurfaceVariant,
+    outline              = MinlishOutline,
+    outlineVariant       = MinlishOutlineVariant,
+    inverseSurface       = MinlishInverseSurface,
+    inverseOnSurface     = MinlishInverseOnSurface,
+    error                = MinlishError,
 )
 
+// Gradient Brush dùng chung — TopBar, Auth, Welcome, Profile, Analytics
 val MinlishGradient = Brush.linearGradient(
     colors = listOf(MinlishGradientStart, MinlishGradientEnd)
 )
@@ -41,7 +53,6 @@ val MinlishGradient = Brush.linearGradient(
 @Composable
 fun MinLishMobileTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
     dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
@@ -50,14 +61,13 @@ fun MinLishMobileTheme(
             val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
-
         darkTheme -> DarkColorScheme
-        else -> LightColorScheme
+        else      -> MinLishLightColorScheme
     }
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = Typography,
-        content = content
+        typography  = Typography,
+        content     = content
     )
 }

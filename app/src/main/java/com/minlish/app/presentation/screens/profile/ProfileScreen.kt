@@ -46,10 +46,12 @@ import androidx.compose.ui.unit.sp
 import com.minlish.app.ui.theme.*
 import com.minlish.app.R
 import com.minlish.app.presentation.components.AppHeader
-import com.minlish.app.ui.components.Footer
+import com.minlish.app.presentation.components.Footer
 
 @Composable
 fun ProfileScreen(
+    currentRoute: String = "profile",
+    onNavigate: (String) -> Unit = {},
     userName: String = "Alex Johnson",
     userLevel: String = "Intermediate Learner",
     joinYear: String = "2023",
@@ -68,7 +70,6 @@ fun ProfileScreen(
     var reminderTime by remember { mutableStateOf("20:00") }
     var darkMode by remember { mutableStateOf(false) }
 
-    var currentRoute by remember { mutableStateOf("Profile") }
     Scaffold(
         topBar = {
             AppHeader(
@@ -82,9 +83,7 @@ fun ProfileScreen(
         bottomBar = {
             Footer(
                 currentRoute = currentRoute,
-                onNavigate = { newRoute ->
-                    currentRoute = newRoute
-                }
+                onNavigate = onNavigate
             )
         }
     ) {paddingValues ->

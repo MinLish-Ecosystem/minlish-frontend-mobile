@@ -61,7 +61,7 @@ import com.minlish.app.R
 import com.minlish.app.presentation.components.AppColors.OnSurfaceVariant
 import com.minlish.app.presentation.components.AppColors.Surface
 import com.minlish.app.presentation.components.AppHeader
-import com.minlish.app.ui.components.Footer
+import com.minlish.app.presentation.components.Footer
 
 data class FlashcardData(
     val category: String,

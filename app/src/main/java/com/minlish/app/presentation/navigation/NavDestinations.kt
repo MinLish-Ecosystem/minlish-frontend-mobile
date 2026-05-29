@@ -11,6 +11,10 @@ sealed class NavDestinations(val route: String) {
     data object ResetPassword: NavDestinations("reset_password")
 
     data object LearningGoal: NavDestinations("learning_goal")
-    data object Dashboard: NavDestinations("dashboard")
     data object Profile: NavDestinations("profile")
+
+    // ── Main app screens ────────────────────────────────────────────────────
+    data object Learning       : NavDestinations("learning")
+    data object Analytics      : NavDestinations("analytics")
+    data object Practice       : NavDestinations("practice")
 }
