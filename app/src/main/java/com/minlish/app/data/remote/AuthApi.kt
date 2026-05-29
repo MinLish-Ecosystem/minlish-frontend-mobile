@@ -1,38 +1,46 @@
 package com.minlish.app.data.remote
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import retrofit2.http.Body
 import retrofit2.http.POST
+import retrofit2.http.Headers
 
 data class LoginRequest(
     val email: String,
     val password: String
 )
 
-data class LoginResponse(
-    val token: String,
+data class UserDto(
+    val id: String,
+    val name: String,
+    val email: String,
+    val role: String,
+    val avatar: String? = null,
+    val isVerified: Boolean
+)
+
+data class LoginData(
+    val accessToken: String,
     val refreshToken: String,
-    val userId: String
+    val redirectUrl: String,
+    val user: UserDto
 )
 
 data class RegisterRequest(
-    val fullName: String,
+    val name: String,
     val password: String,
     val email: String
 )
-data class RegisterResponse(
-    val token: String,
-    val refreshToken: String,
-    val userId: String
+
+data class RegisterData(
+    val message: String
 )
 
 interface AuthApi {
+    @Headers("No-Authentication: true")
     @POST("auth/login")
-    suspend fun login(@Body request: LoginRequest): LoginResponse
+    suspend fun login(@Body request: LoginRequest): ApiResponse<LoginData>
 
+    @Headers("No-Authentication: true")
     @POST("auth/register")
-    suspend fun register(@Body request: RegisterRequest): RegisterResponse
+    suspend fun register(@Body request: RegisterRequest): ApiResponse<RegisterData>
 }
