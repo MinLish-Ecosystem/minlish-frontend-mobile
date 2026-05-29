@@ -1,6 +1,5 @@
 package com.minlish.app.ui.theme
 
-import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
@@ -9,9 +8,10 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalContext
 
-// Dark scheme giữ màu cũ (chưa thiết kế dark mode cho MinLish)
+// Dark scheme giữ màu baseline (chưa thiết kế dark mode cho MinLish)
 private val DarkColorScheme = darkColorScheme(
     primary   = Purple80,
     secondary = PurpleGrey80,
@@ -20,29 +20,34 @@ private val DarkColorScheme = darkColorScheme(
 
 // Light scheme dùng màu MinLish
 private val MinLishLightColorScheme = lightColorScheme(
-    primary              = MlPrimary,
-    onPrimary            = MlOnPrimary,
-    primaryContainer     = MlPrimaryContainer,
-    onPrimaryContainer   = MlOnPrimaryContainer,
-    inversePrimary       = MlInversePrimary,
-    secondary            = MlSecondary,
-    onSecondary          = MlOnSecondary,
-    secondaryContainer   = MlSecondaryContainer,
-    onSecondaryContainer = MlOnSecondaryContainer,
-    tertiary             = MlTertiary,
-    onTertiary           = MlOnTertiary,
-    tertiaryContainer    = MlTertiaryContainer,
-    background           = MlBackground,
-    onBackground         = MlOnBackground,
-    surface              = MlSurface,
-    onSurface            = MlOnSurface,
-    surfaceVariant       = MlSurfaceVariant,
-    onSurfaceVariant     = MlOnSurfaceVariant,
-    outline              = MlOutline,
-    outlineVariant       = MlOutlineVariant,
-    inverseSurface       = MlInverseSurface,
-    inverseOnSurface     = MlInverseOnSurface,
-    error                = MlError,
+    primary              = MinlishPrimary,
+    onPrimary            = MinlishSurfaceLowest,
+    primaryContainer     = MinlishSecondaryContainer,
+    onPrimaryContainer   = MinlishInverseSurface,
+    inversePrimary       = MinlishInversePrimary,
+    secondary            = MinlishSecondary,
+    onSecondary          = MinlishOnSecondary,
+    secondaryContainer   = MinlishSecondaryContainer,
+    onSecondaryContainer = MinlishOnSecondaryContainer,
+    tertiary             = MinlishTertiary,
+    onTertiary           = MinlishOnTertiary,
+    tertiaryContainer    = MinlishTertiaryContainer,
+    background           = MinlishSurface,
+    onBackground         = MinlishOnSurface,
+    surface              = MinlishSurface,
+    onSurface            = MinlishOnSurface,
+    surfaceVariant       = MinlishSurfaceHighest,
+    onSurfaceVariant     = MinlishOnSurfaceVariant,
+    outline              = MinlishOutline,
+    outlineVariant       = MinlishOutlineVariant,
+    inverseSurface       = MinlishInverseSurface,
+    inverseOnSurface     = MinlishInverseOnSurface,
+    error                = MinlishError,
+)
+
+// Gradient Brush dùng chung — TopBar, Auth, Welcome, Profile, Analytics
+val MinlishGradient = Brush.linearGradient(
+    colors = listOf(MinlishGradientStart, MinlishGradientEnd)
 )
 
 @Composable

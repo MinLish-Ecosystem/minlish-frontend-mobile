@@ -1,7 +1,6 @@
 package com.minlish.app.presentation.screens.auth
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -17,7 +16,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -29,25 +27,43 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ArrowForward
 import androidx.compose.material.icons.outlined.ArrowForward
 import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.res.painterResource
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.minlish.app.R
-
-private val startColor = Color(0xFF667EEA)
-private val endColor = Color(0xFF764BA2)
+import com.minlish.app.presentation.navigation.NavDestinations
+import com.minlish.app.presentation.screens.auth.LoginScreen
+import com.minlish.app.ui.theme.MinlishGradient
+import com.minlish.app.ui.theme.MinlishOnSurface
+import com.minlish.app.ui.theme.MinlishOutline
+import com.minlish.app.ui.theme.MinlishPrimary
+import com.minlish.app.ui.theme.MinlishSurface
 
 @Composable
-fun LoginScreen(viewModel: AuthViewModel = viewModel()) {
+fun LoginScreen(
+    viewModel: AuthViewModel = viewModel(),
+    onLoginSuccess: () -> Unit,
+    onGoogleSignInClick: () -> Unit,
+    onForgotPasswordClick: () -> Unit,
+    onSignUpClick: () -> Unit
+) {
 
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
+
+    LaunchedEffect(viewModel.loginSuccess) {
+        if (viewModel.loginSuccess) {
+            onLoginSuccess()
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -64,25 +80,30 @@ fun LoginScreen(viewModel: AuthViewModel = viewModel()) {
             password = password,
             passwordVisible = passwordVisible,
             onPasswordChange = {password = it},
-            onToggleVisibility = {passwordVisible = !passwordVisible}
+            onToggleVisibility = {passwordVisible = !passwordVisible},
+            onForgotPasswordClick = {
+                onForgotPasswordClick()
+            }
         )
         Spacer(modifier = Modifier.height(24.dp))
-        SignInButton(onSignInClick = {})
+        SignInButton(onSignInClick = {
+            viewModel.login(email, password)
+        })
         Spacer(modifier = Modifier.height(24.dp))
         DividerWithText()
         Spacer(modifier = Modifier.height(16.dp))
-        GoogleButton(onGoogleSignInClick = {})
+        GoogleButton(onGoogleSignInClick = {
+            onGoogleSignInClick()
+        })
         Spacer(modifier = Modifier.height(32.dp))
-        SignUpButton(onSignUpClick = {})
+        SignUpButton(onSignUpClick = {
+            onSignUpClick()
+        })
     }
 }
 
 @Composable
 private fun BrandingSection() {
-    val colorBrush = Brush.linearGradient(
-        colors = listOf(startColor, endColor)
-    )
-
     Text(
         text = "MinList",
         fontSize = 48.sp,
@@ -90,16 +111,16 @@ private fun BrandingSection() {
         letterSpacing = (-0.5).sp,
         textAlign = TextAlign.Center,
         style = LocalTextStyle.current.copy(
-            brush = colorBrush
+            brush = MinlishGradient
         )
     )
 
     Spacer(modifier = Modifier.height(8.dp))
 
     Text(
-        text = "Welcome back! Ready to learn ?",
+        text = "Welcome back! Ready to learn?",
         fontSize = 16.sp,
-        color = Color(0xFF464554),
+        color = MinlishOutline,
         textAlign = TextAlign.Center
     )
 }
@@ -115,7 +136,7 @@ private fun EmailField(
             text = "Email Address",
             fontSize = 14.sp,
             fontWeight = FontWeight.Medium,
-            color = Color(0xFF1B1B23)
+            color = MinlishOnSurface
         )
 
         OutlinedTextField(
@@ -123,13 +144,13 @@ private fun EmailField(
             onValueChange = onEmailChange,
             modifier = Modifier.fillMaxWidth(),
             placeholder = {
-                Text("you@example.com", color = Color(0xFF767586))
+                Text("you@example.com", color = MinlishOutline)
             },
             leadingIcon = {
                 Icon(
                     imageVector = Icons.Outlined.Email,
                     contentDescription = null,
-                    tint = Color(0xFF767586)
+                    tint = MinlishOutline
                 )
             },
             keyboardOptions = KeyboardOptions(
@@ -139,11 +160,11 @@ private fun EmailField(
             singleLine = true,
             shape = RoundedCornerShape(12.dp),
             colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = Color(0xFF4648D4),
-                unfocusedBorderColor = Color(0xFFC7C4D7),
+                focusedBorderColor = MinlishPrimary,
+                unfocusedBorderColor = MinlishSurface,
                 focusedContainerColor = Color.White,
                 unfocusedContainerColor = Color.White,
-                cursorColor = Color(0xFF4648D4)
+                cursorColor = MinlishPrimary
             )
         )
     }
@@ -154,7 +175,8 @@ private fun PasswordField(
     password: String,
     passwordVisible: Boolean,
     onPasswordChange: (String) -> Unit,
-    onToggleVisibility: () -> Unit
+    onToggleVisibility: () -> Unit,
+    onForgotPasswordClick: () -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
 
@@ -167,18 +189,20 @@ private fun PasswordField(
                 text = "Password",
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Medium,
-                color = Color(0xFF1B1B23)
+                color = MinlishOnSurface
             )
 
             TextButton(
-                onClick = {},
+                onClick = {
+                    onForgotPasswordClick()
+                },
                 contentPadding = PaddingValues(0.dp)
             ) {
                 Text(
-                    text = "Forget Password ?",
+                    text = "Forget Password?",
                     fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = Color(0xFF4648D4)
+                    color = MinlishPrimary
                 )
             }
         }
@@ -188,13 +212,13 @@ private fun PasswordField(
             onValueChange = onPasswordChange,
             modifier = Modifier.fillMaxWidth(),
             placeholder = {
-                Text("••••••••", color = Color(0xFF767586))
+                Text("••••••••", color = MinlishOutline)
             },
             leadingIcon = {
                 Icon(
                     imageVector = Icons.Outlined.Lock,
                     contentDescription = null,
-                    tint = Color(0xFF767586)
+                    tint = MinlishOutline
                 )
             },
             trailingIcon = {
@@ -203,7 +227,7 @@ private fun PasswordField(
                         imageVector = if (passwordVisible)
                             Icons.Outlined.Visibility else Icons.Outlined.VisibilityOff,
                         contentDescription = if (passwordVisible) "Hide Password" else "Show Password",
-                        tint = Color(0xFF767586)
+                        tint = MinlishOutline
                     )
                 }
             },
@@ -218,11 +242,11 @@ private fun PasswordField(
             singleLine = true,
             shape = RoundedCornerShape(12.dp),
             colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = Color(0xFF4648D4),
-                unfocusedBorderColor = Color(0xFFC7C4D7),
+                focusedBorderColor = MinlishPrimary,
+                unfocusedBorderColor = MinlishSurface,
                 focusedContainerColor = Color.White,
                 unfocusedContainerColor = Color.White,
-                cursorColor = Color(0xFF4648D4)
+                cursorColor = MinlishPrimary
             )
         )
     }
@@ -232,19 +256,12 @@ private fun PasswordField(
 private fun SignInButton(
     onSignInClick: () -> Unit
 ) {
-    val colorBrush = Brush.linearGradient(
-        colors = listOf(
-            Color(0xFF667EEA),
-            Color(0xFF764BA2)
-        )
-    )
-
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(52.dp)
             .clip(RoundedCornerShape(12.dp))
-            .background(colorBrush)
+            .background(MinlishGradient)
             .clickable {onSignInClick()},
         contentAlignment = Alignment.Center
     ) {
@@ -260,7 +277,7 @@ private fun SignInButton(
                 letterSpacing = 0.1.sp
             )
             Icon(
-                imageVector = Icons.Outlined.ArrowForward,
+                imageVector = Icons.AutoMirrored.Outlined.ArrowForward,
                 contentDescription = null,
                 tint = Color.White,
                 modifier = Modifier.size(18.dp)
@@ -278,18 +295,18 @@ private fun DividerWithText() {
     ) {
         HorizontalDivider(
             modifier = Modifier.weight(1f),
-            color = Color(0xFFE9E6F3)
+            color = MinlishSurface
         )
         Text(
             text = "OR CONTINUE WITH",
             fontSize = 11.sp,
             fontWeight = FontWeight.SemiBold,
-            color = Color(0xFF464554),
+            color = MinlishOutline,
             letterSpacing = 0.8.sp
         )
         HorizontalDivider(
             modifier = Modifier.weight(1f),
-            color = Color(0xFFE9E6F3)
+            color = MinlishSurface
         )
     }
 }
@@ -338,14 +355,14 @@ private fun SignUpButton(
         Text(
             text = "Don't have an account?",
             fontSize = 14.sp,
-            color = Color(0xFF464554)
+            color = MinlishOutline
         )
         TextButton(onClick = onSignUpClick) {
             Text(
                 text = "Sign Up",
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Medium,
-                color = Color(0xFF4648D4)
+                color = MinlishPrimary
 
             )
         }
@@ -355,5 +372,11 @@ private fun SignUpButton(
 @Preview(showBackground = true)
 @Composable
 fun LoginScreenPreview() {
-    LoginScreen()
+    LoginScreen(
+        onLoginSuccess = {},
+        onForgotPasswordClick = {},
+        onSignUpClick = {},
+        onGoogleSignInClick = {}
+
+    )
 }

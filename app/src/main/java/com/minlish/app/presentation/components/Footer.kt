@@ -14,11 +14,11 @@ import androidx.compose.ui.unit.dp
 import com.minlish.app.presentation.components.AppColors.OnSurfaceVariant
 
 sealed class NavItem(val label: String, val icon: ImageVector, val selectedIcon: ImageVector?= null){
-    object Analytics : NavItem("Analytics", Icons.Default.BarChart)
-    object Library : NavItem("Library", Icons.Default.ImportContacts)
-    object Learning : NavItem("Learning", Icons.Default.School, Icons.Default.School)
-    object Practice : NavItem("Practice", Icons.Default.FitnessCenter, Icons.Default.FitnessCenter)
-    object Profile : NavItem("Profile", Icons.Default.Person)
+    object Analytics : NavItem("analytics", Icons.Default.BarChart)
+    object Library : NavItem("library", Icons.Default.ImportContacts)
+    object Learning : NavItem("learning", Icons.Default.School, Icons.Default.School)
+    object Practice : NavItem("practice", Icons.Default.FitnessCenter, Icons.Default.FitnessCenter)
+    object Profile : NavItem("profile", Icons.Default.Person)
 }
 
 @Composable
@@ -45,7 +45,7 @@ fun Footer(currentRoute: String, onNavigate: (String) -> Unit, modifier: Modifie
             contentColor = OnSurfaceVariant
         ){
             items.forEach{it ->
-                val isSelected = currentRoute.lowercase() == it.label.lowercase()
+                val isSelected = currentRoute.lowercase() == it.label
                 NavigationBarItem(
                     selected = isSelected,
                     onClick={onNavigate(it.label)},
@@ -58,7 +58,7 @@ fun Footer(currentRoute: String, onNavigate: (String) -> Unit, modifier: Modifie
                     },
                     label={
                         Text(
-                            text=it.label,
+                            text=it.label.replaceFirstChar { char -> char.uppercase() },
                             style = MaterialTheme.typography.labelSmall,
                             maxLines = 1,
                         )

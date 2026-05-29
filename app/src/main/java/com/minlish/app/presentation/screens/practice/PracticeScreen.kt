@@ -51,7 +51,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.room.util.copy
 import com.minlish.app.presentation.components.AppHeader
-import com.minlish.app.ui.components.Footer
+import com.minlish.app.presentation.components.Footer
 
 
 data class PracticeMode(
