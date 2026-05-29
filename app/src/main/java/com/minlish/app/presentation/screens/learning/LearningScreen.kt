@@ -42,7 +42,7 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import com.minlish.app.presentation.components.AppHeader
 import com.minlish.app.presentation.components.NotificationColors
-import com.minlish.app.ui.components.Footer
+import com.minlish.app.presentation.components.Footer
 
 
 // for ui

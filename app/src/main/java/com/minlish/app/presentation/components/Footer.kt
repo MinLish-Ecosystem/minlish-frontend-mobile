@@ -1,6 +1,5 @@
-package com.minlish.app.ui.components
+package com.minlish.app.presentation.components
 
-import android.graphics.drawable.Icon
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -13,7 +12,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import com.minlish.app.presentation.components.AppColors.OnSurfaceVariant
-import com.minlish.app.ui.theme.* // Import theme colors của bạn
+
 sealed class NavItem(val label: String, val icon: ImageVector, val selectedIcon: ImageVector?= null){
     object Analytics : NavItem("Analytics", Icons.Default.BarChart)
     object Library : NavItem("Library", Icons.Default.ImportContacts)
