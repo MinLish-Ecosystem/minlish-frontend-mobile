@@ -7,10 +7,12 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Timer
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -68,6 +70,14 @@ fun AnalyticsScreen(
             ),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            if (uiState.errorMessage != null) {
+                item {
+                    ErrorAlertCard(
+                        message = uiState.errorMessage!!,
+                        onRetry = { viewModel.refresh() }
+                    )
+                }
+            }
             item { AnalyticsHeader() }
             item { StatsBentoGrid(uiState) }
             item { WordsMasteredCard(uiState) }
@@ -514,5 +524,52 @@ private fun ActivityHeatmapCard(uiState: AnalyticsUiState) {
 fun AnalyticsScreenPreview() {
     MinLishMobileTheme {
         AnalyticsScreen()
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Error Alert Card UI component
+// ═══════════════════════════════════════════════════════════════════════════════
+
+@Composable
+private fun ErrorAlertCard(message: String, onRetry: () -> Unit) {
+    Card(
+        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF3CD)),
+        border = BorderStroke(1.dp, Color(0xFFFFEBAA))
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Warning,
+                contentDescription = "Warning",
+                tint = Color(0xFF856404),
+                modifier = Modifier.size(24.dp)
+            )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "Lỗi kết nối mạng",
+                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                    color = Color(0xFF856404)
+                )
+                Text(
+                    text = message,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color(0xFF856404)
+                )
+            }
+            Button(
+                onClick = onRetry,
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF856404)),
+                shape = RoundedCornerShape(8.dp),
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+            ) {
+                Text("Thử lại", color = Color.White, style = MaterialTheme.typography.labelMedium)
+            }
+        }
     }
 }

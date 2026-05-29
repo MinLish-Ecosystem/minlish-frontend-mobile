@@ -33,6 +33,8 @@ object NetworkModule {
 
     private val okHttpClient = OkHttpClient.Builder()
         .addInterceptor(authInterceptor)
+        .addInterceptor(com.minlish.app.data.remote.ErrorInterceptor())
+        .authenticator(com.minlish.app.data.remote.TokenAuthenticator())
         .addInterceptor(loggingInterceptor)
         .build()
 
