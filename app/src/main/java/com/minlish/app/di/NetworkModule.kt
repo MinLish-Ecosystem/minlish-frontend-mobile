@@ -1,6 +1,8 @@
 package com.minlish.app.di
 
 import com.minlish.app.data.remote.AuthApi
+import com.minlish.app.data.remote.FlashCardApi
+import com.minlish.app.data.remote.LearningApi
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -23,4 +25,6 @@ object NetworkModule {
         .build()
 
     val authApi: AuthApi = retrofit.create(AuthApi::class.java)
+    val learningApi: LearningApi = retrofit.create(LearningApi::class.java)
+    val flashCardApi: FlashCardApi=retrofit.create(FlashCardApi::class.java)
 }

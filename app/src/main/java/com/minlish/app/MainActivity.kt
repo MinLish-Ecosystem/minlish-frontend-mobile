@@ -15,11 +15,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.minlish.app.presentation.components.AppHeader
+import com.minlish.app.presentation.screens.learning.FlashCardScreen
+import com.minlish.app.presentation.screens.learning.FlashcardViewModel
 import com.minlish.app.ui.components.Footer
 import com.minlish.app.ui.theme.MinLishMobileTheme
 import com.minlish.app.presentation.screens.learning.HeroSessionCard
 import com.minlish.app.presentation.screens.learning.LearningDashBoardScreen
-import com.minlish.app.presentation.screens.learning.flashCardScreen
+import com.minlish.app.presentation.screens.learning.LearningViewModel
 import com.minlish.app.presentation.screens.practice.PracticeArenaScreen
 
 class MainActivity : ComponentActivity() {
@@ -36,5 +38,10 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun MainScreen() {
-    flashCardScreen()
+    val flashcardViewModel = remember { FlashcardViewModel() }
+    FlashCardScreen(
+        viewModel = flashcardViewModel,
+        onExitClick = { },
+        onMoreClick = { }
+    )
 }
