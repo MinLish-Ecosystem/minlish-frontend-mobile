@@ -23,6 +23,7 @@ import com.minlish.app.presentation.screens.learning.HeroSessionCard
 import com.minlish.app.presentation.screens.learning.LearningDashBoardScreen
 import com.minlish.app.presentation.screens.learning.LearningViewModel
 import com.minlish.app.presentation.screens.practice.PracticeArenaScreen
+import com.minlish.app.presentation.screens.practice.PracticeViewModel
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -38,10 +39,26 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun MainScreen() {
-    val flashcardViewModel = remember { FlashcardViewModel() }
-    FlashCardScreen(
-        viewModel = flashcardViewModel,
-        onExitClick = { },
-        onMoreClick = { }
-    )
+    var currentRoute by remember { mutableStateOf("Practice") }
+    val practiceViewModel = remember { PracticeViewModel() }
+    when (currentRoute) {
+        "Learning" -> {
+        }
+
+        "Practice" -> {
+            PracticeArenaScreen(
+                currentRoute=currentRoute,
+                viewModel= practiceViewModel,
+                onNavigate = { newRoute -> currentRoute = newRoute },
+            )
+        }
+
+        "Profile" -> {
+            // ProfileScreen(...)
+        }
+
+        else -> {
+            // Màn hình mặc định
+        }
+    }
 }
