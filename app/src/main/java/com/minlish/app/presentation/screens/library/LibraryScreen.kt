@@ -1,0 +1,401 @@
+package com.minlish.app.presentation.screens.library
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun LibraryScreen(
+    onSetClick: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var selectedSubTab by remember { mutableStateOf("Explore") }
+    var searchQuery by remember { mutableStateOf("") }
+
+    // Color definitions based on the HTML mockup
+    val surfaceColor = Color(0xFFFCF8FF)
+    val onSurfaceColor = Color(0xFF1B1B23)
+    val onSurfaceVariantColor = Color(0xFF464554)
+    val surfaceContainerHighColor = Color(0xFFE9E6F3)
+    val surfaceContainerLowestColor = Color(0xFFFFFFFF)
+    val primaryColor = Color(0xFF4648D4)
+    val primary50Color = Color(0xFFF0F4FF)
+    val outlineVariantColor = Color(0xFFC7C4D7)
+    val accentBlueColor = Color(0xFF3B82F6)
+    val accentEmeraldColor = Color(0xFF10B981)
+    val accentAmberColor = Color(0xFFF59E0B)
+
+    LazyColumn(
+        modifier = modifier
+            .fillMaxSize()
+            .background(surfaceColor)
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(24.dp)
+    ) {
+        // Tab Switcher ("My Sets" and "Explore")
+        item {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(surfaceContainerHighColor, shape = RoundedCornerShape(12.dp))
+                    .padding(4.dp),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                listOf("My Sets", "Explore").forEach { tab ->
+                    val isSelected = selectedSubTab == tab
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(if (isSelected) surfaceContainerLowestColor else Color.Transparent)
+                            .clickable { selectedSubTab = tab }
+                            .padding(vertical = 10.dp)
+                            .then(
+                                if (isSelected) Modifier.shadow(1.dp, RoundedCornerShape(8.dp)) else Modifier
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = tab,
+                            color = if (isSelected) onSurfaceColor else onSurfaceVariantColor,
+                            fontWeight = FontWeight.Medium,
+                            fontSize = 14.sp
+                        )
+                    }
+                }
+            }
+        }
+
+        // Conditionally render based on selected tab
+        if (selectedSubTab == "Explore") {
+            // Search Bar
+            item {
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    placeholder = {
+                        Text(
+                            text = "Search vocabulary sets...",
+                            color = onSurfaceVariantColor,
+                            fontSize = 15.sp
+                        )
+                    },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = "Search icon",
+                            tint = onSurfaceVariantColor
+                        )
+                    },
+                    shape = RoundedCornerShape(16.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = surfaceContainerLowestColor,
+                        unfocusedContainerColor = surfaceContainerLowestColor,
+                        focusedBorderColor = primaryColor,
+                        unfocusedBorderColor = outlineVariantColor,
+                        focusedTextColor = onSurfaceColor,
+                        unfocusedTextColor = onSurfaceColor
+                    ),
+                    singleLine = true
+                )
+            }
+
+            // Featured Set Section
+            item {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text(
+                        text = "Featured Set",
+                        color = onSurfaceColor,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp
+                    )
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(192.dp)
+                            .shadow(8.dp, RoundedCornerShape(16.dp))
+                            .clip(RoundedCornerShape(16.dp))
+                            .clickable { onSetClick("Business English") }
+                    ) {
+                        AsyncImage(
+                            model = "https://lh3.googleusercontent.com/aida-public/AB6AXuDGpBVgr4REf_p5hjaYzH75aDJ8xz8JzwRTn-niaXN3GUkA_uFtO5ya57A5pskbx7jVWHHCWjDxaiGLhZ2QFk31GuB_M-A6JE-2aMu-DAmOtNMvfJIguazIz7a3D8CW6sQ1H0HoP7L1AVRmGee7t6E3Ncg4s8h_FjVAxYrO31nw4twNypuwvkGtjUMJ3BAdLqgwjMTeho0KqZ5Ux3RsF3MS34dhqNnXZP2E-Fbyre8cJSsrMwU9wkpy_xUWcuI979TCd7Gq3uyA8kw",
+                            contentDescription = "Featured Set Background",
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+
+                        // Gradient Overlay (Dark bottom)
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(
+                                    Brush.verticalGradient(
+                                        colors = listOf(
+                                            Color.Transparent,
+                                            Color(0xFF111827).copy(alpha = 0.85f)
+                                        ),
+                                        startY = 100f
+                                    )
+                                )
+                        )
+
+                        // Content overlayed at bottom
+                        Column(
+                            modifier = Modifier
+                                .align(Alignment.BottomStart)
+                                .padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .background(
+                                        primaryColor.copy(alpha = 0.9f),
+                                        shape = RoundedCornerShape(4.dp)
+                                    )
+                                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                            ) {
+                                Text(
+                                    text = "Business English",
+                                    color = Color.White,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 11.sp
+                                )
+                            }
+
+                            Text(
+                                text = "Tech Startup Meetings",
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 20.sp
+                            )
+
+                            Text(
+                                text = "Master essential vocabulary for modern tech environments.",
+                                color = Color(0xFFE4E1ED),
+                                fontSize = 13.sp
+                            )
+                        }
+                    }
+                }
+            }
+
+            // Trending Topics Section
+            item {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Text(
+                        text = "Trending Topics",
+                        color = onSurfaceColor,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp
+                    )
+
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        // Card 1: TOEIC Essential 500
+                        TrendingTopicItem(
+                            title = "TOEIC Essential 500",
+                            subtitle = "500 terms • Advanced",
+                            icon = Icons.Default.Work,
+                            accentColor = accentBlueColor,
+                            iconBgColor = primary50Color,
+                            onClick = { onSetClick("TOEIC Essential 500") }
+                        )
+
+                        // Card 2: Travel & Tourism
+                        TrendingTopicItem(
+                            title = "Travel & Tourism",
+                            subtitle = "120 terms • Intermediate",
+                            icon = Icons.Default.FlightTakeoff,
+                            accentColor = accentEmeraldColor,
+                            iconBgColor = Color(0xFFF5F2FE),
+                            onClick = { onSetClick("Travel & Tourism") }
+                        )
+
+                        // Card 3: Dining Out
+                        TrendingTopicItem(
+                            title = "Dining Out",
+                            subtitle = "85 terms • Beginner",
+                            icon = Icons.Default.RestaurantMenu,
+                            accentColor = accentAmberColor,
+                            iconBgColor = Color(0xFFF5F2FE),
+                            onClick = { onSetClick("Dining Out") }
+                        )
+                    }
+                }
+            }
+
+            // Categories Section
+            item {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text(
+                        text = "Categories",
+                        color = onSurfaceColor,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp
+                    )
+
+                    FlowRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        listOf("Everyday Life", "Academic", "Medical", "Legal").forEach { category ->
+                            Box(
+                                modifier = Modifier
+                                    .border(
+                                        width = 2.dp,
+                                        color = Color(0xFFF0F4FF),
+                                        shape = RoundedCornerShape(20.dp)
+                                    )
+                                    .background(surfaceContainerLowestColor, shape = RoundedCornerShape(20.dp))
+                                    .clickable { /* Filter category */ }
+                                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = category,
+                                    color = onSurfaceColor,
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 12.sp
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            // My Sets Tab Placeholder
+            item {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 48.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.FolderOpen,
+                            contentDescription = "Empty Folder",
+                            tint = onSurfaceVariantColor,
+                            modifier = Modifier.size(48.dp)
+                        )
+                        Text(
+                            text = "Your sets will appear here",
+                            color = onSurfaceVariantColor,
+                            fontSize = 15.sp
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun TrendingTopicItem(
+    title: String,
+    subtitle: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    accentColor: Color,
+    iconBgColor: Color,
+    onClick: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .shadow(4.dp, RoundedCornerShape(12.dp))
+            .background(Color.White, shape = RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(12.dp))
+            .clickable { onClick() }
+    ) {
+        // Top border simulation (4dp thick color bar at the top)
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(4.dp)
+                .background(accentColor)
+        )
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 16.dp, bottom = 12.dp, start = 16.dp, end = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // Left Icon Container
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .background(iconBgColor, shape = RoundedCornerShape(8.dp))
+                    .clip(RoundedCornerShape(8.dp)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = title,
+                    tint = accentColor,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+
+            // Info column
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(
+                    text = title,
+                    color = Color(0xFF1B1B23),
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp
+                )
+                Text(
+                    text = subtitle,
+                    color = Color(0xFF464554),
+                    fontSize = 14.sp
+                )
+            }
+
+            // Right Chevron
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = "Go",
+                tint = Color(0xFFC7C4D7)
+            )
+        }
+    }
+}
