@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Network Security Config — CHỈ dùng cho môi trường DEV/DEBUG
+    Cho phép HTTP (cleartext) kết nối đến máy ảo Android (10.0.2.2)
+    và localhost để test với backend local.
+
+    KHÔNG dùng file này trên môi trường production!
+-->
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <!-- Máy ảo Android Emulator trỏ đến localhost máy tính -->
+        <domain includeSubdomains="false">10.0.2.2</domain>
+        <!-- Máy thật kết nối qua WiFi cùng mạng — đổi IP theo máy bạn -->
+        <domain includeSubdomains="false">192.168.1.100</domain>
+        <!-- localhost -->
+        <domain includeSubdomains="false">localhost</domain>
+    </domain-config>
+</network-security-config>
