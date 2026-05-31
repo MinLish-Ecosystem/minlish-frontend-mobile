@@ -1,6 +1,8 @@
-package com.minlish.app.data.remote
+package com.minlish.app.data.remote.interceptor
 
 import com.google.gson.Gson
+import com.minlish.app.data.dto.ApiResponse
+import com.minlish.app.data.remote.AppNetworkException
 import okhttp3.Interceptor
 import okhttp3.Response
 

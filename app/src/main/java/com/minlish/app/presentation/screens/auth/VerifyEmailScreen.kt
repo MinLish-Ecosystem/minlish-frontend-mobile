@@ -28,6 +28,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import kotlinx.coroutines.delay
 import com.minlish.app.presentation.components.TopBar
+import com.minlish.app.presentation.screens.auth.components.ProgressHeader
 import com.minlish.app.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
