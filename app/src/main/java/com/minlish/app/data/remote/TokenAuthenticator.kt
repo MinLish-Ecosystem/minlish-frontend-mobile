@@ -1,6 +1,11 @@
 package com.minlish.app.data.remote
 
+import android.util.Log
+import com.minlish.app.data.dto.response.ApiResponse
+import com.minlish.app.data.dto.response.RefreshTokenData
+import com.minlish.app.data.dto.request.RefreshTokenRequest
 import com.minlish.app.data.local.TokenManager
+import com.minlish.app.util.SessionExpiredEvent
 import kotlinx.coroutines.runBlocking
 import okhttp3.Authenticator
 import okhttp3.Request
@@ -13,10 +18,9 @@ import retrofit2.http.Body
 
 interface RefreshTokenApi {
     @POST("auth/refresh-token")
-    suspend fun refreshToken(@Body request: RefreshTokenRequest): ApiResponse<LoginData>
+    suspend fun refreshToken(@Body request: RefreshTokenRequest): ApiResponse<RefreshTokenData>
 }
 
-data class RefreshTokenRequest(val refreshToken: String)
 
 class TokenAuthenticator : Authenticator {
     private val BASE_URL = "http://10.0.2.2:3000/api/v1/"
@@ -30,14 +34,16 @@ class TokenAuthenticator : Authenticator {
     }
 
     override fun authenticate(route: Route?, response: Response): Request? {
+        Log.d("TokenAuthenticator", "401 detected — trying refresh...")
+
         val currentToken = TokenManager.getAccessToken()
-        val requestHeader = response.request.header("Authorization")
-        if (requestHeader != null && requestHeader == "Bearer $currentToken") {
-            TokenManager.clear()
+        val refreshToken = TokenManager.getRefreshToken()
+
+        if (refreshToken.isNullOrEmpty()) {
+            Log.d("TokenAuthenticator", "Token invalid — logging out")
+            handleLogOut()
             return null
         }
-
-        val refreshToken = TokenManager.getRefreshToken() ?: return null
 
         synchronized(this) {
             val latestToken = TokenManager.getAccessToken()
@@ -55,21 +61,29 @@ class TokenAuthenticator : Authenticator {
                     null
                 }
             }
-
+            Log.d("TokenAuthenticator", newTokens.toString())
             if (newTokens != null) {
+                Log.d("TokenAuthenticator", "Token refreshed successfully ✅")
+                val userId = TokenManager.getUserId()
                 TokenManager.saveTokens(
                     accessToken = newTokens.accessToken,
                     refreshToken = newTokens.refreshToken,
-                    userId = newTokens.user.id
+                    userId = userId.toString()
                 )
 
                 return response.request.newBuilder()
                     .header("Authorization", "Bearer ${newTokens.accessToken}")
                     .build()
             } else {
-                TokenManager.clear()
+                Log.d("TokenAuthenticator", "Refresh failed — logging out ❌")
+                handleLogOut()
                 return null
             }
         }
+    }
+
+    private fun handleLogOut() {
+        TokenManager.clear()
+        SessionExpiredEvent.emit()
     }
 }

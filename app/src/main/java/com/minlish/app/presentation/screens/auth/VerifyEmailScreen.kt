@@ -1,52 +1,59 @@
 package com.minlish.app.presentation.screens.auth
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
+import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.delay
 import com.minlish.app.presentation.components.TopBar
+import com.minlish.app.presentation.screens.auth.components.OtpInputField
+import com.minlish.app.presentation.screens.auth.viewmodels.AuthViewModel
 import com.minlish.app.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VerifyEmailScreen(
-    email:String = "vamsi.vamsi@fsmk.com",
     onBackClick: () -> Unit = {},
-    onVerifyClick: (otp: String) -> Unit = {},
+    onVerifyEmailSuccess: () -> Unit = {},
     onChangeEmail: () -> Unit = {},
-    onResendCode: () -> Unit = {}
+    viewModel: AuthViewModel = viewModel()
 ) {
+    val email = viewModel.email
+    val name = viewModel.name
+    val password =  viewModel.password
+
     var otpValue by remember { mutableStateOf("") }
     var secondsLeft by remember { mutableIntStateOf(599) }
+
     LaunchedEffect(Unit) {
         while (secondsLeft > 0) {
             delay(1000)
             secondsLeft--
         }
     }
+
+    LaunchedEffect(viewModel.verifyEmailSuccess) {
+        if (viewModel.verifyEmailSuccess) {
+            onVerifyEmailSuccess()
+        }
+    }
+
     val minutes = secondsLeft / 60
     val seconds = secondsLeft % 60
     val timerText = "%d:%02d".format(minutes, seconds)
@@ -76,8 +83,12 @@ fun VerifyEmailScreen(
                 secondsLeft = secondsLeft,
                 onChangeEmail = onChangeEmail,
                 onOtpChange = { if (it.length <= 6) otpValue = it },
-                onResendCode = onResendCode,
-                onVerifyClick = {onVerifyClick(otpValue)}
+                onResendCode = {
+                    viewModel.resendVerifyEmailOtp()
+                },
+                onVerifyClick = {
+                    viewModel.verifyEmail(email, otpValue)
+                }
             )
         }
     }
@@ -150,72 +161,6 @@ private fun VerifyEmailHeader(
                         fontSize = 16.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = MinlishPrimary
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun OptInputField(
-    otpValue: String,
-    onOtpChange: (String) -> Unit
-) {
-    val focusRequester = remember { FocusRequester() }
-    LaunchedEffect(Unit) {
-        focusRequester.requestFocus()
-    }
-
-    Box(contentAlignment = Alignment.Center) {
-        BasicTextField(
-            value = otpValue,
-            onValueChange = onOtpChange,
-            modifier = Modifier
-                .size(1.dp)
-                .focusRequester(focusRequester),
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.NumberPassword
-            ),
-            cursorBrush = SolidColor(Color.Transparent)
-        )
-    }
-
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        repeat(6) {index ->
-            val char = otpValue.getOrNull(index)
-            val isFocused = index == otpValue.length
-
-            Box(
-                modifier = Modifier
-                    .size(width = 44.dp, height = 52.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(Color.White)
-                    .border(
-                        width = if (isFocused) 2.dp else 1.dp,
-                        color = when {
-                            isFocused -> MinlishPrimary
-                            char != null -> MinlishPrimary.copy(alpha = 0.5f)
-                            else -> MinlishOutlineVariant
-                        },
-                        shape = RoundedCornerShape(8.dp)
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                if (char != null) {
-                    Text(
-                        text = char.toString(),
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MinlishOnSurface
-                    )
-                }
-                if (isFocused && char == null) {
-                    Box(
-                        modifier = Modifier
-                            .width(2.dp)
-                            .height(24.dp)
-                            .background(MinlishPrimary)
                     )
                 }
             }
@@ -298,7 +243,7 @@ private fun VerifyEmailCard(
                 email = email,
                 onChangeEmail = onChangeEmail
             )
-            OptInputField(
+            OtpInputField(
                 otpValue = otpValue,
                 onOtpChange = onOtpChange
             )

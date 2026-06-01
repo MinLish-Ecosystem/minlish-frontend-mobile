@@ -40,6 +40,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.minlish.app.R
 import com.minlish.app.presentation.screens.auth.components.ProgressHeader
 import com.minlish.app.presentation.screens.auth.components.SecurityCheckList
+import com.minlish.app.presentation.screens.auth.viewmodels.AuthViewModel
 import com.minlish.app.ui.theme.MinlishGradient
 import com.minlish.app.ui.theme.MinlishOutline
 import com.minlish.app.ui.theme.MinlishPrimary
@@ -50,7 +51,7 @@ fun RegisterScreen(
     currentStep: Int = 1,
     totalSteps: Int = 2,
     viewModel: AuthViewModel = viewModel(),
-    onRegisterSuccess: () -> Unit,
+    onRegisterSuccess: (String) -> Unit,
     onSignInClick: () -> Unit
 ) {
     var fullName by remember {  mutableStateOf("") }
@@ -64,7 +65,7 @@ fun RegisterScreen(
 
     LaunchedEffect(viewModel.registerSuccess) {
         if (viewModel.registerSuccess) {
-            onRegisterSuccess()
+            onRegisterSuccess(email)
         }
     }
 
@@ -82,7 +83,7 @@ fun RegisterScreen(
         )
         Spacer(modifier = Modifier.height(20.dp))
         BrandingSection()
-        Spacer(modifier = Modifier.height(40.dp))
+        Spacer(modifier = Modifier.height(20.dp))
         FullNameField(fullName = fullName, onFullNameChange = {fullName = it})
         Spacer(modifier = Modifier.height(16.dp))
         EmailField(email = email, onEmailChange = {email = it})
@@ -98,7 +99,7 @@ fun RegisterScreen(
             hasUppercase = hasUppercase,
             hasNumberOrSymbol = hasNumberOrSymbol
         )
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(16.dp))
         SignUpButton(
             onSignUpClick = {
                 viewModel.register(fullName, password, email)
@@ -107,11 +108,11 @@ fun RegisterScreen(
             hasUppercase = hasUppercase,
             hasNumberOrSymbol = hasNumberOrSymbol,
         )
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(12.dp))
         DividerWithText()
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(12.dp))
         GoogleButton(onGoogleSignInClick = {})
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(12.dp))
         SignInButton(onSignInClick = {
             onSignInClick()
         })

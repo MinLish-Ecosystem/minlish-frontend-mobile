@@ -56,7 +56,8 @@ fun ProfileScreen(
     userLevel: String = "Intermediate Learner",
     joinYear: String = "2023",
     onNotificationClick: () -> Unit = {},
-    onUserClick: () -> Unit = {}
+    onUserClick: () -> Unit = {},
+    onLogOutClick: () -> Unit
 ) {
     var displayName by remember { mutableStateOf("Alex Johnson") }
     var email by remember { mutableStateOf("alex@example.com") }
@@ -132,7 +133,7 @@ fun ProfileScreen(
                         darkMode = darkMode,
                         onPushNotificationsChange = { pushNotifications = it },
                         onReminderTimeChange = { reminderTime = it },
-                        onLogOutClick = { }
+                        onLogOutClick = onLogOutClick
                     )
 
                     Spacer(modifier = Modifier.height(8.dp))
@@ -805,5 +806,5 @@ private fun SaveButton(onSaveClick: () -> Unit) {
 @Preview(showBackground = true)
 @Composable
 fun ProfileScreenPreview() {
-    ProfileScreen()
+    ProfileScreen(onLogOutClick = {})
 }

@@ -1,4 +1,4 @@
-package com.minlish.app.data.remote
+package com.minlish.app.data.dto.response
 
 data class ApiResponse<T>(
     val success: Boolean,
