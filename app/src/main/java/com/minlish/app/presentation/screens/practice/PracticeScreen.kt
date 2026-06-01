@@ -29,12 +29,14 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -54,15 +56,6 @@ import com.minlish.app.presentation.components.AppHeader
 import com.minlish.app.presentation.components.Footer
 
 
-data class PracticeMode(
-    val id: String,
-    val title: String,
-    val description: String,
-    var isComingSoon: Boolean,
-    val iconName: ImageVector,
-    val gradientColor: Brush,
-    val buttonText: String,
-)
 @Composable
 fun PracticeArenaCard(practiceMode: PracticeMode, onClick: () -> Unit){
     val cardAlpha = if (!practiceMode.isComingSoon) 1f else 0.6f
@@ -197,44 +190,13 @@ fun PracticeArenaCard(practiceMode: PracticeMode, onClick: () -> Unit){
     }
 }
 @Composable
-fun PracticeArenaScreen(currentRoute: String,onNavigate: (String) -> Unit){
-    val practiceModes= listOf(
-        PracticeMode(
-            id="smart_review",
-            title = "Smart Review (SRS)",
-            description = "Optimize your memory with spaced repetition.",
-            isComingSoon=false,
-            iconName= Icons.Default.Psychology,
-            gradientColor = Brush.horizontalGradient(colors = listOf(Color(0xFF667EEA), Color(0xFF764BA2))),
-            buttonText = "Start Review"
-        ),
-        PracticeMode(
-            id="vocabulary_quiz",
-            title = "Vocabulary Quiz",
-            description = "Test your knowledge on recent words.",
-            isComingSoon=true,
-            iconName= Icons.Default.Quiz,
-            gradientColor = Brush.horizontalGradient(colors = listOf(Color(0xFF667EEA), Color(0xFF764BA2))),
-            buttonText = "Start Quiz"
-        ),
-        PracticeMode(
-            id="listening_challenge",
-            title = "Listening Challenge",
-            description = "Improve comprehension with native audio.",
-            isComingSoon=true,
-            iconName= Icons.Default.Headphones,
-            gradientColor = Brush.horizontalGradient(colors = listOf(Color(0xFF667EEA), Color(0xFF764BA2))),
-            buttonText = "Start Challenge"
-        ),PracticeMode(
-            id="writing_practice",
-            title = "Writing Practice",
-            description = "Construct sentences and get feedback.",
-            isComingSoon=true,
-            iconName= Icons.Default.Edit,
-            gradientColor = Brush.horizontalGradient(colors = listOf(Color(0xFF667EEA), Color(0xFF764BA2))),
-            buttonText = "Start Writing"
-        )
-    )
+fun PracticeArenaScreen(currentRoute: String,viewModel: PracticeViewModel,onNavigate: (String) -> Unit){
+    val loading by viewModel.isLoading
+    val practiceModes by viewModel.practiceModes
+    val error by viewModel.errorMessage
+    LaunchedEffect(Unit) {
+        viewModel.loadPracticeModes("user_001")
+    }
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
@@ -251,6 +213,26 @@ fun PracticeArenaScreen(currentRoute: String,onNavigate: (String) -> Unit){
             )
         }
     ) { paddingValues ->
+        if (loading) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+            return@Scaffold
+        }
+
+        if (error != null) {
+            Column(
+                modifier = Modifier.fillMaxSize().padding(paddingValues),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text("Lỗi: $error", color = MaterialTheme.colorScheme.error)
+                Button(onClick = { viewModel.loadPracticeModes("user_001") }) {
+                    Text("Thử lại")
+                }
+            }
+            return@Scaffold
+        }
         Column(
             modifier = Modifier
                 .fillMaxSize()
