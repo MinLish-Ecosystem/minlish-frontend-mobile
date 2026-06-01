@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.launch
+import com.minlish.app.R
 
 object AppColors {
     val Surface = Color(0xFFFCF8FF)
@@ -79,7 +80,7 @@ fun AppHeader(
                     modifier = Modifier.size(40.dp).clip(CircleShape).clickable { onUserClick() }
                 ) {
                     AsyncImage(
-                        model = userAvatarUrl,
+                        model = if (userAvatarUrl.isNullOrEmpty()) R.drawable.profile_img else userAvatarUrl,
                         contentDescription = "User Avatar",
                         modifier = Modifier
                             .size(40.dp)

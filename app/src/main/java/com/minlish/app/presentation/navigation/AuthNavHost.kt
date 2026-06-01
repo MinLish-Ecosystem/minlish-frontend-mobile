@@ -35,6 +35,8 @@ fun AuthNavHost(
     val currentBackStack by navController.currentBackStackEntryAsState()
     val currentRoute = currentBackStack?.destination?.route ?: NavDestinations.Learning.route
     val context = LocalContext.current
+    val profileViewModel: ProfileViewModel = viewModel()
+    val profileState by profileViewModel.uiState.collectAsState()
 
     // ── Lắng nghe Badge Count sạch sẽ từ Singleton Manager ──
     val unreadBadgeCount by NotificationBadgeManager.badgeCount.collectAsState()
@@ -44,6 +46,7 @@ fun AuthNavHost(
     LaunchedEffect(isLoggedIn) {
         if (isLoggedIn) {
             NotificationBadgeManager.startPolling()
+            profileViewModel.loadProfileData()
         } else {
             NotificationBadgeManager.stopPolling()
         }
@@ -140,7 +143,6 @@ fun AuthNavHost(
 
         // 1. Tab Learning
         composable(NavDestinations.Learning.route) {
-            // Tự động đăng ký thiết bị với server qua Helper cực gọn
             LaunchedEffect(Unit) {
                 FCMHelper.registerFCMToken(context)
             }
@@ -148,9 +150,14 @@ fun AuthNavHost(
             LearningDashBoardScreen(
                 currentRoute = currentRoute,
                 onNavigate = ::onFooterNavigate,
+                userName = profileState.displayName.ifEmpty { "User" },
+                userAvatarUrl = profileState.avatar ?: "",
                 unreadCount = unreadBadgeCount,
                 onNotificationClick = {
                     navController.navigate(NavDestinations.Notifications.route)
+                },
+                onUserClick = {
+                    navController.navigate(NavDestinations.Profile.route)
                 }
             )
         }
@@ -160,10 +167,15 @@ fun AuthNavHost(
             AnalyticsScreen(
                 currentRoute = currentRoute,
                 onNavigate = ::onFooterNavigate,
+                userName = profileState.displayName.ifEmpty { "User" },
+                userAvatarUrl = profileState.avatar ?: "",
                 viewModel = viewModel<AnalyticsViewModel>(),
                 unreadCount = unreadBadgeCount,
                 onNotificationClick = {
                     navController.navigate(NavDestinations.Notifications.route)
+                },
+                onUserClick = {
+                    navController.navigate(NavDestinations.Profile.route)
                 }
             )
         }
@@ -173,16 +185,20 @@ fun AuthNavHost(
             PracticeArenaScreen(
                 currentRoute = currentRoute,
                 onNavigate = ::onFooterNavigate,
+                userName = profileState.displayName.ifEmpty { "User" },
+                userAvatarUrl = profileState.avatar ?: "",
                 unreadCount = unreadBadgeCount,
                 onNotificationClick = {
                     navController.navigate(NavDestinations.Notifications.route)
+                },
+                onUserClick = {
+                    navController.navigate(NavDestinations.Profile.route)
                 }
             )
         }
 
         // 4. Tab Profile
         composable(NavDestinations.Profile.route) {
-            val profileViewModel = viewModel<ProfileViewModel>()
             ProfileScreen(
                 currentRoute = currentRoute,
                 onNavigate = ::onFooterNavigate,
@@ -191,8 +207,8 @@ fun AuthNavHost(
                 onNotificationClick = {
                     navController.navigate(NavDestinations.Notifications.route)
                 },
+                onUserClick = { /* Already on Profile */ },
                 onLogOutClick = {
-                    // Huỷ token trên server trước, sau đó xoá TokenManager local để logout
                     FCMHelper.deleteFCMToken(context) {
                         TokenManager.clear()
                         navController.navigate(NavDestinations.Welcome.route) {

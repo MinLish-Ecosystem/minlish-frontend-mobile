@@ -13,6 +13,9 @@ import kotlinx.coroutines.launch
 data class ProfileUiState(
     val displayName: String = "",
     val email: String = "",
+    val avatar: String? = null,
+    val joinYear: String = "2026",
+    val userLevel: String = "Beginner",
     val selectedGoal: String = "General",
     val dailyWordTarget: Int = 10,
     val dailyReviewTarget: Int = 20,
@@ -48,10 +51,18 @@ class ProfileViewModel: ViewModel() {
                 if (profileRes.isSuccess && learningRes.isSuccess) {
                     val user = profileRes.getOrThrow()
                     val learning = learningRes.getOrThrow()
+                    
+                    val year = user.createdAt?.substring(0, 4) ?: "2026"
+                    val rawLevel = learning.currentLevel ?: "beginner"
+                    val formattedLevel = rawLevel.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() } + " Learner"
+                    
                     _uiState.update {
                         it.copy(
                             displayName = user.name,
                             email = user.email,
+                            avatar = user.avatar,
+                            joinYear = year,
+                            userLevel = formattedLevel,
                             selectedGoal = learning.learningGoal
                                 .replaceFirstChar { c -> c.uppercase() },
                             dailyWordTarget = learning.dailyGoal,
@@ -91,6 +102,35 @@ class ProfileViewModel: ViewModel() {
     fun updateEmailNotifications(value: Boolean) { _uiState.update { it.copy(emailNotifications = value) } }
     fun updateReminderTime(value: String) { _uiState.update { it.copy(reminderTime = value) } }
     fun updateDarkMode(value: Boolean) { _uiState.update { it.copy(darkModeEnabled = value) } }
+    fun uploadAvatar(base64Image: String) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isSaving = true, saveSuccess = false, errorMessage = null) }
+            try {
+                val result = userRepo.updateProfile(_uiState.value.displayName, base64Image)
+                if (result.isSuccess) {
+                    val user = result.getOrThrow()
+                    _uiState.update {
+                        it.copy(
+                            avatar = user.avatar,
+                            isSaving = false,
+                            saveSuccess = true
+                        )
+                    }
+                } else {
+                    _uiState.update {
+                        it.copy(
+                            isSaving = false,
+                            errorMessage = result.exceptionOrNull()?.message ?: "Upload avatar failed"
+                        )
+                    }
+                }
+            } catch (e: Exception) {
+                _uiState.update {
+                    it.copy(isSaving = false, errorMessage = e.message)
+                }
+            }
+        }
+    }
     fun saveChanges() {
         val s = _uiState.value
         viewModelScope.launch {

@@ -7,7 +7,8 @@ data class UserDto(
     val email: String,
     val role: String,
     val avatar: String? = null,
-    val isVerified: Boolean
+    val isVerified: Boolean,
+    val createdAt: String? = null
 )
 
 data class UpdateProfileRequest(

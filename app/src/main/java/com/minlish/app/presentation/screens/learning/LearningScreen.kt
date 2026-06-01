@@ -240,8 +240,11 @@ fun CreateNewSetCard(onCreateNewSetCard: () -> Unit,modifier: Modifier){
 fun LearningDashBoardScreen(
     currentRoute: String,
     onNavigate: (String) -> Unit,
+    userName: String = "User",
+    userAvatarUrl: String = "",
     unreadCount: Int = 0,
-    onNotificationClick: () -> Unit = {}
+    onNotificationClick: () -> Unit = {},
+    onUserClick: () -> Unit = {}
 ) {
     val recentSets = listOf(
         VocabSet("1", "Business English", 42, Icons.Default.Work, 0xFF3B82F6, true),
@@ -253,10 +256,11 @@ fun LearningDashBoardScreen(
         modifier = Modifier.fillMaxSize(),
         topBar = {
             AppHeader(
-                userName = "QuangLe",
-                userAvatarUrl = "https://api.dicebear.com/7.x/avataaars/png?seed=QuangLe",
+                userName = userName,
+                userAvatarUrl = userAvatarUrl,
                 unreadCount = unreadCount,
-                onNotificationClick = onNotificationClick
+                onNotificationClick = onNotificationClick,
+                onUserClick = onUserClick
             )
         },
         bottomBar = {

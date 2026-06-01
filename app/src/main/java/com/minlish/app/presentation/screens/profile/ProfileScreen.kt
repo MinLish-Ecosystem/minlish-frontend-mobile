@@ -52,6 +52,9 @@ import android.widget.Toast
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import coil.compose.AsyncImage
 
 @Composable
 fun ProfileScreen(
@@ -65,6 +68,25 @@ fun ProfileScreen(
 ) {
     val state by viewModel.uiState.collectAsState()
     val context = LocalContext.current
+    
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: android.net.Uri? ->
+        uri?.let {
+            try {
+                val inputStream = context.contentResolver.openInputStream(it)
+                val bytes = inputStream?.readBytes()
+                inputStream?.close()
+                if (bytes != null) {
+                    val base64String = "data:image/jpeg;base64," + android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP)
+                    viewModel.uploadAvatar(base64String)
+                }
+            } catch (e: Exception) {
+                Toast.makeText(context, "Lỗi đọc ảnh: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
     LaunchedEffect(state.saveSuccess) {
         if (state.saveSuccess) {
             Toast.makeText(context, "Cập nhật thành công!", Toast.LENGTH_SHORT).show()
@@ -82,7 +104,7 @@ fun ProfileScreen(
         topBar = {
             AppHeader(
                 userName = state.displayName.ifEmpty { "User" },
-                userAvatarId = R.drawable.profile_img,
+                userAvatarUrl = state.avatar ?: "",
                 unreadCount = unreadCount,
                 onNotificationClick = onNotificationClick,
                 onUserClick = onUserClick,
@@ -117,8 +139,10 @@ fun ProfileScreen(
                 ) {
                     ProfileBannerSection(
                         userName = state.displayName.ifEmpty { "User" },
-                        userLevel = "Intermediate Learner",
-                        joinYear = "2024"
+                        userLevel = state.userLevel,
+                        joinYear = state.joinYear,
+                        userAvatarUrl = state.avatar,
+                        onAvatarClick = { imagePickerLauncher.launch("image/*") }
                     )
 
                     Column(
@@ -169,7 +193,9 @@ fun ProfileScreen(
 private fun ProfileBannerSection(
     userName: String,
     userLevel: String,
-    joinYear: String
+    joinYear: String,
+    userAvatarUrl: String?,
+    onAvatarClick: () -> Unit
 ) {
     Box(
         modifier = Modifier
@@ -219,7 +245,8 @@ private fun ProfileBannerSection(
                         width = 4.dp,
                         color = MinlishSurfaceLowest,
                         shape = CircleShape
-                    ),
+                    )
+                    .clickable { onAvatarClick() },
                 contentAlignment = Alignment.Center
             ) {
                 Box(
@@ -228,9 +255,9 @@ private fun ProfileBannerSection(
                         .background(MinlishSurfaceContainerHigh),
                     contentAlignment = Alignment.Center
                 ) {
-                    Image(
-                        painter = painterResource(R.drawable.profile_img),
-                        contentDescription = null,
+                    AsyncImage(
+                        model = if (userAvatarUrl.isNullOrEmpty()) R.drawable.profile_img else userAvatarUrl,
+                        contentDescription = "User Avatar",
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop
                     )
@@ -290,7 +317,8 @@ private fun PersonalInfoCard(
                 value = email,
                 onValueChange = onEmailChange,
                 leadingIcon = Icons.Outlined.Email,
-                keyboardType = KeyboardType.Email
+                keyboardType = KeyboardType.Email,
+                readOnly = true
             )
         }
     }
@@ -327,7 +355,8 @@ private fun ProfileTextField(
     value: String,
     onValueChange: (String) -> Unit,
     leadingIcon: ImageVector,
-    keyboardType: KeyboardType = KeyboardType.Text
+    keyboardType: KeyboardType = KeyboardType.Text,
+    readOnly: Boolean = false
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(
@@ -337,11 +366,12 @@ private fun ProfileTextField(
             color = MinlishOnSurfaceVariant,
             letterSpacing = 0.1.sp
         )
-
+ 
         OutlinedTextField(
             value = value,
             onValueChange = onValueChange,
             modifier = Modifier.fillMaxWidth(),
+            readOnly = readOnly,
             leadingIcon = {
                 Icon(
                     imageVector = leadingIcon,
@@ -443,7 +473,7 @@ private fun GoalDropdown(
 
         ExposedDropdownMenuBox(
             expanded = expanded,
-            onExpandedChange = {expanded != expanded}
+            onExpandedChange = { expanded = it }
         ) {
             OutlinedTextField(
                 value = selectedGoal,

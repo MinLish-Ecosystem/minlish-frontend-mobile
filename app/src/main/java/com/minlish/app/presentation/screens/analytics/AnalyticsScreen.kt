@@ -35,11 +35,14 @@ import com.minlish.app.ui.theme.*
 
 @Composable
 fun AnalyticsScreen(
-    currentRoute: String = "Analytics",
+    currentRoute: String = "analytics",
     onNavigate: (String) -> Unit = {},
+    userName: String = "User",
+    userAvatarUrl: String = "",
     viewModel: AnalyticsViewModel = viewModel(),
     unreadCount: Int = 0,
-    onNotificationClick: () -> Unit = {}
+    onNotificationClick: () -> Unit = {},
+    onUserClick: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -47,10 +50,11 @@ fun AnalyticsScreen(
         modifier       = Modifier.fillMaxSize(),
         topBar         = {
             AppHeader(
-                userName            = "QuangLe",
-                userAvatarUrl       = "https://api.dicebear.com/7.x/avataaars/png?seed=QuangLe",
+                userName            = userName,
+                userAvatarUrl       = userAvatarUrl,
                 unreadCount         = unreadCount,
-                onNotificationClick = onNotificationClick
+                onNotificationClick = onNotificationClick,
+                onUserClick         = onUserClick
             )
         },
         bottomBar      = {
