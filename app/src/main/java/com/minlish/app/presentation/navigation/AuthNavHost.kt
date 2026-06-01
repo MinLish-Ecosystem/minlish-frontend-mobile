@@ -1,5 +1,6 @@
 package com.minlish.app.presentation.navigation
 
+import androidx.compose.animation.EnterTransition
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -14,6 +15,7 @@ import com.minlish.app.presentation.screens.analytics.AnalyticsScreen
 import com.minlish.app.presentation.screens.analytics.AnalyticsViewModel
 import com.minlish.app.presentation.screens.auth.*
 import com.minlish.app.presentation.screens.auth.viewmodels.AuthViewModel
+import com.minlish.app.presentation.screens.auth.viewmodels.ForgetPasswordViewModel
 import com.minlish.app.presentation.screens.learning.LearningDashBoardScreen
 import com.minlish.app.presentation.screens.practice.PracticeArenaScreen
 import com.minlish.app.presentation.screens.profile.ProfileScreen
@@ -24,7 +26,7 @@ import com.minlish.app.presentation.screens.welcome.WelcomeScreen
 fun AuthNavHost(
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController(),
-    startDestination: String = NavDestinations.Welcome.route
+    startDestination: String = NavDestinations.Welcome.route,
 ) {
     val currentBackStack by navController.currentBackStackEntryAsState()
     val currentRoute = currentBackStack?.destination?.route ?: NavDestinations.Learning.route
@@ -37,6 +39,7 @@ fun AuthNavHost(
         }
     }
     val authViewModel: AuthViewModel = viewModel()
+    val forgotPasswordViewModel: ForgetPasswordViewModel = viewModel()
 
     NavHost(
         navController = navController,
@@ -101,9 +104,10 @@ fun AuthNavHost(
 
         composable(NavDestinations.ForgotPassword.route) {
             ForgotPasswordScreen(
+                viewModel = forgotPasswordViewModel,
                 onBackClick = { navController.popBackStack()},
                 onSendResetSuccess = {
-                    navController.navigate(NavDestinations.ForgotPassword.route)
+                    navController.navigate(NavDestinations.ResetPassword.route)
                 },
                 onReturnToLogin = {
                     navController.navigate(NavDestinations.Login.route) {
@@ -115,6 +119,7 @@ fun AuthNavHost(
 
         composable(NavDestinations.ResetPassword.route) {
             ResetPasswordScreen(
+                viewModel = forgotPasswordViewModel,
                 onBackClick = { navController.popBackStack() },
                 onResetPasswordSuccess = {
                     navController.navigate(NavDestinations.Login.route) {

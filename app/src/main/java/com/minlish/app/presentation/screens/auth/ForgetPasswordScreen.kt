@@ -25,7 +25,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.minlish.app.ui.theme.*
 import com.minlish.app.presentation.components.TopBar
 import com.minlish.app.presentation.screens.auth.viewmodels.AuthViewModel
+import com.minlish.app.presentation.screens.auth.viewmodels.ForgetPasswordUiEvent
 import com.minlish.app.presentation.screens.auth.viewmodels.ForgetPasswordViewModel
+import kotlinx.coroutines.flow.collectLatest
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -37,9 +39,16 @@ fun ForgotPasswordScreen(
 ) {
     var email by remember { mutableStateOf("") }
 
-    LaunchedEffect(viewModel.forgotPasswordSuccess) {
-        if (viewModel.forgotPasswordSuccess) {
-            onSendResetSuccess()
+    LaunchedEffect(Unit) {
+        viewModel.uiEvent.collectLatest { event ->
+            when (event) {
+                is ForgetPasswordUiEvent.ForgotPasswordSuccess -> {
+                    onSendResetSuccess()
+                }
+                else -> {
+
+                }
+            }
         }
     }
 
@@ -59,6 +68,7 @@ fun ForgotPasswordScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             ForgotPasswordCard(
+                isLoading = viewModel.isLoading,
                 email = email,
                 onEmailChange = {email = it},
                 onSendResetLink = {email ->
@@ -72,6 +82,7 @@ fun ForgotPasswordScreen(
 
 @Composable
 private fun ForgotPasswordCard(
+    isLoading: Boolean,
     email: String,
     onEmailChange: (String) -> Unit,
     onSendResetLink: (String) -> Unit,
@@ -122,13 +133,23 @@ private fun ForgotPasswordCard(
             }
             TextButton(
                 onClick = onReturnToLogin,
+                enabled = !isLoading
                 ) {
-                Text(
-                    text = "Return to Log In",
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MinlishPrimary,
-                )
+                if (isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = Color.White.copy(alpha = 0.5f),
+                        strokeWidth = 2.5.dp
+                    )
+                }
+                else {
+                    Text(
+                        text = "Return to Log In",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MinlishPrimary,
+                    )
+                }
             }
         }
     }

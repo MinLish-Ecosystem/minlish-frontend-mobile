@@ -8,7 +8,6 @@ import com.minlish.app.data.dto.response.RegisterData
 import com.minlish.app.data.dto.request.RegisterRequest
 import com.minlish.app.data.dto.request.ResetPasswordRequest
 import com.minlish.app.data.dto.request.VerifyEmailRequest
-import com.minlish.app.presentation.navigation.NavDestinations
 import retrofit2.http.Body
 import retrofit2.http.POST
 import retrofit2.http.Headers

@@ -23,8 +23,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.delay
 import com.minlish.app.presentation.components.TopBar
 import com.minlish.app.presentation.screens.auth.components.OtpInputField
+import com.minlish.app.presentation.screens.auth.viewmodels.AuthUiEvent
 import com.minlish.app.presentation.screens.auth.viewmodels.AuthViewModel
 import com.minlish.app.ui.theme.*
+import kotlinx.coroutines.flow.collectLatest
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -35,8 +37,6 @@ fun VerifyEmailScreen(
     viewModel: AuthViewModel = viewModel()
 ) {
     val email = viewModel.email
-    val name = viewModel.name
-    val password =  viewModel.password
 
     var otpValue by remember { mutableStateOf("") }
     var secondsLeft by remember { mutableIntStateOf(599) }
@@ -48,9 +48,14 @@ fun VerifyEmailScreen(
         }
     }
 
-    LaunchedEffect(viewModel.verifyEmailSuccess) {
-        if (viewModel.verifyEmailSuccess) {
-            onVerifyEmailSuccess()
+    LaunchedEffect(Unit) {
+        viewModel.uiEvent.collectLatest { event ->
+            when (event) {
+                is AuthUiEvent.VerifyEmailSuccess -> {
+                    onVerifyEmailSuccess()
+                }
+                else -> {}
+            }
         }
     }
 
@@ -77,6 +82,7 @@ fun VerifyEmailScreen(
             verticalArrangement = Arrangement.spacedBy(32.dp)
         ) {
             VerifyEmailCard(
+                isLoading = viewModel.isLoading,
                 email = email,
                 otpValue = otpValue,
                 timerText = timerText,
@@ -85,6 +91,7 @@ fun VerifyEmailScreen(
                 onOtpChange = { if (it.length <= 6) otpValue = it },
                 onResendCode = {
                     viewModel.resendVerifyEmailOtp()
+                    secondsLeft = 599
                 },
                 onVerifyClick = {
                     viewModel.verifyEmail(email, otpValue)
@@ -219,6 +226,7 @@ private fun VerifyEmailHints(
 
 @Composable
 private fun VerifyEmailCard(
+    isLoading: Boolean,
     email: String,
     otpValue: String,
     timerText: String,
@@ -263,21 +271,31 @@ private fun VerifyEmailCard(
                 Button(
                     onClick = { onVerifyClick(otpValue) },
                     modifier = Modifier.fillMaxSize(),
+                    enabled = !isLoading,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color.Transparent,
                         disabledContainerColor = Color.Transparent
                     ),
                     elevation = null
                 ) {
-                    Text(
-                        text = "Verify",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = if (otpValue.length == 6)
-                            Color.White
-                        else
-                            Color.White.copy(alpha = 0.5f)
-                    )
+                    if (isLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            color = Color.White.copy(alpha = 0.5f),
+                            strokeWidth = 2.5.dp
+                        )
+                    }
+                    else {
+                        Text(
+                            text = "Verify",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = if (otpValue.length == 6)
+                                Color.White
+                            else
+                                Color.White.copy(alpha = 0.5f)
+                        )
+                    }
                 }
             }
         }

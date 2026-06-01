@@ -2,6 +2,6 @@ package com.minlish.app.data.dto.request
 
 data class ResetPasswordRequest(
     val email: String,
-    val password: String,
+    val newPassword: String,
     val otp: String
 )

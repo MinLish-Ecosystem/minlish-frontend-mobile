@@ -78,7 +78,7 @@ class AuthRepository {
             val response = authApi.resetPassword(
                 ResetPasswordRequest(
                     email = email.trim(),
-                    password = password.trim(),
+                    newPassword = password.trim(),
                     otp = otp.trim()
                 )
             )

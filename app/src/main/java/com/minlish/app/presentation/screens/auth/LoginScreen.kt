@@ -37,12 +37,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.res.painterResource
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.minlish.app.R
+import com.minlish.app.presentation.screens.auth.viewmodels.AuthUiEvent
 import com.minlish.app.presentation.screens.auth.viewmodels.AuthViewModel
 import com.minlish.app.ui.theme.MinlishGradient
 import com.minlish.app.ui.theme.MinlishOnSurface
 import com.minlish.app.ui.theme.MinlishOutline
 import com.minlish.app.ui.theme.MinlishPrimary
 import com.minlish.app.ui.theme.MinlishSurface
+import kotlinx.coroutines.flow.collectLatest
 
 @Composable
 fun LoginScreen(
@@ -57,9 +59,17 @@ fun LoginScreen(
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
 
-    LaunchedEffect(viewModel.loginSuccess) {
-        if (viewModel.loginSuccess) {
-            onLoginSuccess()
+    LaunchedEffect(Unit) {
+        viewModel.uiEvent.collectLatest { event ->
+            when (event) {
+                is AuthUiEvent.LoginSuccess -> {
+                    onLoginSuccess()
+                }
+
+                else -> {
+
+                }
+            }
         }
     }
 
@@ -84,7 +94,9 @@ fun LoginScreen(
             }
         )
         Spacer(modifier = Modifier.height(24.dp))
-        SignInButton(onSignInClick = {
+        SignInButton(
+            isLoading = viewModel.isLoading,
+            onSignInClick = {
             viewModel.login(email, password)
         })
         Spacer(modifier = Modifier.height(24.dp))
@@ -252,7 +264,8 @@ private fun PasswordField(
 
 @Composable
 private fun SignInButton(
-    onSignInClick: () -> Unit
+    onSignInClick: () -> Unit,
+    isLoading: Boolean
 ) {
     Box(
         modifier = Modifier
@@ -260,26 +273,38 @@ private fun SignInButton(
             .height(52.dp)
             .clip(RoundedCornerShape(12.dp))
             .background(MinlishGradient)
-            .clickable {onSignInClick()},
+            .clickable(
+                enabled = !isLoading,
+                onClick = {onSignInClick()}
+            ),
         contentAlignment = Alignment.Center
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Text(
-                text = "Sign In",
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Medium,
-                color = Color.White,
-                letterSpacing = 0.1.sp
-            )
-            Icon(
-                imageVector = Icons.AutoMirrored.Outlined.ArrowForward,
-                contentDescription = null,
-                tint = Color.White,
-                modifier = Modifier.size(18.dp)
-            )
+            if (isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(24.dp),
+                    color = Color.White.copy(alpha = 0.5f),
+                    strokeWidth = 2.5.dp
+                )
+            }
+            else {
+                Text(
+                    text = "Sign In",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = Color.White,
+                    letterSpacing = 0.1.sp
+                )
+                Icon(
+                    imageVector = Icons.AutoMirrored.Outlined.ArrowForward,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
         }
     }
 }

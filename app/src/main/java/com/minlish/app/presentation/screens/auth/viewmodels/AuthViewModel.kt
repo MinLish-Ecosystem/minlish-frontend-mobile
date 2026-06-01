@@ -7,21 +7,25 @@ import com.minlish.app.data.repository.AuthRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.receiveAsFlow
 
+sealed interface AuthUiEvent {
+    object RegisterSuccess : AuthUiEvent
+    object LoginSuccess: AuthUiEvent
+    object VerifyEmailSuccess: AuthUiEvent
+    data class ShowError(val message: String?) : AuthUiEvent
+}
 class AuthViewModel: ViewModel() {
     private val repository = AuthRepository()
     var isLoading by mutableStateOf(false)
         private set
+
     var errorMessage by mutableStateOf<String?>(null)
         private set
-    var loginSuccess by mutableStateOf(false)
-        private set
 
-    var registerSuccess by mutableStateOf(false)
-        private set
-
-    var  verifyEmailSuccess by mutableStateOf(false)
-            private set
+    private val _uiEvent = Channel<AuthUiEvent>()
+    val uiEvent = _uiEvent.receiveAsFlow()
 
     var name by mutableStateOf("")
         private set
@@ -35,18 +39,18 @@ class AuthViewModel: ViewModel() {
     fun login(email: String, password: String) {
         viewModelScope.launch {
             isLoading = true
-            errorMessage = null
 
             withContext(Dispatchers.IO) {
                 repository.login(email, password)
                     .onSuccess {
-                        loginSuccess = true
+                        _uiEvent.send(AuthUiEvent.LoginSuccess)
                     }
                     .onFailure { e ->
                         errorMessage = e.message ?: "Login Failed"
+                        _uiEvent.send(AuthUiEvent.ShowError(errorMessage))
                     }
-                isLoading = false
-            }
+                }
+            isLoading = false
         }
     }
 
@@ -58,13 +62,14 @@ class AuthViewModel: ViewModel() {
             withContext(Dispatchers.IO) {
                 repository.verifyEmail(email, otp)
                     .onSuccess {
-                        verifyEmailSuccess = true
+                        _uiEvent.send(AuthUiEvent.VerifyEmailSuccess)
                     }
                     .onFailure { e ->
                         errorMessage = e.message ?: "Verify Failed"
+                        _uiEvent.send(AuthUiEvent.ShowError(errorMessage))
                     }
-                isLoading = false
-            }
+                }
+            isLoading = false
         }
     }
 
@@ -80,13 +85,13 @@ class AuthViewModel: ViewModel() {
             withContext(Dispatchers.IO) {
                 repository.register(fullName, email, password)
                     .onSuccess {
-                        registerSuccess = true
+                        _uiEvent.send(AuthUiEvent.RegisterSuccess)
                     }
                     .onFailure { e ->
                         errorMessage = e.message ?: "Register Failed"
                     }
-                isLoading = false
-            }
+                }
+            isLoading = false
         }
     }
 
@@ -94,10 +99,9 @@ class AuthViewModel: ViewModel() {
         viewModelScope.launch {
             isLoading = true
             errorMessage = null
-            registerSuccess = false
 
             withContext(Dispatchers.IO) {
-                repository.register(name, password, email)
+                repository.register(name, email, password)
                     .onSuccess {
                         errorMessage = null
                     }

@@ -7,29 +7,34 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.minlish.app.data.repository.AuthRepository
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+
+sealed interface ForgetPasswordUiEvent {
+    object ForgotPasswordSuccess : AuthUiEvent
+    object ResetPasswordSuccess: AuthUiEvent
+    data class ShowError(val message: String?) : AuthUiEvent
+}
 class ForgetPasswordViewModel: ViewModel() {
     private val repository = AuthRepository()
     var isLoading by mutableStateOf(false)
         private set
     var errorMessage by mutableStateOf<String?>(null)
 
-    var  forgotPasswordSuccess by mutableStateOf(false)
-        private set
-
-    var  resetPasswordSuccess by mutableStateOf(false)
-        private set
-
     var email by mutableStateOf("")
         private set
+
+
+    private val _uiEvent = Channel<AuthUiEvent>()
+    val uiEvent = _uiEvent.receiveAsFlow()
 
     fun resendForgotPasswordEmail() {
         viewModelScope.launch {
             isLoading = true
             errorMessage = null
-            forgotPasswordSuccess = false
 
             withContext(Dispatchers.IO) {
                 repository.forgotPassword(email)
@@ -37,8 +42,8 @@ class ForgetPasswordViewModel: ViewModel() {
                         errorMessage = null
                     }
                     .onFailure { e -> errorMessage = e.message }
-                isLoading = false
             }
+            isLoading = false
         }
     }
 
@@ -51,10 +56,11 @@ class ForgetPasswordViewModel: ViewModel() {
             withContext(Dispatchers.IO) {
                 repository.forgotPassword(email)
                     .onSuccess {
-                        forgotPasswordSuccess = true
+                        _uiEvent.send(ForgetPasswordUiEvent.ForgotPasswordSuccess)
                     }
                     .onFailure { e ->
                         errorMessage = e.message ?: "Forgot Password Failed"
+                        _uiEvent.send(ForgetPasswordUiEvent.ShowError(errorMessage))
                     }
                 isLoading = false
             }
@@ -69,10 +75,11 @@ class ForgetPasswordViewModel: ViewModel() {
             withContext(Dispatchers.IO) {
                 repository.resetPassword(email, password, otp)
                     .onSuccess {
-                        resetPasswordSuccess = true
+                        _uiEvent.send(ForgetPasswordUiEvent.ResetPasswordSuccess)
                     }
                     .onFailure { e ->
                         errorMessage = e.message ?: "Reset Password Failed"
+                        _uiEvent.send(ForgetPasswordUiEvent.ShowError(errorMessage))
                     }
                 isLoading = false
             }
