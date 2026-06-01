@@ -21,11 +21,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.minlish.app.presentation.screens.auth.components.ProgressHeader
 import com.minlish.app.ui.theme.*
+import java.nio.file.WatchEvent
 
 data class LearningGoalOption(
     val id: String,
@@ -97,6 +99,11 @@ fun LearningGoalScreen(
         LearningGoalGrid(
             selectedId = selectedId,
             onSelect = { selectedId = it }
+        )
+        Spacer(modifier = Modifier.height(32.dp))
+        ContinueButton(
+            isSelected = selectedId != null,
+            onContinueClick = onContinueClick
         )
     }
 }
@@ -275,6 +282,46 @@ private fun GoalOptionCardWide(
                     text = option.description,
                     fontSize = 14.sp,
                     color = MinlishOnSurfaceVariant
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ContinueButton(
+    isSelected: Boolean,
+    onContinueClick: () -> Unit
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shadowElevation =  4.dp,
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .size(48.dp)
+                .clip(RoundedCornerShape(12.dp)),
+            contentAlignment = Alignment.Center
+        ) {
+            Button(
+                onClick = onContinueClick,
+                enabled = isSelected,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(
+                        containerColor = MinlishPrimary,
+                        disabledContainerColor = MinlishOutline
+                )
+            ) {
+                Text(
+                    text = "Continue",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color.White
                 )
             }
         }

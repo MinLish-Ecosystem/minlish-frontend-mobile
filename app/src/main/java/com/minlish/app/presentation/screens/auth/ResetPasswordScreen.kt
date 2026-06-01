@@ -27,9 +27,11 @@ import com.minlish.app.presentation.screens.auth.components.SecurityCheckList
 import com.minlish.app.presentation.components.TopBar
 import com.minlish.app.presentation.screens.auth.components.OtpInputField
 import com.minlish.app.presentation.screens.auth.viewmodels.AuthViewModel
+import com.minlish.app.presentation.screens.auth.viewmodels.ForgetPasswordUiEvent
 import com.minlish.app.presentation.screens.auth.viewmodels.ForgetPasswordViewModel
 import com.minlish.app.ui.theme.*
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -50,11 +52,16 @@ fun ResetPasswordScreen(
     val passwordsMatch = newPassword == confirmPassword && confirmPassword.isNotEmpty()
     val otpComplete = otpValue.length == 6
 
-    var secondsLeft by remember { mutableIntStateOf(599) }
+    var secondsLeft by remember { mutableIntStateOf(10) }
 
-    LaunchedEffect(viewModel.forgotPasswordSuccess) {
-        if (viewModel.forgotPasswordSuccess) {
-            onResetPasswordSuccess()
+    LaunchedEffect(Unit) {
+        viewModel.uiEvent.collectLatest { event ->
+            when (event) {
+                is ForgetPasswordUiEvent.ResetPasswordSuccess -> {
+                    onResetPasswordSuccess()
+                }
+                else -> {}
+            }
         }
     }
 
@@ -87,7 +94,6 @@ fun ResetPasswordScreen(
         ) {
             Spacer(modifier = Modifier.height(16.dp))
             OtpSection(
-                viewModel = viewModel,
                 otpValue = otpValue,
                 timerText = timerText,
                 secondsLeft = secondsLeft,
@@ -100,6 +106,7 @@ fun ResetPasswordScreen(
             HorizontalDivider(color = MinlishSurfaceContainerHigh)
 
             ResetPasswordCard(
+                isLoading = viewModel.isLoading,
                 newPassword = newPassword,
                 confirmPassword = confirmPassword,
                 newPasswordVisible = newPasswordVisible,
@@ -123,6 +130,7 @@ fun ResetPasswordScreen(
 
 @Composable
 private fun ResetPasswordCard(
+    isLoading: Boolean,
     newPassword: String,
     confirmPassword: String,
     newPasswordVisible: Boolean,
@@ -184,22 +192,31 @@ private fun ResetPasswordCard(
                 Button(
                     onClick = onResetPassword,
                     modifier = Modifier.fillMaxSize(),
-                    enabled = hasMinLength && hasUppercase && hasNumberOrSymbol && passwordsMatch && otpComplete,
+                    enabled = hasMinLength && hasUppercase && hasNumberOrSymbol && passwordsMatch && otpComplete && !isLoading,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color.Transparent,
                         disabledContentColor = Color.Transparent
                     ),
                     elevation = null
                 ) {
-                    Text(
-                        text = "Reset Password",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = if (hasMinLength && hasUppercase && hasNumberOrSymbol && passwordsMatch)
-                                    Color.White
-                                else
-                                    Color.White.copy(alpha = 0.5f)
-                    )
+                    if (isLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            color = Color.White.copy(alpha = 0.5f),
+                            strokeWidth = 2.5.dp
+                        )
+                    }
+                    else {
+                        Text(
+                            text = "Reset Password",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = if (hasMinLength && hasUppercase && hasNumberOrSymbol && passwordsMatch)
+                                Color.White
+                            else
+                                Color.White.copy(alpha = 0.5f)
+                        )
+                    }
                 }
             }
         }
@@ -320,7 +337,6 @@ private fun PasswordInputField(
 
 @Composable
 private fun OtpSection(
-    viewModel: ForgetPasswordViewModel,
     otpValue: String,
     timerText: String,
     secondsLeft: Int,

@@ -270,7 +270,7 @@ private fun WelcomeBottomActions(
             )
             TextButton(onClick = onLogInClick) {
                 Text(
-                    text = "Log In",
+                    text = "Sign In",
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium,
                     color = MinlishPrimary

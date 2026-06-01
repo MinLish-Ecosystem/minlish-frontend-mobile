@@ -40,18 +40,20 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.minlish.app.R
 import com.minlish.app.presentation.screens.auth.components.ProgressHeader
 import com.minlish.app.presentation.screens.auth.components.SecurityCheckList
+import com.minlish.app.presentation.screens.auth.viewmodels.AuthUiEvent
 import com.minlish.app.presentation.screens.auth.viewmodels.AuthViewModel
 import com.minlish.app.ui.theme.MinlishGradient
 import com.minlish.app.ui.theme.MinlishOutline
 import com.minlish.app.ui.theme.MinlishPrimary
 import com.minlish.app.ui.theme.MinlishSurface
+import kotlinx.coroutines.flow.collectLatest
 
 @Composable
 fun RegisterScreen(
     currentStep: Int = 1,
     totalSteps: Int = 2,
     viewModel: AuthViewModel = viewModel(),
-    onRegisterSuccess: (String) -> Unit,
+    onRegisterSuccess: () -> Unit,
     onSignInClick: () -> Unit
 ) {
     var fullName by remember {  mutableStateOf("") }
@@ -63,9 +65,15 @@ fun RegisterScreen(
     val hasUppercase = password.any {it.isUpperCase()}
     val hasNumberOrSymbol = password.any {!it.isLetterOrDigit() || it.isDigit()}
 
-    LaunchedEffect(viewModel.registerSuccess) {
-        if (viewModel.registerSuccess) {
-            onRegisterSuccess(email)
+    LaunchedEffect(Unit) {
+        viewModel.uiEvent.collectLatest { event ->
+            when (event) {
+                is AuthUiEvent.RegisterSuccess -> {
+                    onRegisterSuccess()
+                }
+
+                else -> {}
+            }
         }
     }
 
@@ -107,6 +115,7 @@ fun RegisterScreen(
             hasMinLength = hasMinLength,
             hasUppercase = hasUppercase,
             hasNumberOrSymbol = hasNumberOrSymbol,
+            isLoading = viewModel.isLoading
         )
         Spacer(modifier = Modifier.height(12.dp))
         DividerWithText()
@@ -293,7 +302,8 @@ private fun SignUpButton(
     hasMinLength: Boolean,
     hasUppercase: Boolean,
     hasNumberOrSymbol: Boolean,
-    onSignUpClick: () -> Unit
+    onSignUpClick: () -> Unit,
+    isLoading: Boolean,
 ) {
     Box(
         modifier = Modifier
@@ -307,7 +317,7 @@ private fun SignUpButton(
         Button(
             onClick = onSignUpClick,
             modifier = Modifier.fillMaxSize(),
-            enabled = hasMinLength && hasUppercase && hasNumberOrSymbol,
+            enabled = hasMinLength && hasUppercase && hasNumberOrSymbol && !isLoading,
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color.Transparent,
                 disabledContentColor = Color.Transparent
@@ -318,24 +328,33 @@ private fun SignUpButton(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text(
-                    text = "Sign Up",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = if (hasMinLength && hasUppercase && hasNumberOrSymbol)
-                        Color.White
-                    else
-                        Color.White.copy(alpha = 0.5f)
-                )
-                Icon(
-                    imageVector = Icons.AutoMirrored.Outlined.ArrowForward,
-                    contentDescription = null,
-                    tint = if (hasMinLength && hasUppercase && hasNumberOrSymbol)
-                        Color.White
-                    else
-                        Color.White.copy(alpha = 0.5f),
-                    modifier = Modifier.size(18.dp)
-                )
+                if (isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = Color.White.copy(alpha = 0.5f),
+                        strokeWidth = 2.5.dp
+                    )
+                }
+                else {
+                    Text(
+                        text = "Sign Up",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = if (hasMinLength && hasUppercase && hasNumberOrSymbol)
+                            Color.White
+                        else
+                            Color.White.copy(alpha = 0.5f)
+                    )
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Outlined.ArrowForward,
+                        contentDescription = null,
+                        tint = if (hasMinLength && hasUppercase && hasNumberOrSymbol)
+                            Color.White
+                        else
+                            Color.White.copy(alpha = 0.5f),
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
             }
         }
     }
