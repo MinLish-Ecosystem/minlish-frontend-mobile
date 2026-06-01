@@ -22,8 +22,21 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+
 import com.minlish.app.presentation.components.AppHeader
 import com.minlish.app.presentation.components.Footer
+
+data class MockSetData(
+    val title: String,
+    val description: String,
+    val wordCount: Int,
+    val masteryPercent: Int,
+    val accentColor: Color,
+    val statusColor: Color,
+    val statusIcon: androidx.compose.ui.graphics.vector.ImageVector,
+    val statusText: String,
+    val progressBrush: Brush
+)
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -31,17 +44,53 @@ fun LibraryScreen(
     currentRoute: String = "library",
     onNavigate: (String) -> Unit = {},
     onSetClick: (String) -> Unit = {},
+    onCreateNewSet: () -> Unit = {},
 ) {
-    var selectedSubTab by remember { mutableStateOf("Explore") }
+    var selectedSubTab by remember { mutableStateOf("My Sets") }
     var searchQuery by remember { mutableStateOf("") }
     
     // Mock data for "My Sets"
     val mySets = remember {
         listOf(
-            "IELTS Core Vocabulary",
-            "Business Meeting Essentials",
-            "Daily Conversation",
-            "Travel & Tourism"
+            MockSetData(
+                title = "IELTS Core",
+                description = "Essential vocabulary for academic reading and writing.",
+                wordCount = 150,
+                masteryPercent = 65,
+                accentColor = Color(0xFF06B6D4), // accent-cyan
+                statusColor = Color(0xFF10B981), // success
+                statusIcon = Icons.Default.CheckCircle,
+                statusText = "65% Mastered",
+                progressBrush = Brush.linearGradient(
+                    colors = listOf(Color(0xFFF093FB), Color(0xFFF5576C))
+                )
+            ),
+            MockSetData(
+                title = "Phrasal Verbs II",
+                description = "Common phrasal verbs for everyday conversation.",
+                wordCount = 85,
+                masteryPercent = 30,
+                accentColor = Color(0xFFF59E0B), // accent-amber
+                statusColor = Color(0xFFF59E0B), // warning
+                statusIcon = Icons.Default.TrendingUp,
+                statusText = "30% Mastered",
+                progressBrush = Brush.horizontalGradient(
+                    colors = listOf(Color(0xFFF59E0B), Color(0xFFF59E0B))
+                )
+            ),
+            MockSetData(
+                title = "Business Idioms",
+                description = "Expressions used in professional environments.",
+                wordCount = 42,
+                masteryPercent = 0,
+                accentColor = Color(0xFFF43F5E), // accent-rose
+                statusColor = Color(0xFFC7C4D7), // outline-variant
+                statusIcon = Icons.Default.HourglassEmpty,
+                statusText = "Not started",
+                progressBrush = Brush.horizontalGradient(
+                    colors = listOf(Color(0xFFE4E1ED), Color(0xFFE4E1ED))
+                )
+            )
         )
     }
 
@@ -72,6 +121,30 @@ fun LibraryScreen(
                 currentRoute = currentRoute,
                 onNavigate   = onNavigate
             )
+        },
+        floatingActionButton = {
+            if (selectedSubTab == "My Sets") {
+                FloatingActionButton(
+                    onClick = onCreateNewSet,
+                    containerColor = Color.Transparent,
+                    contentColor = Color.White,
+                    shape = RoundedCornerShape(50),
+                    modifier = Modifier
+                        .padding(bottom = 16.dp)
+                        .background(
+                            brush = Brush.linearGradient(
+                                colors = listOf(Color(0xFF667EEA), Color(0xFF764BA2))
+                            ),
+                            shape = RoundedCornerShape(50)
+                        )
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "Create New Set",
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
+            }
         },
         containerColor = surfaceColor
     ) { innerPadding ->
@@ -117,9 +190,7 @@ fun LibraryScreen(
             }
         }
 
-        // Conditionally render based on selected tab
         if (selectedSubTab == "Explore") {
-            // Search Bar
             item {
                 OutlinedTextField(
                     value = searchQuery,
@@ -152,7 +223,6 @@ fun LibraryScreen(
                 )
             }
 
-            // Featured Set Section
             item {
                 Column(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -179,7 +249,6 @@ fun LibraryScreen(
                             contentScale = ContentScale.Crop
                         )
 
-                        // Gradient Overlay (Dark bottom)
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
@@ -194,7 +263,6 @@ fun LibraryScreen(
                                 )
                         )
 
-                        // Content overlayed at bottom
                         Column(
                             modifier = Modifier
                                 .align(Alignment.BottomStart)
@@ -234,7 +302,6 @@ fun LibraryScreen(
                 }
             }
 
-            // Trending Topics Section
             item {
                 Column(
                     verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -249,7 +316,6 @@ fun LibraryScreen(
                     Column(
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        // Card 1: TOEIC Essential 500
                         TrendingTopicItem(
                             title = "TOEIC Essential 500",
                             subtitle = "500 terms • Advanced",
@@ -259,7 +325,6 @@ fun LibraryScreen(
                             onClick = { onSetClick("TOEIC Essential 500") }
                         )
 
-                        // Card 2: Travel & Tourism
                         TrendingTopicItem(
                             title = "Travel & Tourism",
                             subtitle = "120 terms • Intermediate",
@@ -269,7 +334,6 @@ fun LibraryScreen(
                             onClick = { onSetClick("Travel & Tourism") }
                         )
 
-                        // Card 3: Dining Out
                         TrendingTopicItem(
                             title = "Dining Out",
                             subtitle = "85 terms • Beginner",
@@ -282,7 +346,6 @@ fun LibraryScreen(
                 }
             }
 
-            // Categories Section
             item {
                 Column(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -308,7 +371,7 @@ fun LibraryScreen(
                                         shape = RoundedCornerShape(20.dp)
                                     )
                                     .background(surfaceContainerLowestColor, shape = RoundedCornerShape(20.dp))
-                                    .clickable { /* Filter category */ }
+                                    .clickable {  }
                                     .padding(horizontal = 16.dp, vertical = 8.dp),
                                 contentAlignment = Alignment.Center
                             ) {
@@ -324,7 +387,6 @@ fun LibraryScreen(
                 }
             }
         } else {
-            // My Sets Tab
             if (mySets.isEmpty()) {
                 item {
                     Box(
@@ -364,16 +426,12 @@ fun LibraryScreen(
                         )
 
                         Column(
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
-                            mySets.forEach { setName ->
-                                TrendingTopicItem(
-                                    title = setName,
-                                    subtitle = "Custom Set",
-                                    icon = Icons.Default.Folder,
-                                    accentColor = primaryColor,
-                                    iconBgColor = primary50Color,
-                                    onClick = { onSetClick(setName) }
+                            mySets.forEach { setItem ->
+                                VocabularySetCard(
+                                    data = setItem,
+                                    onClick = { onSetClick(setItem.title) }
                                 )
                             }
                         }
@@ -381,8 +439,130 @@ fun LibraryScreen(
                 }
             }
         }
-    } // end LazyColumn
-    } // end Scaffold
+    }
+    } 
+}
+
+@Composable
+fun VocabularySetCard(
+    data: MockSetData,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .shadow(4.dp, RoundedCornerShape(12.dp))
+            .clickable { onClick() },
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White)
+    ) {
+        Column {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(4.dp)
+                    .background(data.accentColor)
+            )
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Top
+                ) {
+                    Column(
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(
+                            text = data.title,
+                            color = Color(0xFF1B1B23),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 20.sp
+                        )
+                        Text(
+                            text = data.description,
+                            color = Color(0xFF464554),
+                            fontSize = 14.sp,
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
+                    }
+                    IconButton(
+                        onClick = {},
+                        modifier = Modifier.size(24.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.MoreVert,
+                            contentDescription = "More options",
+                            tint = Color(0xFFC7C4D7)
+                        )
+                    }
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Style,
+                            contentDescription = null,
+                            tint = Color(0xFF464554),
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Text(
+                            text = "${data.wordCount} words",
+                            color = Color(0xFF464554),
+                            fontWeight = FontWeight.Medium,
+                            fontSize = 14.sp
+                        )
+                    }
+
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = data.statusIcon,
+                            contentDescription = null,
+                            tint = data.statusColor,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Text(
+                            text = data.statusText,
+                            color = data.statusColor,
+                            fontWeight = FontWeight.Medium,
+                            fontSize = 14.sp
+                        )
+                    }
+                }
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(8.dp)
+                        .clip(RoundedCornerShape(50))
+                        .background(Color(0xFFE4E1ED)) 
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(data.masteryPercent / 100f)
+                            .fillMaxHeight()
+                            .clip(RoundedCornerShape(50))
+                            .background(data.progressBrush)
+                    )
+                }
+            }
+        }
+    }
 }
 
 @Composable
@@ -402,7 +582,6 @@ fun TrendingTopicItem(
             .clip(RoundedCornerShape(12.dp))
             .clickable { onClick() }
     ) {
-        // Top border simulation (4dp thick color bar at the top)
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -417,7 +596,6 @@ fun TrendingTopicItem(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Left Icon Container
             Box(
                 modifier = Modifier
                     .size(48.dp)
@@ -433,7 +611,6 @@ fun TrendingTopicItem(
                 )
             }
 
-            // Info column
             Column(
                 modifier = Modifier.weight(1f)
             ) {
@@ -450,7 +627,6 @@ fun TrendingTopicItem(
                 )
             }
 
-            // Right Chevron
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                 contentDescription = "Go",

@@ -25,9 +25,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.minlish.app.ui.theme.MinLishMobileTheme
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Màu sắc theo design system từ Stitch (Create New Set screen)
-// ─────────────────────────────────────────────────────────────────────────────
 private object CreateSetColors {
     val Background      = Color(0xFFF9FAFB)
     val Surface         = Color(0xFFFFFFFF)
@@ -36,10 +33,10 @@ private object CreateSetColors {
     val OnSurfaceVariant= Color(0xFF4B5563)
     val Outline         = Color(0xFFD1D5DB)
     val OutlineVariant  = Color(0xFFE5E7EB)
-    val Primary         = Color(0xFF4F46E5)           // Indigo 600
-    val PrimaryContainer= Color(0xFFE0E7FF)           // Indigo 100
+    val Primary         = Color(0xFF4F46E5)         
+    val PrimaryContainer= Color(0xFFE0E7FF)           
     val OnPrimary       = Color(0xFFFFFFFF)
-    val OnPrimaryContainer = Color(0xFF312E81)        // Indigo 900
+    val OnPrimaryContainer = Color(0xFF312E81)        
     val Error           = Color(0xFFEF4444)
     val ErrorContainer  = Color(0xFFFEE2E2)
 
@@ -47,38 +44,27 @@ private object CreateSetColors {
     val GradientEnd     = Color(0xFF764BA2)
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Dữ liệu cho Word item trong form
-// ─────────────────────────────────────────────────────────────────────────────
 data class WordEntry(
     val id: Int,
     var term: String = "",
     var definition: String = ""
 )
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Danh mục có sẵn
-// ─────────────────────────────────────────────────────────────────────────────
 private val CATEGORIES = listOf("Academic", "Business", "Travel", "Casual", "General", "Other")
 
-// ─────────────────────────────────────────────────────────────────────────────
-// CreateNewSetScreen — Màn hình tạo bộ từ mới
-// ─────────────────────────────────────────────────────────────────────────────
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateNewSetScreen(
     onBackClick: () -> Unit = {},
     onCreateClick: (title: String, description: String, category: String, isPublic: Boolean) -> Unit = { _, _, _, _ -> }
 ) {
-    // ── State ────────────────────────────────────────────────────────────────
     var setName         by remember { mutableStateOf("") }
     var description     by remember { mutableStateOf("") }
-    var selectedCategory by remember { mutableStateOf("Business") }  // default theo mockup
+    var selectedCategory by remember { mutableStateOf("Business") }  
     var isPublic        by remember { mutableStateOf(true) }
     var words           by remember { mutableStateOf(listOf<WordEntry>()) }
     var wordIdCounter   by remember { mutableIntStateOf(0) }
 
-    // Validation
     val isNameError = setName.isNotEmpty() && setName.length < 2
     val canCreate   = setName.length >= 2
 
@@ -105,7 +91,7 @@ fun CreateNewSetScreen(
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            // ── Form Section ──────────────────────────────────────────────────
+
             item {
                 FormSection(
                     setName         = setName,
@@ -120,7 +106,6 @@ fun CreateNewSetScreen(
                 )
             }
 
-            // ── Vocabulary Section ────────────────────────────────────────────
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -148,7 +133,6 @@ fun CreateNewSetScreen(
                 }
             }
 
-            // ── Empty State hoặc danh sách từ ────────────────────────────────
             if (words.isEmpty()) {
                 item {
                     EmptyWordState(
@@ -174,7 +158,6 @@ fun CreateNewSetScreen(
                     )
                 }
                 item {
-                    // Nút thêm từ tiếp theo (khi đã có ít nhất 1 từ)
                     OutlinedButton(
                         onClick = { words = words + WordEntry(id = ++wordIdCounter) },
                         modifier = Modifier.fillMaxWidth(),
@@ -200,15 +183,11 @@ fun CreateNewSetScreen(
                 }
             }
 
-            // Padding dưới cùng tránh bottom bar
             item { Spacer(modifier = Modifier.height(20.dp)) }
         }
     }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Top App Bar
-// ─────────────────────────────────────────────────────────────────────────────
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun CreateSetTopBar(onBackClick: () -> Unit) {
@@ -238,15 +217,11 @@ private fun CreateSetTopBar(onBackClick: () -> Unit) {
                 modifier = Modifier.weight(1f),
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
             )
-            // Placeholder cân bằng bố cục
             Spacer(modifier = Modifier.size(48.dp))
         }
     }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Bottom Bar — nút Create Set
-// ─────────────────────────────────────────────────────────────────────────────
 @Composable
 private fun CreateSetBottomBar(canCreate: Boolean, onClick: () -> Unit) {
     Surface(
@@ -299,9 +274,6 @@ private fun CreateSetBottomBar(canCreate: Boolean, onClick: () -> Unit) {
     }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Form Section (tên, mô tả, danh mục, public toggle)
-// ─────────────────────────────────────────────────────────────────────────────
 @Composable
 private fun FormSection(
     setName: String,
@@ -324,7 +296,6 @@ private fun FormSection(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // ── Set Name ──────────────────────────────────────────────────────
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(
                     text = "Set Name",
@@ -359,7 +330,6 @@ private fun FormSection(
                 )
             }
 
-            // ── Description ───────────────────────────────────────────────────
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Row {
                     Text(
@@ -398,7 +368,6 @@ private fun FormSection(
                 )
             }
 
-            // ── Category ──────────────────────────────────────────────────────
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text(
                     text = "Category",
@@ -420,10 +389,8 @@ private fun FormSection(
                 }
             }
 
-            // ── Divider ───────────────────────────────────────────────────────
             HorizontalDivider(color = CreateSetColors.OutlineVariant)
 
-            // ── Public Toggle ─────────────────────────────────────────────────
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -456,9 +423,6 @@ private fun FormSection(
     }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Category Chip
-// ─────────────────────────────────────────────────────────────────────────────
 @Composable
 private fun CategoryChip(label: String, isSelected: Boolean, onClick: () -> Unit) {
     Box(
@@ -484,9 +448,6 @@ private fun CategoryChip(label: String, isSelected: Boolean, onClick: () -> Unit
     }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Empty State — Chưa có từ nào
-// ─────────────────────────────────────────────────────────────────────────────
 @Composable
 private fun EmptyWordState(onAddWord: () -> Unit) {
     Surface(
@@ -506,7 +467,6 @@ private fun EmptyWordState(onAddWord: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Icon container
             Box(
                 modifier = Modifier
                     .size(64.dp)
@@ -565,9 +525,6 @@ private fun EmptyWordState(onAddWord: () -> Unit) {
     }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Word Entry Card — nhập từ + định nghĩa
-// ─────────────────────────────────────────────────────────────────────────────
 @Composable
 private fun WordEntryCard(
     index: Int,
@@ -583,7 +540,6 @@ private fun WordEntryCard(
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
-            // Header
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -607,7 +563,6 @@ private fun WordEntryCard(
             HorizontalDivider(color = CreateSetColors.OutlineVariant)
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Term
             OutlinedTextField(
                 value = word.term,
                 onValueChange = onTermChange,
@@ -623,7 +578,6 @@ private fun WordEntryCard(
             )
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Definition
             OutlinedTextField(
                 value = word.definition,
                 onValueChange = onDefinitionChange,
@@ -642,9 +596,6 @@ private fun WordEntryCard(
     }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Preview
-// ─────────────────────────────────────────────────────────────────────────────
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun CreateNewSetScreenPreview() {

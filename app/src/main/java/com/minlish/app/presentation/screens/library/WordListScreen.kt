@@ -68,7 +68,6 @@ fun WordListScreen(
 ) {
     var searchQuery by remember { mutableStateOf("") }
 
-    // Color theme values
     val surfaceColor = Color(0xFFFFFFFF)
     val surfaceVariantColor = Color(0xFFF3F4F6)
     val onSurfaceColor = Color(0xFF111827)
@@ -123,7 +122,6 @@ fun WordListScreen(
             .fillMaxSize()
             .background(surfaceVariantColor)
     ) {
-        // Sticky Header / Navbar
         Surface(
             modifier = Modifier.fillMaxWidth(),
             color = surfaceColor.copy(alpha = 0.9f),
@@ -157,7 +155,7 @@ fun WordListScreen(
                     style = MaterialTheme.typography.titleMedium
                 )
 
-                IconButton(onClick = { /* More actions */ }) {
+                IconButton(onClick = {}) {
                     Icon(
                         imageVector = Icons.Default.MoreVert,
                         contentDescription = "More",
@@ -190,12 +188,10 @@ fun WordListScreen(
                             fontSize = 14.sp
                         )
 
-                        // Statistics
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            // Total Card
                             CardStats(
                                 count = "42",
                                 label = "Total",
@@ -204,7 +200,6 @@ fun WordListScreen(
                                 labelColor = onSurfaceVariantColor
                             )
 
-                            // Mastered Card
                             CardStats(
                                 count = "12",
                                 label = "Mastered",
@@ -213,7 +208,6 @@ fun WordListScreen(
                                 labelColor = WordStatus.MASTERED.onContainerColor
                             )
 
-                            // Learning Card
                             CardStats(
                                 count = "5",
                                 label = "Learning",
@@ -223,13 +217,12 @@ fun WordListScreen(
                             )
                         }
 
-                        // Action Buttons
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             Button(
-                                onClick = { /* Start Session */ },
+                                onClick = {},
                                 modifier = Modifier
                                     .weight(1f)
                                     .height(48.dp),
@@ -257,7 +250,7 @@ fun WordListScreen(
                             }
 
                             Button(
-                                onClick = { /* Add Word */ },
+                                onClick = {},
                                 modifier = Modifier
                                     .height(48.dp)
                                     .border(
@@ -291,13 +284,11 @@ fun WordListScreen(
                 }
             }
 
-            // Word List Section
             item {
                 Column(
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    // Search Bar
                     OutlinedTextField(
                         value = searchQuery,
                         onValueChange = { searchQuery = it },
@@ -326,7 +317,6 @@ fun WordListScreen(
                         singleLine = true
                     )
 
-                    // Sub-header
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -340,7 +330,7 @@ fun WordListScreen(
                         )
 
                         TextButton(
-                            onClick = { /* Filter click */ },
+                            onClick = {},
                             contentPadding = PaddingValues(horizontal = 8.dp)
                         ) {
                             Row(
@@ -365,7 +355,6 @@ fun WordListScreen(
                 }
             }
 
-            // Word Cards List
             items(filteredWords) { item ->
                 Box(
                     modifier = Modifier
@@ -402,7 +391,7 @@ fun WordListScreen(
                                         )
 
                                         IconButton(
-                                            onClick = { /* Play pronunciation */ },
+                                            onClick = {},
                                             modifier = Modifier.size(24.dp)
                                         ) {
                                             Icon(
@@ -422,7 +411,6 @@ fun WordListScreen(
                                     )
                                 }
 
-                                // Status Badge
                                 Box(
                                     modifier = Modifier
                                         .background(
@@ -454,12 +442,11 @@ fun WordListScreen(
                         }
                     }
 
-                    // Simulated Left Vertical Accent Bar
                     Box(
                         modifier = Modifier
                             .align(Alignment.CenterStart)
                             .width(4.dp)
-                            .height(84.dp) // Covers most of the card height
+                            .height(84.dp)
                             .background(
                                 color = item.status.color,
                                 shape = RoundedCornerShape(

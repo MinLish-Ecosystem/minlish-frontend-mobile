@@ -17,6 +17,7 @@ import com.minlish.app.presentation.screens.auth.viewmodels.AuthViewModel
 import com.minlish.app.presentation.screens.learning.LearningDashBoardScreen
 import com.minlish.app.presentation.screens.library.LibraryScreen
 import com.minlish.app.presentation.screens.library.WordListScreen
+import com.minlish.app.presentation.screens.vocab.CreateNewSetScreen
 import com.minlish.app.presentation.screens.practice.PracticeArenaScreen
 import com.minlish.app.presentation.screens.profile.ProfileScreen
 import com.minlish.app.presentation.screens.welcome.LearningGoalScreen
@@ -159,10 +160,13 @@ fun AuthNavHost(
         // 3. Tab Library
         composable(NavDestinations.Library.route) {
             LibraryScreen(
-                currentRoute = currentRoute,
-                onNavigate   = ::onFooterNavigate,
-                onSetClick   = { setName -> 
+                currentRoute      = currentRoute,
+                onNavigate        = ::onFooterNavigate,
+                onSetClick        = { setName ->
                     navController.navigate(NavDestinations.WordList.createRoute(setName))
+                },
+                onCreateNewSet    = {
+                    navController.navigate(NavDestinations.CreateNewSet.route)
                 }
             )
         }
@@ -176,6 +180,17 @@ fun AuthNavHost(
             WordListScreen(
                 setName = setName,
                 onBack  = { navController.popBackStack() }
+            )
+        }
+
+        // Sub-screen Create New Set
+        composable(NavDestinations.CreateNewSet.route) {
+            CreateNewSetScreen(
+                onBackClick   = { navController.popBackStack() },
+                onCreateClick = { _, _, _, _ ->
+                    // TODO: gọi API tạo set, sau đó quay về Library
+                    navController.popBackStack()
+                }
             )
         }
 
