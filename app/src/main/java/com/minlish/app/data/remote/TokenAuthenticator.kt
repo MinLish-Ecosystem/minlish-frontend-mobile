@@ -1,10 +1,9 @@
 package com.minlish.app.data.remote
 
 import android.util.Log
-import com.minlish.app.data.dto.ApiResponse
-import com.minlish.app.data.dto.LoginData
-import com.minlish.app.data.dto.RefreshTokenData
-import com.minlish.app.data.dto.RefreshTokenRequest
+import com.minlish.app.data.dto.response.ApiResponse
+import com.minlish.app.data.dto.response.RefreshTokenData
+import com.minlish.app.data.dto.request.RefreshTokenRequest
 import com.minlish.app.data.local.TokenManager
 import com.minlish.app.util.SessionExpiredEvent
 import kotlinx.coroutines.runBlocking

@@ -28,7 +28,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowForward
-import androidx.compose.material.icons.outlined.ArrowForward
 import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Visibility
@@ -38,8 +37,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.res.painterResource
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.minlish.app.R
-import com.minlish.app.presentation.navigation.NavDestinations
-import com.minlish.app.presentation.screens.auth.LoginScreen
+import com.minlish.app.presentation.screens.auth.viewmodels.AuthViewModel
 import com.minlish.app.ui.theme.MinlishGradient
 import com.minlish.app.ui.theme.MinlishOnSurface
 import com.minlish.app.ui.theme.MinlishOutline

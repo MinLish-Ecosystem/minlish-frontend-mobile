@@ -1,10 +1,14 @@
 package com.minlish.app.data.remote
 
-import com.minlish.app.data.dto.ApiResponse
-import com.minlish.app.data.dto.LoginData
-import com.minlish.app.data.dto.LoginRequest
-import com.minlish.app.data.dto.RegisterData
-import com.minlish.app.data.dto.RegisterRequest
+import com.minlish.app.data.dto.response.ApiResponse
+import com.minlish.app.data.dto.response.LoginData
+import com.minlish.app.data.dto.request.LoginRequest
+import com.minlish.app.data.dto.request.ForgotPasswordRequest
+import com.minlish.app.data.dto.response.RegisterData
+import com.minlish.app.data.dto.request.RegisterRequest
+import com.minlish.app.data.dto.request.ResetPasswordRequest
+import com.minlish.app.data.dto.request.VerifyEmailRequest
+import com.minlish.app.presentation.navigation.NavDestinations
 import retrofit2.http.Body
 import retrofit2.http.POST
 import retrofit2.http.Headers
@@ -18,4 +22,16 @@ interface AuthApi {
     @Headers("No-Authentication: true")
     @POST("auth/register")
     suspend fun register(@Body request: RegisterRequest): ApiResponse<RegisterData>
+
+    @Headers("No-Authentication: true")
+    @POST("auth/verify-email")
+    suspend fun verifyEmail(@Body request: VerifyEmailRequest): ApiResponse<String>
+
+    @Headers("No-Authentication: true")
+    @POST("auth/forgot-password")
+    suspend fun forgotPassword(@Body request: ForgotPasswordRequest): ApiResponse<String>
+
+    @Headers("No-Authentication: true")
+    @POST("auth/reset-password")
+    suspend fun resetPassword(@Body request: ResetPasswordRequest): ApiResponse<String>
 }

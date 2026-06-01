@@ -1,4 +1,4 @@
-package com.minlish.app.data.dto
+package com.minlish.app.data.dto.request
 
 data class LoginRequest(
     val email: String,

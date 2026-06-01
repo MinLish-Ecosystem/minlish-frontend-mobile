@@ -40,6 +40,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.minlish.app.R
 import com.minlish.app.presentation.screens.auth.components.ProgressHeader
 import com.minlish.app.presentation.screens.auth.components.SecurityCheckList
+import com.minlish.app.presentation.screens.auth.viewmodels.AuthViewModel
 import com.minlish.app.ui.theme.MinlishGradient
 import com.minlish.app.ui.theme.MinlishOutline
 import com.minlish.app.ui.theme.MinlishPrimary
