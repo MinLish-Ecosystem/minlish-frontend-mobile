@@ -3,10 +3,8 @@ package com.minlish.app.presentation.screens.library
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
@@ -24,15 +22,28 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.minlish.app.presentation.components.AppHeader
+import com.minlish.app.presentation.components.Footer
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun LibraryScreen(
-    onSetClick: (String) -> Unit,
-    modifier: Modifier = Modifier
+    currentRoute: String = "library",
+    onNavigate: (String) -> Unit = {},
+    onSetClick: (String) -> Unit = {},
 ) {
     var selectedSubTab by remember { mutableStateOf("Explore") }
     var searchQuery by remember { mutableStateOf("") }
+    
+    // Mock data for "My Sets"
+    val mySets = remember {
+        listOf(
+            "IELTS Core Vocabulary",
+            "Business Meeting Essentials",
+            "Daily Conversation",
+            "Travel & Tourism"
+        )
+    }
 
     // Color definitions based on the HTML mockup
     val surfaceColor = Color(0xFFFCF8FF)
@@ -47,11 +58,29 @@ fun LibraryScreen(
     val accentEmeraldColor = Color(0xFF10B981)
     val accentAmberColor = Color(0xFFF59E0B)
 
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        topBar = {
+            AppHeader(
+                userName = "MinLish",
+                userAvatarUrl = "https://api.dicebear.com/7.x/avataaars/png?seed=MinLish",
+                onNotificationClick = {}
+            )
+        },
+        bottomBar = {
+            Footer(
+                currentRoute = currentRoute,
+                onNavigate   = onNavigate
+            )
+        },
+        containerColor = surfaceColor
+    ) { innerPadding ->
+
     LazyColumn(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxSize()
-            .background(surfaceColor)
-            .padding(16.dp),
+            .padding(innerPadding)
+            .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
         // Tab Switcher ("My Sets" and "Explore")
@@ -295,34 +324,65 @@ fun LibraryScreen(
                 }
             }
         } else {
-            // My Sets Tab Placeholder
-            item {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 48.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+            // My Sets Tab
+            if (mySets.isEmpty()) {
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 48.dp),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.FolderOpen,
-                            contentDescription = "Empty Folder",
-                            tint = onSurfaceVariantColor,
-                            modifier = Modifier.size(48.dp)
-                        )
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.FolderOpen,
+                                contentDescription = "Empty Folder",
+                                tint = onSurfaceVariantColor,
+                                modifier = Modifier.size(48.dp)
+                            )
+                            Text(
+                                text = "Your sets will appear here",
+                                color = onSurfaceVariantColor,
+                                fontSize = 15.sp
+                            )
+                        }
+                    }
+                }
+            } else {
+                item {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
                         Text(
-                            text = "Your sets will appear here",
-                            color = onSurfaceVariantColor,
-                            fontSize = 15.sp
+                            text = "My Vocabulary Sets",
+                            color = onSurfaceColor,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp
                         )
+
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            mySets.forEach { setName ->
+                                TrendingTopicItem(
+                                    title = setName,
+                                    subtitle = "Custom Set",
+                                    icon = Icons.Default.Folder,
+                                    accentColor = primaryColor,
+                                    iconBgColor = primary50Color,
+                                    onClick = { onSetClick(setName) }
+                                )
+                            }
+                        }
                     }
                 }
             }
         }
-    }
+    } // end LazyColumn
+    } // end Scaffold
 }
 
 @Composable

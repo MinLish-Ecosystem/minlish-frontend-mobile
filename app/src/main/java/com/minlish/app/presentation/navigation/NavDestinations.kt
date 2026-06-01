@@ -14,6 +14,13 @@ sealed class NavDestinations(val route: String) {
     // ── Main app screens ────────────────────────────────────────────────────
     data object Learning       : NavDestinations("learning")
     data object Analytics      : NavDestinations("analytics")
+    data object Library        : NavDestinations("library")
     data object Practice       : NavDestinations("practice")
 
+    // ── Sub-screens ──────────────────────────────────────────────────────────
+    // route: "word_list/{setName}" — setName được encode trong URL
+    data object WordList : NavDestinations("word_list/{setName}") {
+        fun createRoute(setName: String) =
+            "word_list/${java.net.URLEncoder.encode(setName, "UTF-8")}"
+    }
 }

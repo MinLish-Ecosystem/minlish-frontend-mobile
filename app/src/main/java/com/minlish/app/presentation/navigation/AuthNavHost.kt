@@ -15,6 +15,8 @@ import com.minlish.app.presentation.screens.analytics.AnalyticsViewModel
 import com.minlish.app.presentation.screens.auth.*
 import com.minlish.app.presentation.screens.auth.viewmodels.AuthViewModel
 import com.minlish.app.presentation.screens.learning.LearningDashBoardScreen
+import com.minlish.app.presentation.screens.library.LibraryScreen
+import com.minlish.app.presentation.screens.library.WordListScreen
 import com.minlish.app.presentation.screens.practice.PracticeArenaScreen
 import com.minlish.app.presentation.screens.profile.ProfileScreen
 import com.minlish.app.presentation.screens.welcome.LearningGoalScreen
@@ -154,7 +156,30 @@ fun AuthNavHost(
             )
         }
 
-        // 3. Tab Practice Arena
+        // 3. Tab Library
+        composable(NavDestinations.Library.route) {
+            LibraryScreen(
+                currentRoute = currentRoute,
+                onNavigate   = ::onFooterNavigate,
+                onSetClick   = { setName -> 
+                    navController.navigate(NavDestinations.WordList.createRoute(setName))
+                }
+            )
+        }
+
+        // Sub-screen Word List
+        composable(NavDestinations.WordList.route) { backStackEntry ->
+            val setName = backStackEntry.arguments?.getString("setName")?.let {
+                java.net.URLDecoder.decode(it, "UTF-8")
+            } ?: "Vocabulary Set"
+
+            WordListScreen(
+                setName = setName,
+                onBack  = { navController.popBackStack() }
+            )
+        }
+
+        // 4. Tab Practice Arena
         composable(NavDestinations.Practice.route) {
             PracticeArenaScreen(
                 currentRoute = currentRoute,
