@@ -1,9 +1,8 @@
 package com.minlish.app.presentation.navigation
 
-import android.util.Log
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -17,10 +16,15 @@ import com.minlish.app.presentation.screens.analytics.AnalyticsScreen
 import com.minlish.app.presentation.screens.analytics.AnalyticsViewModel
 import com.minlish.app.presentation.screens.auth.*
 import com.minlish.app.presentation.screens.learning.LearningDashBoardScreen
+import com.minlish.app.presentation.screens.notifications.NotificationScreen
+import com.minlish.app.presentation.screens.notifications.NotificationViewModel
 import com.minlish.app.presentation.screens.practice.PracticeArenaScreen
 import com.minlish.app.presentation.screens.profile.ProfileScreen
+import com.minlish.app.presentation.screens.profile.ProfileViewModel
 import com.minlish.app.presentation.screens.welcome.LearningGoalScreen
 import com.minlish.app.presentation.screens.welcome.WelcomeScreen
+import com.minlish.app.util.FCMHelper
+import com.minlish.app.util.NotificationBadgeManager
 
 @Composable
 fun AuthNavHost(
@@ -28,17 +32,28 @@ fun AuthNavHost(
     navController: NavHostController = rememberNavController(),
     startDestination: String = NavDestinations.Welcome.route
 ) {
-    // 1. Lắng nghe route hiện tại từ backstack để truyền xuống các Footer
     val currentBackStack by navController.currentBackStackEntryAsState()
     val currentRoute = currentBackStack?.destination?.route ?: NavDestinations.Learning.route
+    val context = LocalContext.current
 
-    // 2. Hàm điều hướng chung từ Footer - Do Footer và Route đã đồng bộ chữ thường
+    // ── Lắng nghe Badge Count sạch sẽ từ Singleton Manager ──
+    val unreadBadgeCount by NotificationBadgeManager.badgeCount.collectAsState()
+
+    // Quản lý vòng đời Polling: start khi đã đăng nhập, stop khi logout
+    val isLoggedIn = TokenManager.isLoggedIn()
+    LaunchedEffect(isLoggedIn) {
+        if (isLoggedIn) {
+            NotificationBadgeManager.startPolling()
+        } else {
+            NotificationBadgeManager.stopPolling()
+        }
+    }
+
     fun onFooterNavigate(label: String) {
         navController.navigate(label) {
-            // Quay về Learning (màn hình gốc) để tránh phình to backstack
             popUpTo(NavDestinations.Learning.route) { saveState = true }
             launchSingleTop = true
-            restoreState    = true
+            restoreState = true
         }
     }
 
@@ -47,32 +62,25 @@ fun AuthNavHost(
         startDestination = startDestination,
         modifier = modifier
     ) {
+        // ── Auth screens — giữ nguyên 100% ──
+
         composable(NavDestinations.Welcome.route) {
             WelcomeScreen(
-                onGetStartedClick = {
-                    navController.navigate(NavDestinations.Register.route)
-                },
-                onLogInClick = {
-                    navController.navigate(NavDestinations.Login.route)
-                }
+                onGetStartedClick = { navController.navigate(NavDestinations.Register.route) },
+                onLogInClick = { navController.navigate(NavDestinations.Login.route) }
             )
         }
 
         composable(NavDestinations.Login.route) {
             LoginScreen(
                 onLoginSuccess = {
-                    // Đăng nhập thành công -> Vào thẳng Learning (màn hình chính học tập)
                     navController.navigate(NavDestinations.Learning.route) {
                         popUpTo(NavDestinations.Welcome.route) { inclusive = true }
                     }
                 },
                 onGoogleSignInClick = {},
-                onForgotPasswordClick = {
-                    navController.navigate(NavDestinations.ForgotPassword.route)
-                },
-                onSignUpClick = {
-                    navController.navigate(NavDestinations.Register.route)
-                }
+                onForgotPasswordClick = { navController.navigate(NavDestinations.ForgotPassword.route) },
+                onSignUpClick = { navController.navigate(NavDestinations.Register.route) }
             )
         }
 
@@ -81,17 +89,13 @@ fun AuthNavHost(
                 onRegisterSuccess = { email ->
                     navController.navigate("${NavDestinations.VerifyEmail.route}/$email")
                 },
-                onSignInClick = {
-                    navController.navigate(NavDestinations.Login.route)
-                }
+                onSignInClick = { navController.navigate(NavDestinations.Login.route) }
             )
         }
 
         composable(
-            route = NavDestinations.VerifyEmail.route, // Sử dụng route chuẩn từ NavDestinations
-            arguments = listOf(
-                navArgument("email") {type = NavType.StringType}
-            )
+            route = NavDestinations.VerifyEmail.route,
+            arguments = listOf(navArgument("email") { type = NavType.StringType })
         ) { backStackEntry ->
             val email = backStackEntry.arguments?.getString("email") ?: ""
             VerifyEmailScreen(
@@ -99,9 +103,7 @@ fun AuthNavHost(
                 onBackClick = { navController.popBackStack() },
                 onVerifyClick = {
                     navController.navigate(NavDestinations.LearningGoal.route) {
-                        popUpTo(NavDestinations.Welcome.route) {
-                            inclusive = true
-                        }
+                        popUpTo(NavDestinations.Welcome.route) { inclusive = true }
                     }
                 },
                 onChangeEmail = { navController.popBackStack() },
@@ -111,14 +113,13 @@ fun AuthNavHost(
 
         composable(NavDestinations.ForgotPassword.route) {
             ForgotPasswordScreen(
-                onBackClick = { navController.popBackStack()},
+                onBackClick = { navController.popBackStack() },
                 onSendResetLink = { email ->
-                    // Sử dụng helper createRoute để truyền email an toàn
                     navController.navigate(NavDestinations.VerifyEmail.createRoute(email))
                 },
                 onReturnToLogin = {
                     navController.navigate(NavDestinations.Login.route) {
-                        popUpTo(NavDestinations.Login.route) { inclusive = true}
+                        popUpTo(NavDestinations.Login.route) { inclusive = true }
                     }
                 }
             )
@@ -126,9 +127,8 @@ fun AuthNavHost(
 
         composable(NavDestinations.LearningGoal.route) {
             LearningGoalScreen(
-                onBackClick = { navController.popBackStack()},
+                onBackClick = { navController.popBackStack() },
                 onContinueClick = {
-                    // Chọn mục tiêu xong -> Vào thẳng Learning học tập
                     navController.navigate(NavDestinations.Learning.route) {
                         popUpTo(NavDestinations.LearningGoal.route) { inclusive = true }
                     }
@@ -136,13 +136,22 @@ fun AuthNavHost(
             )
         }
 
-        // ── Main App Tabs (Liên kết chặt chẽ với Footer Navigation) ──────────
+        // ── Main App Tabs ──
 
-        // 1. Tab chính Learning
+        // 1. Tab Learning
         composable(NavDestinations.Learning.route) {
+            // Tự động đăng ký thiết bị với server qua Helper cực gọn
+            LaunchedEffect(Unit) {
+                FCMHelper.registerFCMToken(context)
+            }
+
             LearningDashBoardScreen(
                 currentRoute = currentRoute,
-                onNavigate = ::onFooterNavigate
+                onNavigate = ::onFooterNavigate,
+                unreadCount = unreadBadgeCount,
+                onNotificationClick = {
+                    navController.navigate(NavDestinations.Notifications.route)
+                }
             )
         }
 
@@ -151,29 +160,70 @@ fun AuthNavHost(
             AnalyticsScreen(
                 currentRoute = currentRoute,
                 onNavigate = ::onFooterNavigate,
-                viewModel = viewModel<AnalyticsViewModel>()
+                viewModel = viewModel<AnalyticsViewModel>(),
+                unreadCount = unreadBadgeCount,
+                onNotificationClick = {
+                    navController.navigate(NavDestinations.Notifications.route)
+                }
             )
         }
 
-        // 3. Tab Practice Arena
+        // 3. Tab Practice
         composable(NavDestinations.Practice.route) {
             PracticeArenaScreen(
                 currentRoute = currentRoute,
-                onNavigate = ::onFooterNavigate
+                onNavigate = ::onFooterNavigate,
+                unreadCount = unreadBadgeCount,
+                onNotificationClick = {
+                    navController.navigate(NavDestinations.Notifications.route)
+                }
             )
         }
 
         // 4. Tab Profile
         composable(NavDestinations.Profile.route) {
+            val profileViewModel = viewModel<ProfileViewModel>()
             ProfileScreen(
                 currentRoute = currentRoute,
                 onNavigate = ::onFooterNavigate,
-                onNotificationClick = {},
+                viewModel = profileViewModel,
+                unreadCount = unreadBadgeCount,
+                onNotificationClick = {
+                    navController.navigate(NavDestinations.Notifications.route)
+                },
                 onLogOutClick = {
-                    TokenManager.clear()
-                    navController.navigate(NavDestinations.Welcome.route) {
-                        popUpTo(0) { inclusive = true }
+                    // Huỷ token trên server trước, sau đó xoá TokenManager local để logout
+                    FCMHelper.deleteFCMToken(context) {
+                        TokenManager.clear()
+                        navController.navigate(NavDestinations.Welcome.route) {
+                            popUpTo(0) { inclusive = true }
+                        }
                     }
+                }
+            )
+        }
+
+        // 5. Màn hình Notifications
+        composable(NavDestinations.Notifications.route) {
+            val notifViewModel = viewModel<NotificationViewModel>()
+            NotificationScreen(
+                onBackClick = { navController.popBackStack() },
+                viewModel = notifViewModel,
+                onNotificationClick = { notif ->
+                    when (notif.type) {
+                        "daily_reminder", "review_due" -> {
+                            navController.navigate(NavDestinations.Practice.route) {
+                                popUpTo(NavDestinations.Learning.route)
+                            }
+                        }
+                        "streak_milestone", "achievement" -> {
+                            navController.navigate(NavDestinations.Analytics.route) {
+                                popUpTo(NavDestinations.Learning.route)
+                            }
+                        }
+                    }
+                    // Làm tươi nóng badge ngay lập tức
+                    NotificationBadgeManager.refreshBadge()
                 }
             )
         }

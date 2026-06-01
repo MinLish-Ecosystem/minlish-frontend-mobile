@@ -1,5 +1,6 @@
 package com.minlish.app
 
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -18,6 +19,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         TokenManager.init(applicationContext)
+        requestNotificationPermissionIfNeeded()
         enableEdgeToEdge()
         setContent {
             MinLishMobileTheme {
@@ -37,6 +39,19 @@ class MainActivity : ComponentActivity() {
                         NavDestinations.Learning.route
                     else
                         NavDestinations.Welcome.route
+                )
+            }
+        }
+    }
+
+    private fun requestNotificationPermissionIfNeeded() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)
+                != android.content.pm.PackageManager.PERMISSION_GRANTED
+            ) {
+                requestPermissions(
+                    arrayOf(android.Manifest.permission.POST_NOTIFICATIONS),
+                    1001
                 )
             }
         }

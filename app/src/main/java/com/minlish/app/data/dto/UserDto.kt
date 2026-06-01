@@ -9,3 +9,8 @@ data class UserDto(
     val avatar: String? = null,
     val isVerified: Boolean
 )
+
+data class UpdateProfileRequest(
+    val name: String,
+    val avatar: String? = null
+)

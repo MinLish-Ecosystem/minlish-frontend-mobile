@@ -3,6 +3,8 @@ package com.minlish.app.di
 import com.minlish.app.data.local.TokenManager
 import com.minlish.app.data.remote.AuthApi
 import com.minlish.app.data.remote.StatsApi
+import com.minlish.app.data.remote.UserApi
+import com.minlish.app.data.remote.NotificationApi
 import com.minlish.app.data.remote.TokenAuthenticator
 import com.minlish.app.data.remote.interceptor.AuthInterceptor
 import com.minlish.app.data.remote.interceptor.ErrorInterceptor
@@ -34,4 +36,6 @@ object NetworkModule {
 
     val authApi: AuthApi = retrofit.create(AuthApi::class.java)
     val statsApi: StatsApi = retrofit.create(StatsApi::class.java)
+    val userApi: UserApi = retrofit.create(UserApi::class.java)
+    val notificationApi: NotificationApi = retrofit.create(NotificationApi::class.java)
 }

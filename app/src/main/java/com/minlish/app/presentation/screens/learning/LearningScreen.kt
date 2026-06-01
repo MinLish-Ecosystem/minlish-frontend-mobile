@@ -237,7 +237,12 @@ fun CreateNewSetCard(onCreateNewSetCard: () -> Unit,modifier: Modifier){
 }
 // viết lại vocabSet để truyền tham số
 @Composable
-fun LearningDashBoardScreen(currentRoute: String,onNavigate: (String) -> Unit){
+fun LearningDashBoardScreen(
+    currentRoute: String,
+    onNavigate: (String) -> Unit,
+    unreadCount: Int = 0,
+    onNotificationClick: () -> Unit = {}
+) {
     val recentSets = listOf(
         VocabSet("1", "Business English", 42, Icons.Default.Work, 0xFF3B82F6, true),
         VocabSet("2", "Travel Survival", 18, Icons.Default.FlightTakeoff, 0xFF10B981, true),
@@ -250,7 +255,8 @@ fun LearningDashBoardScreen(currentRoute: String,onNavigate: (String) -> Unit){
             AppHeader(
                 userName = "QuangLe",
                 userAvatarUrl = "https://api.dicebear.com/7.x/avataaars/png?seed=QuangLe",
-                onNotificationClick = {}
+                unreadCount = unreadCount,
+                onNotificationClick = onNotificationClick
             )
         },
         bottomBar = {

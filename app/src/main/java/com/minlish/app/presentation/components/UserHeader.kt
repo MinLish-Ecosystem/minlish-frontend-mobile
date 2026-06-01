@@ -45,11 +45,12 @@ object NotificationColors {
     val PressedIconTint = Color.White
 }
 
-@OptIn(DelicateCoroutinesApi::class)
+@OptIn(DelicateCoroutinesApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun AppHeader(
     userName: String,
     userAvatarUrl: String,
+    unreadCount: Int = 0,
     onNotificationClick: () -> Unit,
     onUserClick: () -> Unit={},
     modifier: Modifier = Modifier
@@ -111,21 +112,37 @@ fun AppHeader(
                     shape = CircleShape
                 )
             ) {
-                Icon(
-                    imageVector = Icons.Filled.Notifications,
-                    contentDescription = "Notifications",
-                    tint = if (isNotificationActive) NotificationColors.PressedIconTint else NotificationColors.NormalIconTint
-                )
+                BadgedBox(
+                    badge = {
+                        if (unreadCount > 0) {
+                            Badge(containerColor = Color(0xFFEF4444)) {
+                                Text(
+                                    text = if (unreadCount > 99) "99+" else unreadCount.toString(),
+                                    color = Color.White,
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                    }
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Notifications,
+                        contentDescription = "Notifications",
+                        tint = if (isNotificationActive) NotificationColors.PressedIconTint else NotificationColors.NormalIconTint
+                    )
+                }
             }
         }
     }
 }
 
-@OptIn(DelicateCoroutinesApi::class)
+@OptIn(DelicateCoroutinesApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun AppHeader(
     userName: String,
     userAvatarId: Int,
+    unreadCount: Int = 0,
     onNotificationClick: () -> Unit,
     onUserClick: () -> Unit={},
     modifier: Modifier = Modifier
@@ -188,11 +205,26 @@ fun AppHeader(
                     shape = CircleShape
                 )
             ) {
-                Icon(
-                    imageVector = Icons.Filled.Notifications,
-                    contentDescription = "Notifications",
-                    tint = if (isNotificationActive) NotificationColors.PressedIconTint else NotificationColors.NormalIconTint
-                )
+                BadgedBox(
+                    badge = {
+                        if (unreadCount > 0) {
+                            Badge(containerColor = Color(0xFFEF4444)) {
+                                Text(
+                                    text = if (unreadCount > 99) "99+" else unreadCount.toString(),
+                                    color = Color.White,
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                    }
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Notifications,
+                        contentDescription = "Notifications",
+                        tint = if (isNotificationActive) NotificationColors.PressedIconTint else NotificationColors.NormalIconTint
+                    )
+                }
             }
         }
     }

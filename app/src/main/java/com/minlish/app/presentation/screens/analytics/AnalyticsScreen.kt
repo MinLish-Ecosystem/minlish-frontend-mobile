@@ -37,7 +37,9 @@ import com.minlish.app.ui.theme.*
 fun AnalyticsScreen(
     currentRoute: String = "Analytics",
     onNavigate: (String) -> Unit = {},
-    viewModel: AnalyticsViewModel = viewModel()
+    viewModel: AnalyticsViewModel = viewModel(),
+    unreadCount: Int = 0,
+    onNotificationClick: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -47,7 +49,8 @@ fun AnalyticsScreen(
             AppHeader(
                 userName            = "QuangLe",
                 userAvatarUrl       = "https://api.dicebear.com/7.x/avataaars/png?seed=QuangLe",
-                onNotificationClick = {}
+                unreadCount         = unreadCount,
+                onNotificationClick = onNotificationClick
             )
         },
         bottomBar      = {
