@@ -21,16 +21,29 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.minlish.app.ui.theme.*
 import com.minlish.app.presentation.components.TopBar
+import com.minlish.app.presentation.screens.auth.viewmodels.AuthViewModel
+import com.minlish.app.presentation.screens.auth.viewmodels.ForgetPasswordViewModel
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ForgotPasswordScreen(
+    viewModel: ForgetPasswordViewModel = viewModel(),
     onBackClick: () -> Unit = {},
-    onSendResetLink: (email: String) -> Unit = {},
+    onSendResetSuccess: () -> Unit = {},
     onReturnToLogin: () -> Unit = {}
 ) {
     var email by remember { mutableStateOf("") }
+
+    LaunchedEffect(viewModel.forgotPasswordSuccess) {
+        if (viewModel.forgotPasswordSuccess) {
+            onSendResetSuccess()
+        }
+    }
+
+
     Scaffold(
         topBar = {
             TopBar(onBackClick = onBackClick)
@@ -48,7 +61,9 @@ fun ForgotPasswordScreen(
             ForgotPasswordCard(
                 email = email,
                 onEmailChange = {email = it},
-                onSendResetLink = { onSendResetLink(email)},
+                onSendResetLink = {email ->
+                    viewModel.forgotPassword(email)
+                },
                 onReturnToLogin = onReturnToLogin
             )
         }

@@ -44,9 +44,6 @@ import com.minlish.app.presentation.components.AppHeader
 import com.minlish.app.presentation.components.NotificationColors
 import com.minlish.app.presentation.components.Footer
 
-
-// for ui
-
 data class VocabSet(
     val id: String,
     val title: String,

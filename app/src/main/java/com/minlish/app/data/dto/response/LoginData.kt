@@ -1,4 +1,6 @@
-package com.minlish.app.data.dto
+package com.minlish.app.data.dto.response
+
+import com.minlish.app.data.dto.UserDto
 
 
 data class LoginData(
