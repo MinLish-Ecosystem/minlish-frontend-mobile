@@ -7,11 +7,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.rememberNavController
 import com.minlish.app.data.local.TokenManager
@@ -19,16 +15,7 @@ import com.minlish.app.data.sync.SyncManager
 import com.minlish.app.di.DatabaseModule
 import com.minlish.app.presentation.navigation.AuthNavHost
 import com.minlish.app.presentation.navigation.NavDestinations
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
-import com.minlish.app.presentation.components.AppHeader
-import com.minlish.app.presentation.screens.learning.FlashCardScreen
-import com.minlish.app.presentation.screens.learning.FlashcardViewModel
 import com.minlish.app.ui.theme.MinLishMobileTheme
-import com.minlish.app.presentation.screens.learning.HeroSessionCard
-import com.minlish.app.presentation.screens.learning.LearningDashBoardScreen
-import com.minlish.app.presentation.screens.learning.LearningViewModel
 import com.minlish.app.presentation.screens.practice.PracticeArenaScreen
 import com.minlish.app.presentation.screens.practice.PracticeViewModel
 import com.minlish.app.util.SessionExpiredEvent
@@ -44,7 +31,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             MinLishMobileTheme {
                 val navController = rememberNavController()
-                val syncManager = SyncManager(this)
+                val syncManager = SyncManager()
 
                 LaunchedEffect(Unit) {
                     if (TokenManager.isLoggedIn()) {
