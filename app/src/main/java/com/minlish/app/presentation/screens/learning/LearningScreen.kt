@@ -234,7 +234,15 @@ fun CreateNewSetCard(onCreateNewSetCard: () -> Unit,modifier: Modifier){
 }
 // viết lại vocabSet để truyền tham số
 @Composable
-fun LearningDashBoardScreen(currentRoute: String,onNavigate: (String) -> Unit){
+fun LearningDashBoardScreen(
+    currentRoute: String,
+    onNavigate: (String) -> Unit,
+    userName: String = "User",
+    userAvatarUrl: String = "",
+    unreadCount: Int = 0,
+    onNotificationClick: () -> Unit = {},
+    onUserClick: () -> Unit = {}
+) {
     val recentSets = listOf(
         VocabSet("1", "Business English", 42, Icons.Default.Work, 0xFF3B82F6, true),
         VocabSet("2", "Travel Survival", 18, Icons.Default.FlightTakeoff, 0xFF10B981, true),
@@ -245,7 +253,9 @@ fun LearningDashBoardScreen(currentRoute: String,onNavigate: (String) -> Unit){
         modifier = Modifier.fillMaxSize(),
         topBar = {
             AppHeader(
-                onNotificationClick = {}
+                unreadCount = unreadCount,
+                onNotificationClick = onNotificationClick,
+                onUserClick = onUserClick
             )
         },
         bottomBar = {

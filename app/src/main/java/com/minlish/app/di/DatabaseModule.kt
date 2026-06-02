@@ -7,15 +7,16 @@ import com.minlish.app.data.local.dao.UserDao
 object DatabaseModule {
     private var database: DatabaseManager? = null
 
-    fun getDatabase(context: Context): DatabaseManager {
-        return database ?: Room.databaseBuilder(
-            context.applicationContext,
-            DatabaseManager::class.java,
-            "minlish_database"
-        ).build().also { database = it }
+    fun init(context: Context) {
+        if (database == null) {
+            database = Room.databaseBuilder(
+                context.applicationContext,
+                DatabaseManager::class.java,
+                "minlish_database"
+            ).fallbackToDestructiveMigration().build()
+        }
     }
 
-    fun getUserDao(context: Context): UserDao {
-        return getDatabase(context).userDao()
-    }
+    val userDao: UserDao
+        get() = database?.userDao() ?: throw IllegalStateException("Database not initialized. Please call DatabaseModule.init(context) in Application class.")
 }

@@ -30,9 +30,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
-import com.minlish.app.presentation.screens.profile.ProfileViewModel
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.launch
+import com.minlish.app.R
+import com.minlish.app.presentation.screens.profile.ProfileViewModel
 
 object AppColors {
     val Surface = Color(0xFFFCF8FF)
@@ -48,28 +49,22 @@ object NotificationColors {
     val PressedIconTint = Color.White
 }
 
-@OptIn(DelicateCoroutinesApi::class)
+@OptIn(DelicateCoroutinesApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun AppHeader(
+    unreadCount: Int = 0,
     onNotificationClick: () -> Unit,
     onUserClick: () -> Unit={},
     modifier: Modifier = Modifier,
     viewModel: ProfileViewModel = viewModel()
 ) {
 
-    val user by viewModel.user.collectAsState()
-    val userName by remember(user) {
-        mutableStateOf(user?.name ?: "Anonymous")
-    }
-
-    val userAvatarUrl by remember(user) {
-        mutableStateOf(user?.avatar ?: "https://api.dicebear.com/7.x/avataaars/png?seed=QuangLe")
-    }
+    val state by viewModel.uiState.collectAsState()
 
     val textGradientBrush = Brush.linearGradient(
         colors = listOf(Color(0xFF667EEA), Color(0xFF764BA2))
     )
-    var isNotificationActive by remember {mutableStateOf(false)}
+    var isNotificationActive by remember { mutableStateOf(false) }
     Surface(
         color = Color.White,
         shadowElevation = 6.dp
@@ -90,17 +85,17 @@ fun AppHeader(
                     modifier = Modifier.size(40.dp).clip(CircleShape).clickable { onUserClick() }
                 ) {
                     AsyncImage(
-                        model = userAvatarUrl,
+                        model = if (state.avatar.isNullOrEmpty()) R.drawable.profile_img else state.avatar,
                         contentDescription = "User Avatar",
                         modifier = Modifier
                             .size(40.dp)
                             .clip(CircleShape),
-                        contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                        contentScale = ContentScale.Crop
                     )
                 }
 
                 Text(
-                    text = userName,
+                    text = state.displayName.ifEmpty { "User" },
                     style = MaterialTheme.typography.headlineSmall.copy(
                         fontWeight = FontWeight.Bold,
                         fontSize = 20.sp,
@@ -123,11 +118,26 @@ fun AppHeader(
                     shape = CircleShape
                 )
             ) {
-                Icon(
-                    imageVector = Icons.Filled.Notifications,
-                    contentDescription = "Notifications",
-                    tint = if (isNotificationActive) NotificationColors.PressedIconTint else NotificationColors.NormalIconTint
-                )
+                BadgedBox(
+                    badge = {
+                        if (unreadCount > 0) {
+                            Badge(containerColor = Color(0xFFEF4444)) {
+                                Text(
+                                    text = if (unreadCount > 99) "99+" else unreadCount.toString(),
+                                    color = Color.White,
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                    }
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Notifications,
+                        contentDescription = "Notifications",
+                        tint = if (isNotificationActive) NotificationColors.PressedIconTint else NotificationColors.NormalIconTint
+                    )
+                }
             }
         }
     }

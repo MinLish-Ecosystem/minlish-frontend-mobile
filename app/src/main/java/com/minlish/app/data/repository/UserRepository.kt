@@ -1,37 +1,84 @@
 package com.minlish.app.data.repository
 
-import android.content.Context
+import com.minlish.app.data.dto.DeleteFCMTokenRequest
+import com.minlish.app.data.dto.LearningProfileDto
+import com.minlish.app.data.dto.RegisterFCMTokenRequest
+import com.minlish.app.data.dto.UpdateLearningProfileRequest
+import com.minlish.app.data.dto.UpdateProfileRequest
 import com.minlish.app.data.dto.UserDto
-import com.minlish.app.data.dto.response.ApiResponse
+import com.minlish.app.data.dto.UserPreferencesDto
 import com.minlish.app.data.local.TokenManager
-import com.minlish.app.data.local.dao.UserDao
 import com.minlish.app.data.local.entity.UserEntity
 import com.minlish.app.data.mapper.toEntity
-import com.minlish.app.data.remote.UserAPI
 import com.minlish.app.di.DatabaseModule
 import com.minlish.app.di.NetworkModule
 import kotlinx.coroutines.flow.Flow
 
-class UserRepository(context: Context) {
-
+class UserRepository {
     private val userApi = NetworkModule.userApi
-    private val userDao = DatabaseModule.getUserDao(context)
+    private val userDao = DatabaseModule.userDao
+    private val statsApi = NetworkModule.statsApi
 
-    fun getUserStream(userId: String): Flow<UserEntity?> {
+    fun getLocalUserProfile(): Flow<UserEntity?> {
+        val userId = TokenManager.getUserId() ?: ""
         return userDao.getUserById(userId)
     }
 
-    suspend fun syncUser(userId: String): Result<Unit> {
-        return try {
-            val response = userApi.getUserProfile()
-            if (response.success && response.data != null) {
-                userDao.insertUser(response.data.toEntity())
-                Result.success(Unit)
-            } else {
-                Result.failure(Exception(response.message))
-            }
-        } catch (e: Exception) {
-            Result.failure(e)
+    suspend fun refreshUserProfile(): Result<Unit> = runCatching {
+        val userDto = userApi.getProfile()
+        if (userDto.success && userDto.data != null) {
+            val user = userDto.data.toEntity()
+            userDao.insertUser(user)
         }
+    }
+
+    suspend fun getProfile(): Result<UserDto> = runCatching {
+        userApi.getProfile().data ?: throw Exception("Profile data is null")
+    }
+
+    suspend fun updateProfile(name: String, avatar: String? = null): Result<UserDto> = runCatching {
+        userApi.updateProfile(UpdateProfileRequest(name, avatar)).data
+            ?: throw Exception("Update profile failed")
+    }
+
+    suspend fun getLearningProfile(): Result<LearningProfileDto> = runCatching {
+        userApi.getLearningProfile().data
+            ?: throw Exception("Learning profile is null")
+    }
+
+    suspend fun updateLearningProfile(
+        goal: String,
+        dailyGoal: Int,
+        reviewPerDay: Int,
+        reminderTime: String,
+        pushNotification: Boolean,
+        emailNotification: Boolean
+    ): Result<LearningProfileDto> = runCatching {
+        userApi.updateLearningProfile(
+            UpdateLearningProfileRequest(
+                learningGoal = goal.lowercase(),
+                dailyGoal = dailyGoal,
+                reviewPerDay = reviewPerDay,
+                reminderTime = reminderTime,
+                preferences = UserPreferencesDto(
+                    pushNotification = pushNotification,
+                    emailNotification = emailNotification
+                )
+            )
+        ).data ?: throw Exception("Update learning profile failed")
+    }
+
+    suspend fun getCurrentStreak(): Result<Int> = runCatching {
+        statsApi.getDashboardStats().data?.streak?.current ?: 0
+    }
+
+    suspend fun registerFCMToken(token: String, deviceId: String): Result<Unit> = runCatching {
+        userApi.registerFCMToken(RegisterFCMTokenRequest(token, deviceId))
+        Unit
+    }
+
+    suspend fun deleteFCMToken(deviceId: String): Result<Unit> = runCatching {
+        userApi.deleteFCMToken(DeleteFCMTokenRequest(deviceId))
+        Unit
     }
 }
