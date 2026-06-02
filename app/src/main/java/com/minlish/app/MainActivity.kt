@@ -10,6 +10,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.rememberNavController
 import com.minlish.app.data.local.TokenManager
+import com.minlish.app.di.DatabaseModule
 import com.minlish.app.presentation.navigation.AuthNavHost
 import com.minlish.app.presentation.navigation.NavDestinations
 import com.minlish.app.ui.theme.MinLishMobileTheme
@@ -19,6 +20,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         TokenManager.init(applicationContext)
+        DatabaseModule.init(applicationContext)
         requestNotificationPermissionIfNeeded()
         enableEdgeToEdge()
         setContent {

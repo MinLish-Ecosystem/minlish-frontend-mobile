@@ -42,9 +42,9 @@ android {
 }
 
 dependencies {
-    implementation("androidx.room:room-runtime:2.6.1")
-    implementation("androidx.room:room-ktx:2.6.1")
-    ksp("androidx.room:room-compiler:2.6.1")
+    implementation("androidx.room:room-runtime:2.8.4")
+    implementation("androidx.room:room-ktx:2.8.4")
+    ksp("androidx.room:room-compiler:2.8.4")
     implementation("androidx.compose.material:material-icons-extended:1.7.8")
     implementation("androidx.compose.foundation:foundation:1.6.7")
     implementation("androidx.navigation:navigation-compose:2.9.8")
@@ -55,7 +55,6 @@ dependencies {
     implementation(libs.androidx.compose.animation)
     implementation(libs.androidx.compose.runtime)
     implementation(libs.androidx.material3)
-    implementation(libs.androidx.room.ktx)
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
     implementation(platform(libs.androidx.compose.bom))
