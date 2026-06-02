@@ -47,35 +47,65 @@ import com.minlish.app.ui.theme.*
 import com.minlish.app.R
 import com.minlish.app.presentation.components.AppHeader
 import com.minlish.app.presentation.components.Footer
+import androidx.compose.runtime.collectAsState
+import android.widget.Toast
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import coil.compose.AsyncImage
 
 @Composable
 fun ProfileScreen(
     currentRoute: String = "profile",
     onNavigate: (String) -> Unit = {},
-    userName: String = "Alex Johnson",
-    userLevel: String = "Intermediate Learner",
-    joinYear: String = "2023",
+    unreadCount: Int = 0,
     onNotificationClick: () -> Unit = {},
     onUserClick: () -> Unit = {},
-    onLogOutClick: () -> Unit
+    onLogOutClick: () -> Unit,
+    viewModel: ProfileViewModel = viewModel()
 ) {
-    var displayName by remember { mutableStateOf("Alex Johnson") }
-    var email by remember { mutableStateOf("alex@example.com") }
+    val state by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
+    
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: android.net.Uri? ->
+        uri?.let {
+            try {
+                val inputStream = context.contentResolver.openInputStream(it)
+                val bytes = inputStream?.readBytes()
+                inputStream?.close()
+                if (bytes != null) {
+                    val base64String = "data:image/jpeg;base64," + android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP)
+                    viewModel.uploadAvatar(base64String)
+                }
+            } catch (e: Exception) {
+                Toast.makeText(context, "Lỗi đọc ảnh: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
 
-    var selectedGoal by remember { mutableStateOf("General") }
-    var dailyWordTarget by remember { mutableIntStateOf(25) }
-    var dailyReviewTarget by remember { mutableIntStateOf(30) }
-    val currentStreak = 14
-
-    var pushNotifications by remember { mutableStateOf(true) }
-    var reminderTime by remember { mutableStateOf("20:00") }
-    var darkMode by remember { mutableStateOf(false) }
+    LaunchedEffect(state.saveSuccess) {
+        if (state.saveSuccess) {
+            Toast.makeText(context, "Cập nhật thành công!", Toast.LENGTH_SHORT).show()
+            viewModel.dismissSuccess()
+        }
+    }
+    LaunchedEffect(state.errorMessage) {
+        state.errorMessage?.let {
+            Toast.makeText(context, it, Toast.LENGTH_LONG).show()
+            viewModel.dismissError()
+        }
+    }
 
     Scaffold(
         topBar = {
             AppHeader(
-                userName = userName,
-                userAvatarId = R.drawable.profile_img,
+                userName = state.displayName.ifEmpty { "User" },
+                userAvatarUrl = state.avatar ?: "",
+                unreadCount = unreadCount,
                 onNotificationClick = onNotificationClick,
                 onUserClick = onUserClick,
             )
@@ -87,61 +117,72 @@ fun ProfileScreen(
                 onNavigate = onNavigate
             )
         }
-    ) {paddingValues ->
+    ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
                 .background(MinlishSurface)
         ) {
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .verticalScroll(rememberScrollState())
-            ) {
-
-                ProfileBannerSection(
-                    userName = userName,
-                    userLevel = userLevel,
-                    joinYear = joinYear
-                )
-
-                Column(
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(24.dp)
+            if (state.isLoading) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    PersonalInfoCard(
-                        displayName = displayName,
-                        email = email,
-                        onDisplayNameChange = { displayName = it },
-                        onEmailChange = { email = it }
-                    )
-                    LearningGoalsCard(
-                        selectedGoal = selectedGoal,
-                        dailyWordTarget = dailyWordTarget,
-                        dailyReviewTarget = dailyReviewTarget,
-                        currentStreak = currentStreak,
-                        onGoalChange = { selectedGoal = it },
-                        onWordTargetChange = { dailyWordTarget = it },
-                        onReviewTargetChange = { dailyReviewTarget = it }
-                    )
-
-                    AppSettingsCard(
-                        pushNotifications = pushNotifications,
-                        reminderTime = reminderTime,
-                        darkMode = darkMode,
-                        onPushNotificationsChange = { pushNotifications = it },
-                        onReminderTimeChange = { reminderTime = it },
-                        onLogOutClick = onLogOutClick
+                    CircularProgressIndicator(color = MinlishPrimary)
+                }
+            } else {
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    ProfileBannerSection(
+                        userName = state.displayName.ifEmpty { "User" },
+                        userLevel = state.userLevel,
+                        joinYear = state.joinYear,
+                        userAvatarUrl = state.avatar,
+                        onAvatarClick = { imagePickerLauncher.launch("image/*") }
                     )
 
-                    Spacer(modifier = Modifier.height(8.dp))
-                    SaveButton(                               // ← thêm dính đáy
-                        onSaveClick = {
-                            // TODO: gọi ProfileViewModel.save()
-                        }
-                    )
+                    Column(
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(24.dp)
+                    ) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        PersonalInfoCard(
+                            displayName = state.displayName,
+                            email = state.email,
+                            onDisplayNameChange = { viewModel.updateDisplayName(it) },
+                            onEmailChange = { viewModel.updateEmail(it) }
+                        )
+                        LearningGoalsCard(
+                            selectedGoal = state.selectedGoal,
+                            dailyWordTarget = state.dailyWordTarget,
+                            dailyReviewTarget = state.dailyReviewTarget,
+                            currentStreak = state.currentStreak,
+                            onGoalChange = { viewModel.updateSelectedGoal(it) },
+                            onWordTargetChange = { viewModel.updateWordTarget(it) },
+                            onReviewTargetChange = { viewModel.updateReviewTarget(it) }
+                        )
+
+                        AppSettingsCard(
+                            pushNotifications = state.pushNotifications,
+                            emailNotifications = state.emailNotifications,
+                            reminderTime = state.reminderTime,
+                            darkMode = state.darkModeEnabled,
+                            onPushNotificationsChange = { viewModel.updatePushNotifications(it) },
+                            onEmailNotificationsChange = { viewModel.updateEmailNotifications(it) },
+                            onReminderTimeChange = { viewModel.updateReminderTime(it) },
+                            onDarkModeChange = { viewModel.updateDarkMode(it) },
+                            onLogOutClick = onLogOutClick
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        SaveButton(
+                            isSaving = state.isSaving,
+                            onSaveClick = { viewModel.saveChanges() }
+                        )
+                    }
                 }
             }
         }
@@ -152,7 +193,9 @@ fun ProfileScreen(
 private fun ProfileBannerSection(
     userName: String,
     userLevel: String,
-    joinYear: String
+    joinYear: String,
+    userAvatarUrl: String?,
+    onAvatarClick: () -> Unit
 ) {
     Box(
         modifier = Modifier
@@ -202,7 +245,8 @@ private fun ProfileBannerSection(
                         width = 4.dp,
                         color = MinlishSurfaceLowest,
                         shape = CircleShape
-                    ),
+                    )
+                    .clickable { onAvatarClick() },
                 contentAlignment = Alignment.Center
             ) {
                 Box(
@@ -211,9 +255,9 @@ private fun ProfileBannerSection(
                         .background(MinlishSurfaceContainerHigh),
                     contentAlignment = Alignment.Center
                 ) {
-                    Image(
-                        painter = painterResource(R.drawable.profile_img),
-                        contentDescription = null,
+                    AsyncImage(
+                        model = if (userAvatarUrl.isNullOrEmpty()) R.drawable.profile_img else userAvatarUrl,
+                        contentDescription = "User Avatar",
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop
                     )
@@ -273,7 +317,8 @@ private fun PersonalInfoCard(
                 value = email,
                 onValueChange = onEmailChange,
                 leadingIcon = Icons.Outlined.Email,
-                keyboardType = KeyboardType.Email
+                keyboardType = KeyboardType.Email,
+                readOnly = true
             )
         }
     }
@@ -310,7 +355,8 @@ private fun ProfileTextField(
     value: String,
     onValueChange: (String) -> Unit,
     leadingIcon: ImageVector,
-    keyboardType: KeyboardType = KeyboardType.Text
+    keyboardType: KeyboardType = KeyboardType.Text,
+    readOnly: Boolean = false
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(
@@ -320,11 +366,12 @@ private fun ProfileTextField(
             color = MinlishOnSurfaceVariant,
             letterSpacing = 0.1.sp
         )
-
+ 
         OutlinedTextField(
             value = value,
             onValueChange = onValueChange,
             modifier = Modifier.fillMaxWidth(),
+            readOnly = readOnly,
             leadingIcon = {
                 Icon(
                     imageVector = leadingIcon,
@@ -426,7 +473,7 @@ private fun GoalDropdown(
 
         ExposedDropdownMenuBox(
             expanded = expanded,
-            onExpandedChange = {expanded != expanded}
+            onExpandedChange = { expanded = it }
         ) {
             OutlinedTextField(
                 value = selectedGoal,
@@ -574,10 +621,13 @@ private fun StreakBanner(currentStreak: Int) {
 @Composable
 private fun AppSettingsCard(
     pushNotifications: Boolean,
+    emailNotifications: Boolean,
     reminderTime: String,
     darkMode: Boolean,
     onPushNotificationsChange: (Boolean) -> Unit,
+    onEmailNotificationsChange: (Boolean) -> Unit,
     onReminderTimeChange: (String) -> Unit,
+    onDarkModeChange: (Boolean) -> Unit,
     onLogOutClick: () -> Unit
 ) {
     Surface(
@@ -599,10 +649,18 @@ private fun AppSettingsCard(
 
             SettingsToggleRow(
                 title = "Push Notifications",
-                subtitle =  "Daily reminders & streaks",
+                subtitle = "Daily reminders & streaks",
                 checked = pushNotifications,
                 onCheckedChange = onPushNotificationsChange,
                 activeColor = MinlishSuccess
+            )
+
+            SettingsToggleRow(
+                title = "Email Notifications",
+                subtitle = "Receive emails when offline",
+                checked = emailNotifications,
+                onCheckedChange = onEmailNotificationsChange,
+                activeColor = MinlishInfo
             )
 
             SettingsTimeRow(
@@ -610,6 +668,14 @@ private fun AppSettingsCard(
                 subtitle = "When to send daily notification",
                 time = reminderTime,
                 onTimeChange = onReminderTimeChange
+            )
+
+            SettingsToggleRow(
+                title = "Dark Mode",
+                subtitle = "Coming soon",
+                checked = darkMode,
+                onCheckedChange = onDarkModeChange,
+                activeColor = Color(0xFF6366F1)
             )
 
             HorizontalDivider(color = Color(0xFFF3F4F6))
@@ -623,24 +689,18 @@ private fun AppSettingsCard(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Outlined.Logout,
-                            contentDescription = null,
-                            tint = MinlishError,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Text(
-                            text = "Log Out",
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = MinlishError
-                        )
-                    }
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Outlined.Logout,
+                        contentDescription = null,
+                        tint = MinlishError,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Text(
+                        text = "Log Out",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = MinlishError
+                    )
                 }
             }
         }
@@ -768,7 +828,10 @@ private fun SettingsTimeRow(
 }
 
 @Composable
-private fun SaveButton(onSaveClick: () -> Unit) {
+private fun SaveButton(
+    isSaving: Boolean = false,
+    onSaveClick: () -> Unit
+) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -784,21 +847,34 @@ private fun SaveButton(onSaveClick: () -> Unit) {
             .padding(horizontal = 16.dp)
             .padding(top = 16.dp, bottom = 24.dp)
     ) {
+        val backgroundModifier = if (isSaving) {
+            Modifier.background(Color(0xFFa5b4fc))
+        } else {
+            Modifier.background(MinlishGradient)
+        }
         Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(MinlishGradient)
-                    .clickable {onSaveClick()},
-                contentAlignment = Alignment.Center
-            ) {
-            Text(
-                text = "Save Changes",
-                fontSize = 20.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = Color.White
-            )
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(52.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .then(backgroundModifier)
+                .clickable(enabled = !isSaving) { onSaveClick() },
+            contentAlignment = Alignment.Center
+        ) {
+            if (isSaving) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(24.dp),
+                    color = Color.White,
+                    strokeWidth = 2.dp
+                )
+            } else {
+                Text(
+                    text = "Save Changes",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color.White
+                )
+            }
         }
     }
 }

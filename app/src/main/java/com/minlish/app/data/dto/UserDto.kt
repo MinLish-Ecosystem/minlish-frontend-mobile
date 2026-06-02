@@ -9,5 +9,10 @@ data class UserDto(
     val avatar: String? = null,
     val isVerified: Boolean,
     val createdAt: String? = null,
-    val updatedAt: String? =  null
+    val updatedAt: String? = null
+)
+
+data class UpdateProfileRequest(
+    val name: String,
+    val avatar: String? = null
 )

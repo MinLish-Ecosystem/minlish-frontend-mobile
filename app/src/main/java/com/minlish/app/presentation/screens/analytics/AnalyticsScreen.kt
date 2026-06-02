@@ -35,9 +35,14 @@ import com.minlish.app.ui.theme.*
 
 @Composable
 fun AnalyticsScreen(
-    currentRoute: String = "Analytics",
+    currentRoute: String = "analytics",
     onNavigate: (String) -> Unit = {},
-    viewModel: AnalyticsViewModel = viewModel()
+    userName: String = "User",
+    userAvatarUrl: String = "",
+    viewModel: AnalyticsViewModel = viewModel(),
+    unreadCount: Int = 0,
+    onNotificationClick: () -> Unit = {},
+    onUserClick: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -45,7 +50,11 @@ fun AnalyticsScreen(
         modifier       = Modifier.fillMaxSize(),
         topBar         = {
             AppHeader(
-                onNotificationClick = {}
+                userName            = userName,
+                userAvatarUrl       = userAvatarUrl,
+                unreadCount         = unreadCount,
+                onNotificationClick = onNotificationClick,
+                onUserClick         = onUserClick
             )
         },
         bottomBar      = {

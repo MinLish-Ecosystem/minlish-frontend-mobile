@@ -197,7 +197,15 @@ fun PracticeArenaCard(practiceMode: PracticeMode, onClick: () -> Unit){
     }
 }
 @Composable
-fun PracticeArenaScreen(currentRoute: String,onNavigate: (String) -> Unit){
+fun PracticeArenaScreen(
+    currentRoute: String,
+    onNavigate: (String) -> Unit,
+    userName: String = "User",
+    userAvatarUrl: String = "",
+    unreadCount: Int = 0,
+    onNotificationClick: () -> Unit = {},
+    onUserClick: () -> Unit = {}
+) {
     val practiceModes= listOf(
         PracticeMode(
             id="smart_review",
@@ -239,9 +247,11 @@ fun PracticeArenaScreen(currentRoute: String,onNavigate: (String) -> Unit){
         modifier = Modifier.fillMaxSize(),
         topBar = {
             AppHeader(
-                userName = "QuangLe",
-                userAvatarUrl = "https://api.dicebear.com/7.x/avataaars/png?seed=QuangLe",
-                onNotificationClick = {}
+                userName = userName,
+                userAvatarUrl = userAvatarUrl,
+                unreadCount = unreadCount,
+                onNotificationClick = onNotificationClick,
+                onUserClick = onUserClick
             )
         },
         bottomBar = {
