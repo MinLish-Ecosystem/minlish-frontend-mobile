@@ -7,12 +7,40 @@ import com.minlish.app.data.dto.UpdateLearningProfileRequest
 import com.minlish.app.data.dto.UpdateProfileRequest
 import com.minlish.app.data.dto.UserDto
 import com.minlish.app.data.dto.UserPreferencesDto
+import com.minlish.app.data.local.TokenManager
+import com.minlish.app.data.local.entity.UserEntity
+import com.minlish.app.di.DatabaseModule
 import com.minlish.app.di.NetworkModule
+import kotlinx.coroutines.flow.Flow
 
 class UserRepository {
     private val userApi = NetworkModule.userApi
     private val statsApi = NetworkModule.statsApi
+    private val userDao = DatabaseModule.userDao
 
+    // ── Local Database Caching (Upstream) ───────────────────────────────────
+    fun getLocalUserProfile(): Flow<UserEntity?> {
+        val userId = TokenManager.getUserId() ?: ""
+        return userDao.getUserById(userId)
+    }
+
+    suspend fun refreshUserProfile(): Result<Unit> = runCatching {
+        val userDto = userApi.getProfile()
+        val user = UserEntity(
+            id = userDto.data?.id ?: "",
+            name = userDto.data?.name ?: "",
+            email = userDto.data?.email ?: "",
+            avatar = userDto.data?.avatar,
+            role = userDto.data?.role ?: "user",
+            isVerified = userDto.data?.isVerified ?: false,
+            createdAt = userDto.data?.createdAt,
+            updatedAt = userDto.data?.updatedAt
+        )
+        userDao.insertUser(user)
+        Unit
+    }
+
+    // ── Network Operations (HEAD) ───────────────────────────────────────────
     suspend fun getProfile(): Result<UserDto> = runCatching {
         userApi.getProfile().data ?: throw Exception("Profile data is null")
     }

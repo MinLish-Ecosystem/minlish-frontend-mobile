@@ -21,16 +21,38 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.minlish.app.ui.theme.*
 import com.minlish.app.presentation.components.TopBar
+import com.minlish.app.presentation.screens.auth.viewmodels.AuthViewModel
+import com.minlish.app.presentation.screens.auth.viewmodels.ForgetPasswordUiEvent
+import com.minlish.app.presentation.screens.auth.viewmodels.ForgetPasswordViewModel
+import kotlinx.coroutines.flow.collectLatest
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ForgotPasswordScreen(
+    viewModel: ForgetPasswordViewModel = viewModel(),
     onBackClick: () -> Unit = {},
-    onSendResetLink: (email: String) -> Unit = {},
+    onSendResetSuccess: () -> Unit = {},
     onReturnToLogin: () -> Unit = {}
 ) {
     var email by remember { mutableStateOf("") }
+
+    LaunchedEffect(Unit) {
+        viewModel.uiEvent.collectLatest { event ->
+            when (event) {
+                is ForgetPasswordUiEvent.ForgotPasswordSuccess -> {
+                    onSendResetSuccess()
+                }
+                else -> {
+
+                }
+            }
+        }
+    }
+
+
     Scaffold(
         topBar = {
             TopBar(onBackClick = onBackClick)
@@ -46,9 +68,12 @@ fun ForgotPasswordScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             ForgotPasswordCard(
+                isLoading = viewModel.isLoading,
                 email = email,
                 onEmailChange = {email = it},
-                onSendResetLink = { onSendResetLink(email)},
+                onSendResetLink = {email ->
+                    viewModel.forgotPassword(email)
+                },
                 onReturnToLogin = onReturnToLogin
             )
         }
@@ -57,6 +82,7 @@ fun ForgotPasswordScreen(
 
 @Composable
 private fun ForgotPasswordCard(
+    isLoading: Boolean,
     email: String,
     onEmailChange: (String) -> Unit,
     onSendResetLink: (String) -> Unit,
@@ -107,13 +133,23 @@ private fun ForgotPasswordCard(
             }
             TextButton(
                 onClick = onReturnToLogin,
+                enabled = !isLoading
                 ) {
-                Text(
-                    text = "Return to Log In",
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MinlishPrimary,
-                )
+                if (isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = Color.White.copy(alpha = 0.5f),
+                        strokeWidth = 2.5.dp
+                    )
+                }
+                else {
+                    Text(
+                        text = "Return to Log In",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MinlishPrimary,
+                    )
+                }
             }
         }
     }

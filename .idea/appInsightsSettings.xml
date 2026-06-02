@@ -8,10 +8,10 @@
             <InsightsFilterSettings>
               <option name="connection">
                 <ConnectionSetting>
-                  <option name="appId" value="PLACEHOLDER" />
-                  <option name="mobileSdkAppId" value="" />
-                  <option name="projectId" value="" />
-                  <option name="projectNumber" value="" />
+                  <option name="appId" value="com.minlish.app" />
+                  <option name="mobileSdkAppId" value="1:831655266341:android:0a673e5a20f20d0d7317cc" />
+                  <option name="projectId" value="minlish-mobile" />
+                  <option name="projectNumber" value="831655266341" />
                 </ConnectionSetting>
               </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />

@@ -1,53 +1,64 @@
 package com.minlish.app.presentation.screens.auth
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
+import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.delay
 import com.minlish.app.presentation.components.TopBar
-import com.minlish.app.presentation.screens.auth.components.ProgressHeader
+import com.minlish.app.presentation.screens.auth.components.OtpInputField
+import com.minlish.app.presentation.screens.auth.viewmodels.AuthUiEvent
+import com.minlish.app.presentation.screens.auth.viewmodels.AuthViewModel
 import com.minlish.app.ui.theme.*
+import kotlinx.coroutines.flow.collectLatest
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VerifyEmailScreen(
-    email:String = "vamsi.vamsi@fsmk.com",
     onBackClick: () -> Unit = {},
-    onVerifyClick: (otp: String) -> Unit = {},
+    onVerifyEmailSuccess: () -> Unit = {},
     onChangeEmail: () -> Unit = {},
-    onResendCode: () -> Unit = {}
+    viewModel: AuthViewModel = viewModel()
 ) {
+    val email = viewModel.email
+
     var otpValue by remember { mutableStateOf("") }
     var secondsLeft by remember { mutableIntStateOf(599) }
+
     LaunchedEffect(Unit) {
         while (secondsLeft > 0) {
             delay(1000)
             secondsLeft--
         }
     }
+
+    LaunchedEffect(Unit) {
+        viewModel.uiEvent.collectLatest { event ->
+            when (event) {
+                is AuthUiEvent.VerifyEmailSuccess -> {
+                    onVerifyEmailSuccess()
+                }
+                else -> {}
+            }
+        }
+    }
+
     val minutes = secondsLeft / 60
     val seconds = secondsLeft % 60
     val timerText = "%d:%02d".format(minutes, seconds)
@@ -71,14 +82,20 @@ fun VerifyEmailScreen(
             verticalArrangement = Arrangement.spacedBy(32.dp)
         ) {
             VerifyEmailCard(
+                isLoading = viewModel.isLoading,
                 email = email,
                 otpValue = otpValue,
                 timerText = timerText,
                 secondsLeft = secondsLeft,
                 onChangeEmail = onChangeEmail,
                 onOtpChange = { if (it.length <= 6) otpValue = it },
-                onResendCode = onResendCode,
-                onVerifyClick = {onVerifyClick(otpValue)}
+                onResendCode = {
+                    viewModel.resendVerifyEmailOtp()
+                    secondsLeft = 599
+                },
+                onVerifyClick = {
+                    viewModel.verifyEmail(email, otpValue)
+                }
             )
         }
     }
@@ -159,72 +176,6 @@ private fun VerifyEmailHeader(
 }
 
 @Composable
-private fun OptInputField(
-    otpValue: String,
-    onOtpChange: (String) -> Unit
-) {
-    val focusRequester = remember { FocusRequester() }
-    LaunchedEffect(Unit) {
-        focusRequester.requestFocus()
-    }
-
-    Box(contentAlignment = Alignment.Center) {
-        BasicTextField(
-            value = otpValue,
-            onValueChange = onOtpChange,
-            modifier = Modifier
-                .size(1.dp)
-                .focusRequester(focusRequester),
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.NumberPassword
-            ),
-            cursorBrush = SolidColor(Color.Transparent)
-        )
-    }
-
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        repeat(6) {index ->
-            val char = otpValue.getOrNull(index)
-            val isFocused = index == otpValue.length
-
-            Box(
-                modifier = Modifier
-                    .size(width = 44.dp, height = 52.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(Color.White)
-                    .border(
-                        width = if (isFocused) 2.dp else 1.dp,
-                        color = when {
-                            isFocused -> MinlishPrimary
-                            char != null -> MinlishPrimary.copy(alpha = 0.5f)
-                            else -> MinlishOutlineVariant
-                        },
-                        shape = RoundedCornerShape(8.dp)
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                if (char != null) {
-                    Text(
-                        text = char.toString(),
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MinlishOnSurface
-                    )
-                }
-                if (isFocused && char == null) {
-                    Box(
-                        modifier = Modifier
-                            .width(2.dp)
-                            .height(24.dp)
-                            .background(MinlishPrimary)
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
 private fun VerifyEmailHints(
     timerText: String,
     secondsLeft: Int,
@@ -275,6 +226,7 @@ private fun VerifyEmailHints(
 
 @Composable
 private fun VerifyEmailCard(
+    isLoading: Boolean,
     email: String,
     otpValue: String,
     timerText: String,
@@ -299,7 +251,7 @@ private fun VerifyEmailCard(
                 email = email,
                 onChangeEmail = onChangeEmail
             )
-            OptInputField(
+            OtpInputField(
                 otpValue = otpValue,
                 onOtpChange = onOtpChange
             )
@@ -319,21 +271,31 @@ private fun VerifyEmailCard(
                 Button(
                     onClick = { onVerifyClick(otpValue) },
                     modifier = Modifier.fillMaxSize(),
+                    enabled = !isLoading,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color.Transparent,
                         disabledContainerColor = Color.Transparent
                     ),
                     elevation = null
                 ) {
-                    Text(
-                        text = "Verify",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = if (otpValue.length == 6)
-                            Color.White
-                        else
-                            Color.White.copy(alpha = 0.5f)
-                    )
+                    if (isLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            color = Color.White.copy(alpha = 0.5f),
+                            strokeWidth = 2.5.dp
+                        )
+                    }
+                    else {
+                        Text(
+                            text = "Verify",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = if (otpValue.length == 6)
+                                Color.White
+                            else
+                                Color.White.copy(alpha = 0.5f)
+                        )
+                    }
                 }
             }
         }

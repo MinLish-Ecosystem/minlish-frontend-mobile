@@ -5,16 +5,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navArgument
 import com.minlish.app.data.local.TokenManager
 import com.minlish.app.presentation.screens.analytics.AnalyticsScreen
 import com.minlish.app.presentation.screens.analytics.AnalyticsViewModel
 import com.minlish.app.presentation.screens.auth.*
+import com.minlish.app.presentation.screens.auth.viewmodels.AuthViewModel
+import com.minlish.app.presentation.screens.auth.viewmodels.ForgetPasswordViewModel
 import com.minlish.app.presentation.screens.learning.LearningDashBoardScreen
 import com.minlish.app.presentation.screens.notifications.NotificationScreen
 import com.minlish.app.presentation.screens.notifications.NotificationViewModel
@@ -30,7 +30,7 @@ import com.minlish.app.util.NotificationBadgeManager
 fun AuthNavHost(
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController(),
-    startDestination: String = NavDestinations.Welcome.route
+    startDestination: String = NavDestinations.Welcome.route,
 ) {
     val currentBackStack by navController.currentBackStackEntryAsState()
     val currentRoute = currentBackStack?.destination?.route ?: NavDestinations.Learning.route
@@ -59,6 +59,8 @@ fun AuthNavHost(
             restoreState = true
         }
     }
+    val authViewModel: AuthViewModel = viewModel()
+    val forgotPasswordViewModel: ForgetPasswordViewModel = viewModel()
 
     NavHost(
         navController = navController,
@@ -76,6 +78,7 @@ fun AuthNavHost(
 
         composable(NavDestinations.Login.route) {
             LoginScreen(
+                viewModel = authViewModel,
                 onLoginSuccess = {
                     navController.navigate(NavDestinations.Learning.route) {
                         popUpTo(NavDestinations.Welcome.route) { inclusive = true }
@@ -89,40 +92,49 @@ fun AuthNavHost(
 
         composable(NavDestinations.Register.route) {
             RegisterScreen(
-                onRegisterSuccess = { email ->
-                    navController.navigate("${NavDestinations.VerifyEmail.route}/$email")
+                viewModel = authViewModel,
+                onRegisterSuccess = {
+                    navController.navigate(NavDestinations.VerifyEmail.route)
                 },
                 onSignInClick = { navController.navigate(NavDestinations.Login.route) }
             )
         }
 
-        composable(
-            route = NavDestinations.VerifyEmail.route,
-            arguments = listOf(navArgument("email") { type = NavType.StringType })
-        ) { backStackEntry ->
-            val email = backStackEntry.arguments?.getString("email") ?: ""
+        composable(NavDestinations.VerifyEmail.route) {
             VerifyEmailScreen(
-                email = email,
+                viewModel = authViewModel,
                 onBackClick = { navController.popBackStack() },
-                onVerifyClick = {
+                onVerifyEmailSuccess = {
                     navController.navigate(NavDestinations.LearningGoal.route) {
                         popUpTo(NavDestinations.Welcome.route) { inclusive = true }
                     }
                 },
                 onChangeEmail = { navController.popBackStack() },
-                onResendCode = { }
             )
         }
 
         composable(NavDestinations.ForgotPassword.route) {
             ForgotPasswordScreen(
-                onBackClick = { navController.popBackStack() },
-                onSendResetLink = { email ->
-                    navController.navigate(NavDestinations.VerifyEmail.createRoute(email))
+                viewModel = forgotPasswordViewModel,
+                onBackClick = { navController.popBackStack()},
+                onSendResetSuccess = {
+                    navController.navigate(NavDestinations.ResetPassword.route)
                 },
                 onReturnToLogin = {
                     navController.navigate(NavDestinations.Login.route) {
                         popUpTo(NavDestinations.Login.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        composable(NavDestinations.ResetPassword.route) {
+            ResetPasswordScreen(
+                viewModel = forgotPasswordViewModel,
+                onBackClick = { navController.popBackStack() },
+                onResetPasswordSuccess = {
+                    navController.navigate(NavDestinations.Login.route) {
+                        popUpTo(NavDestinations.Login.route) {inclusive = true}
                     }
                 }
             )

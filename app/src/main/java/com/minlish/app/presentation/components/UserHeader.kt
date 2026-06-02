@@ -12,6 +12,7 @@ import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -53,13 +54,13 @@ fun AppHeader(
     userAvatarUrl: String,
     unreadCount: Int = 0,
     onNotificationClick: () -> Unit,
-    onUserClick: () -> Unit={},
+    onUserClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val textGradientBrush = Brush.linearGradient(
         colors = listOf(Color(0xFF667EEA), Color(0xFF764BA2))
     )
-    var isNotificationActive by remember {mutableStateOf(false)}
+    var isNotificationActive by remember { mutableStateOf(false) }
     Surface(
         color = Color.White,
         shadowElevation = 6.dp

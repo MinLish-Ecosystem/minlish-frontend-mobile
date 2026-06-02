@@ -1,9 +1,12 @@
 package com.minlish.app.presentation.screens.auth
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.outlined.*
@@ -19,16 +22,25 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.minlish.app.presentation.screens.auth.components.SecurityCheckList
 import com.minlish.app.presentation.components.TopBar
+import com.minlish.app.presentation.screens.auth.components.OtpInputField
+import com.minlish.app.presentation.screens.auth.viewmodels.AuthViewModel
+import com.minlish.app.presentation.screens.auth.viewmodels.ForgetPasswordUiEvent
+import com.minlish.app.presentation.screens.auth.viewmodels.ForgetPasswordViewModel
 import com.minlish.app.ui.theme.*
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ResetPasswordScreen(
+    viewModel: ForgetPasswordViewModel = viewModel(),
     onBackClick: () -> Unit = {},
-    onResetPassword: (newPassword: String) -> Unit = {}
+    onResetPasswordSuccess: () -> Unit = {}
 ) {
+    var otpValue by remember { mutableStateOf("") }
     var newPassword by remember {mutableStateOf("")}
     var confirmPassword by remember { mutableStateOf("") }
     var newPasswordVisible by remember { mutableStateOf(false) }
@@ -38,6 +50,29 @@ fun ResetPasswordScreen(
     val hasUppercase = newPassword.any {it.isUpperCase()}
     val hasNumberOrSymbol = newPassword.any {!it.isLetterOrDigit() || it.isDigit()}
     val passwordsMatch = newPassword == confirmPassword && confirmPassword.isNotEmpty()
+    val otpComplete = otpValue.length == 6
+
+    var secondsLeft by remember { mutableIntStateOf(10) }
+
+    LaunchedEffect(Unit) {
+        viewModel.uiEvent.collectLatest { event ->
+            when (event) {
+                is ForgetPasswordUiEvent.ResetPasswordSuccess -> {
+                    onResetPasswordSuccess()
+                }
+                else -> {}
+            }
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        while (secondsLeft > 0) {
+            delay(1000)
+            secondsLeft--
+        }
+    }
+    val timerText = "%d:%02d".format(secondsLeft / 60, secondsLeft % 60)
+
 
     Scaffold(
         topBar = {
@@ -53,10 +88,25 @@ fun ResetPasswordScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
                 .padding(horizontal = 16.dp)
-                .padding(top = 32.dp, bottom = 48.dp),
+                .padding(top = 16.dp, bottom = 16.dp)
+                .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            Spacer(modifier = Modifier.height(16.dp))
+            OtpSection(
+                otpValue = otpValue,
+                timerText = timerText,
+                secondsLeft = secondsLeft,
+                onOtpChange = { if (it.length <= 6) otpValue = it },
+                onResendOTP = {
+                    viewModel.resendForgotPasswordEmail()
+                    secondsLeft = 599
+                }
+            )
+            HorizontalDivider(color = MinlishSurfaceContainerHigh)
+
             ResetPasswordCard(
+                isLoading = viewModel.isLoading,
                 newPassword = newPassword,
                 confirmPassword = confirmPassword,
                 newPasswordVisible = newPasswordVisible,
@@ -65,11 +115,14 @@ fun ResetPasswordScreen(
                 hasUppercase = hasUppercase,
                 hasNumberOrSymbol = hasNumberOrSymbol,
                 passwordsMatch = passwordsMatch,
+                otpComplete = otpComplete,
                 onNewPasswordChange = { newPassword = it },
                 onConfirmPasswordChange = { confirmPassword = it },
                 onToggleNewPassword = { newPasswordVisible = !newPasswordVisible },
                 onToggleConfirmPassword = { confirmPasswordVisible = !confirmPasswordVisible },
-                onResetPassword = { onResetPassword(newPassword) }
+                onResetPassword = {
+                    viewModel.resetPassword(newPassword, otpValue)
+                }
             )
         }
     }
@@ -77,6 +130,7 @@ fun ResetPasswordScreen(
 
 @Composable
 private fun ResetPasswordCard(
+    isLoading: Boolean,
     newPassword: String,
     confirmPassword: String,
     newPasswordVisible: Boolean,
@@ -85,6 +139,7 @@ private fun ResetPasswordCard(
     hasUppercase: Boolean,
     hasNumberOrSymbol: Boolean,
     passwordsMatch: Boolean,
+    otpComplete: Boolean,
     onNewPasswordChange: (String) -> Unit,
     onConfirmPasswordChange: (String) -> Unit,
     onToggleNewPassword: () -> Unit,
@@ -137,22 +192,31 @@ private fun ResetPasswordCard(
                 Button(
                     onClick = onResetPassword,
                     modifier = Modifier.fillMaxSize(),
-                    enabled = hasMinLength && hasUppercase && hasNumberOrSymbol && passwordsMatch,
+                    enabled = hasMinLength && hasUppercase && hasNumberOrSymbol && passwordsMatch && otpComplete && !isLoading,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color.Transparent,
                         disabledContentColor = Color.Transparent
                     ),
                     elevation = null
                 ) {
-                    Text(
-                        text = "Reset Password",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = if (hasMinLength && hasUppercase && hasNumberOrSymbol && passwordsMatch)
-                                    Color.White
-                                else
-                                    Color.White.copy(alpha = 0.5f)
-                    )
+                    if (isLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            color = Color.White.copy(alpha = 0.5f),
+                            strokeWidth = 2.5.dp
+                        )
+                    }
+                    else {
+                        Text(
+                            text = "Reset Password",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = if (hasMinLength && hasUppercase && hasNumberOrSymbol && passwordsMatch)
+                                Color.White
+                            else
+                                Color.White.copy(alpha = 0.5f)
+                        )
+                    }
                 }
             }
         }
@@ -270,6 +334,85 @@ private fun PasswordInputField(
     }
 }
 
+
+@Composable
+private fun OtpSection(
+    otpValue: String,
+    timerText: String,
+    secondsLeft: Int,
+    onOtpChange: (String) -> Unit,
+    onResendOTP: () -> Unit
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text(
+                text = "Enter OTP Code",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = MinlishOnSurface
+            )
+            Text(
+                text = "Check your email for the 6-digit code",
+                fontSize = 13.sp,
+                color = MinlishOnSurfaceVariant,
+                textAlign = TextAlign.Center
+            )
+        }
+
+        OtpInputField(
+            otpValue = otpValue,
+            onOtpChange = onOtpChange
+        )
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Timer,
+                    contentDescription = null,
+                    tint = if (secondsLeft < 60) MinlishError
+                        else MinlishOnSurfaceVariant,
+                    modifier = Modifier.size(16.dp)
+                )
+                Text(
+                    text = "Expires in $timerText",
+                    fontSize = 13.sp,
+                    color = if (secondsLeft < 60) MinlishError
+                    else MinlishOnSurfaceVariant
+                )
+            }
+
+            TextButton(
+                onClick = {
+                    onResendOTP()
+                },
+                enabled = secondsLeft == 0,
+                contentPadding = PaddingValues(0.dp)
+            ) {
+                Text(
+                    text = "Resend OTP",
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = if (secondsLeft == 0) MinlishPrimary
+                        else MinlishOutlineVariant
+                )
+            }
+        }
+    }
+}
 
 @Preview(showBackground = true)
 @Composable
