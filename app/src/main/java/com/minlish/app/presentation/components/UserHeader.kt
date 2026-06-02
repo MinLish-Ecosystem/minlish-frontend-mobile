@@ -12,6 +12,7 @@ import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -28,6 +29,7 @@ import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.minlish.app.presentation.screens.profile.ProfileViewModel
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.launch
 
@@ -48,12 +50,15 @@ object NotificationColors {
 @OptIn(DelicateCoroutinesApi::class)
 @Composable
 fun AppHeader(
-    userName: String,
-    userAvatarUrl: String,
     onNotificationClick: () -> Unit,
     onUserClick: () -> Unit={},
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    viewModel: ProfileViewModel = ProfileViewModel()
 ) {
+    val user by viewModel.userProfile.collectAsState()
+    val userName = user?.name ?: "Quang Le"
+    val userAvatarUrl = user?.avatar ?: ""
+
     val textGradientBrush = Brush.linearGradient(
         colors = listOf(Color(0xFF667EEA), Color(0xFF764BA2))
     )
@@ -84,83 +89,6 @@ fun AppHeader(
                             .size(40.dp)
                             .clip(CircleShape),
                         contentScale = androidx.compose.ui.layout.ContentScale.Crop
-                    )
-                }
-
-                Text(
-                    text = userName,
-                    style = MaterialTheme.typography.headlineSmall.copy(
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 20.sp,
-                        brush = textGradientBrush
-                    )
-                )
-            }
-
-            IconButton(
-                onClick = {
-                    isNotificationActive = true
-                    onNotificationClick()
-                    kotlinx.coroutines.GlobalScope.launch {
-                        kotlinx.coroutines.delay(150)
-                        isNotificationActive = false
-                    }
-                },
-                modifier = Modifier.background(
-                    color = if (isNotificationActive) NotificationColors.PressedBackground else NotificationColors.NormalBackground,
-                    shape = CircleShape
-                )
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.Notifications,
-                    contentDescription = "Notifications",
-                    tint = if (isNotificationActive) NotificationColors.PressedIconTint else NotificationColors.NormalIconTint
-                )
-            }
-        }
-    }
-}
-
-@OptIn(DelicateCoroutinesApi::class)
-@Composable
-fun AppHeader(
-    userName: String,
-    userAvatarId: Int,
-    onNotificationClick: () -> Unit,
-    onUserClick: () -> Unit={},
-    modifier: Modifier = Modifier
-) {
-    val textGradientBrush = Brush.linearGradient(
-        colors = listOf(Color(0xFF667EEA), Color(0xFF764BA2))
-    )
-    var isNotificationActive by remember {mutableStateOf(false)}
-    Surface(
-        color = Color.White,
-        shadowElevation = 6.dp
-    ) {
-        Row(
-            modifier = modifier
-                .fillMaxWidth()
-                .windowInsetsPadding(WindowInsets.statusBars)
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Box(
-                    modifier = Modifier.size(40.dp).clip(CircleShape).clickable { onUserClick() }
-                ) {
-                    Image(
-                        painter = painterResource(userAvatarId),
-                        contentDescription = "User Avatar",
-                        modifier = Modifier
-                            .size(40.dp)
-                            .clip(CircleShape),
-                        contentScale = ContentScale.Crop
                     )
                 }
 

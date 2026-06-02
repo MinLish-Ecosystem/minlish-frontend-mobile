@@ -45,8 +45,6 @@ fun AnalyticsScreen(
         modifier       = Modifier.fillMaxSize(),
         topBar         = {
             AppHeader(
-                userName            = "QuangLe",
-                userAvatarUrl       = "https://api.dicebear.com/7.x/avataaars/png?seed=QuangLe",
                 onNotificationClick = {}
             )
         },

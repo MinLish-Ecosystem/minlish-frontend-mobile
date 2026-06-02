@@ -4,6 +4,7 @@ import com.minlish.app.data.local.TokenManager
 import com.minlish.app.data.remote.AuthApi
 import com.minlish.app.data.remote.StatsApi
 import com.minlish.app.data.remote.TokenAuthenticator
+import com.minlish.app.data.remote.UserAPI
 import com.minlish.app.data.remote.interceptor.AuthInterceptor
 import com.minlish.app.data.remote.interceptor.ErrorInterceptor
 import okhttp3.Interceptor
@@ -34,4 +35,6 @@ object NetworkModule {
 
     val authApi: AuthApi = retrofit.create(AuthApi::class.java)
     val statsApi: StatsApi = retrofit.create(StatsApi::class.java)
+
+    val userApi: UserAPI = retrofit.create(UserAPI::class.java)
 }
