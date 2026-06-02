@@ -1,7 +1,8 @@
 package com.minlish.app.presentation.screens.profile
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -17,12 +18,12 @@ import androidx.compose.material.icons.automirrored.outlined.Logout
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.outlined.Badge
 import androidx.compose.material.icons.outlined.Email
-import androidx.compose.material.icons.outlined.Logout
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.TrackChanges
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -35,32 +36,50 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
 import com.minlish.app.ui.theme.*
-import com.minlish.app.R
 import com.minlish.app.presentation.components.AppHeader
 import com.minlish.app.presentation.components.Footer
+import java.time.Instant
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun ProfileScreen(
+    viewModel: ProfileViewModel = viewModel(),
     currentRoute: String = "profile",
     onNavigate: (String) -> Unit = {},
-    userName: String = "Alex Johnson",
     userLevel: String = "Intermediate Learner",
-    joinYear: String = "2023",
     onNotificationClick: () -> Unit = {},
     onUserClick: () -> Unit = {},
     onLogOutClick: () -> Unit
 ) {
-    var displayName by remember { mutableStateOf("Alex Johnson") }
-    var email by remember { mutableStateOf("alex@example.com") }
+    val user by viewModel.user.collectAsState()
+
+    var displayName by remember(user) {
+        mutableStateOf(user?.name ?: "Anonymous")
+    }
+
+    var email by remember(user) {
+        mutableStateOf(user?.email ?: "example@gmail.com")
+    }
+
+    var avatar by remember(user) {
+        mutableStateOf(user?.avatar ?: "https://api.dicebear.com/7.x/avataaars/png?seed=QuangLe")
+    }
+
+    var joinYear by remember(user) {
+        val year = try {
+            user?.createdAt?.let { java.time.Instant.parse(it).atZone(java.time.ZoneId.of("UTC")).year } ?: 2023
+        } catch (e: Exception) { 2023 }
+        mutableIntStateOf(year)
+    }
 
     var selectedGoal by remember { mutableStateOf("General") }
     var dailyWordTarget by remember { mutableIntStateOf(25) }
@@ -74,8 +93,6 @@ fun ProfileScreen(
     Scaffold(
         topBar = {
             AppHeader(
-                userName = userName,
-                userAvatarId = R.drawable.profile_img,
                 onNotificationClick = onNotificationClick,
                 onUserClick = onUserClick,
             )
@@ -101,9 +118,10 @@ fun ProfileScreen(
             ) {
 
                 ProfileBannerSection(
-                    userName = userName,
+                    userName = displayName,
                     userLevel = userLevel,
-                    joinYear = joinYear
+                    joinYear = joinYear.toString(),
+                    avatar = avatar
                 )
 
                 Column(
@@ -152,7 +170,8 @@ fun ProfileScreen(
 private fun ProfileBannerSection(
     userName: String,
     userLevel: String,
-    joinYear: String
+    joinYear: String,
+    avatar: String
 ) {
     Box(
         modifier = Modifier
@@ -211,8 +230,8 @@ private fun ProfileBannerSection(
                         .background(MinlishSurfaceContainerHigh),
                     contentAlignment = Alignment.Center
                 ) {
-                    Image(
-                        painter = painterResource(R.drawable.profile_img),
+                    AsyncImage(
+                        model = avatar,
                         contentDescription = null,
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop
@@ -803,6 +822,7 @@ private fun SaveButton(onSaveClick: () -> Unit) {
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Preview(showBackground = true)
 @Composable
 fun ProfileScreenPreview() {

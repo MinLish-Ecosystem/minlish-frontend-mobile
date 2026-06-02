@@ -9,6 +9,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.rememberNavController
 import com.minlish.app.data.local.TokenManager
+import com.minlish.app.data.sync.SyncManager
 import com.minlish.app.presentation.navigation.AuthNavHost
 import com.minlish.app.presentation.navigation.NavDestinations
 import com.minlish.app.ui.theme.MinLishMobileTheme
@@ -22,6 +23,14 @@ class MainActivity : ComponentActivity() {
         setContent {
             MinLishMobileTheme {
                 val navController = rememberNavController()
+                val syncManager = SyncManager(this)
+
+                LaunchedEffect(Unit) {
+                    if (TokenManager.isLoggedIn()) {
+                        syncManager.syncAll()
+                    }
+                }
+
                 LaunchedEffect(Unit) {
                     SessionExpiredEvent.flow.collect {
                         navController.navigate(NavDestinations.Login.route) {

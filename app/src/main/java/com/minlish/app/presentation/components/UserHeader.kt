@@ -28,6 +28,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.minlish.app.presentation.screens.profile.ProfileViewModel
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -53,11 +54,17 @@ fun AppHeader(
     onNotificationClick: () -> Unit,
     onUserClick: () -> Unit={},
     modifier: Modifier = Modifier,
-    viewModel: ProfileViewModel = ProfileViewModel()
+    viewModel: ProfileViewModel = viewModel()
 ) {
-    val user by viewModel.userProfile.collectAsState()
-    val userName = user?.name ?: "Quang Le"
-    val userAvatarUrl = user?.avatar ?: ""
+
+    val user by viewModel.user.collectAsState()
+    val userName by remember(user) {
+        mutableStateOf(user?.name ?: "Anonymous")
+    }
+
+    val userAvatarUrl by remember(user) {
+        mutableStateOf(user?.avatar ?: "https://api.dicebear.com/7.x/avataaars/png?seed=QuangLe")
+    }
 
     val textGradientBrush = Brush.linearGradient(
         colors = listOf(Color(0xFF667EEA), Color(0xFF764BA2))

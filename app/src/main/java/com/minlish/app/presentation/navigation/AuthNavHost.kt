@@ -19,6 +19,7 @@ import com.minlish.app.presentation.screens.auth.viewmodels.ForgetPasswordViewMo
 import com.minlish.app.presentation.screens.learning.LearningDashBoardScreen
 import com.minlish.app.presentation.screens.practice.PracticeArenaScreen
 import com.minlish.app.presentation.screens.profile.ProfileScreen
+import com.minlish.app.presentation.screens.profile.ProfileViewModel
 import com.minlish.app.presentation.screens.welcome.LearningGoalScreen
 import com.minlish.app.presentation.screens.welcome.WelcomeScreen
 

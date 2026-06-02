@@ -35,6 +35,5 @@ object NetworkModule {
 
     val authApi: AuthApi = retrofit.create(AuthApi::class.java)
     val statsApi: StatsApi = retrofit.create(StatsApi::class.java)
-
     val userApi: UserAPI = retrofit.create(UserAPI::class.java)
 }
