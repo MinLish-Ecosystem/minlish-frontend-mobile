@@ -50,8 +50,6 @@ fun AnalyticsScreen(
         modifier       = Modifier.fillMaxSize(),
         topBar         = {
             AppHeader(
-                userName            = userName,
-                userAvatarUrl       = userAvatarUrl,
                 unreadCount         = unreadCount,
                 onNotificationClick = onNotificationClick,
                 onUserClick         = onUserClick

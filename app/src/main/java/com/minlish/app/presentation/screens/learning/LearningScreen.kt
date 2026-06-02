@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Work
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -44,14 +45,6 @@ import com.minlish.app.presentation.components.AppHeader
 import com.minlish.app.presentation.components.NotificationColors
 import com.minlish.app.presentation.components.Footer
 
-data class VocabSet(
-    val id: String,
-    val title: String,
-    val wordCount: Int,
-    val iconName: ImageVector,
-    val colorHex: Long,
-    val isDueToday: Boolean = false
-)
 @Composable
 fun HeroSessionCard(newWords: Int,reviewsDue: Int,onStartSessionClick: () -> Unit){
     var isStartSessionActivated by remember {mutableStateOf(false)}
@@ -232,23 +225,28 @@ fun CreateNewSetCard(onCreateNewSetCard: () -> Unit,modifier: Modifier){
         }
     }
 }
-// viết lại vocabSet để truyền tham số
+
 @Composable
 fun LearningDashBoardScreen(
-    currentRoute: String,
-    onNavigate: (String) -> Unit,
-    userName: String = "User",
-    userAvatarUrl: String = "",
-    unreadCount: Int = 0,
-    onNotificationClick: () -> Unit = {},
-    onUserClick: () -> Unit = {}
-) {
-    val recentSets = listOf(
-        VocabSet("1", "Business English", 42, Icons.Default.Work, 0xFF3B82F6, true),
-        VocabSet("2", "Travel Survival", 18, Icons.Default.FlightTakeoff, 0xFF10B981, true),
-        VocabSet("3", "Food & Dining", 25, Icons.Default.Fastfood, 0xFFF59E0B, false),
-        VocabSet("4", "Books", 25, Icons.Default.Book, 0xFFF59E0B, false)
-    )
+        currentRoute: String,
+        onNavigate: (String) -> Unit,
+        userName: String = "User",
+        userAvatarUrl: String = "",
+        unreadCount: Int = 0,
+        viewModel: LearningViewModel,
+        onNotificationClick: () -> Unit = {},
+        onUserClick: () -> Unit = {}
+    ) {
+
+    val vocabSets by viewModel.vocabSets
+    val newWords by viewModel.newWordsCount
+    val reviewsDue by viewModel.reviewsDueCount
+    val loading by viewModel.isLoading
+    val error by viewModel.errorMessage
+
+    LaunchedEffect(Unit) {
+        viewModel.loadDashBoardData("user_001")
+    }
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
@@ -265,6 +263,28 @@ fun LearningDashBoardScreen(
             )
         }
     ) { paddingValues ->
+        // Handle Loading
+        if (loading && vocabSets.isEmpty()) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+            return@Scaffold
+        }
+
+        if (error != null) {
+            Column(
+                modifier = Modifier.fillMaxSize().padding(paddingValues),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text("Lỗi: $error", color = MaterialTheme.colorScheme.error)
+                Button(onClick = { viewModel.loadDashBoardData("user_001") }) {
+                    Text("Thử lại")
+                }
+            }
+            return@Scaffold
+        }
+
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
@@ -273,7 +293,7 @@ fun LearningDashBoardScreen(
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
             item{
-                HeroSessionCard(14,28, onStartSessionClick = {})
+                HeroSessionCard(newWords=newWords, reviewsDue =reviewsDue , onStartSessionClick = {})
             }
             item{
                 Text(
@@ -287,7 +307,7 @@ fun LearningDashBoardScreen(
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    val totalItems= recentSets.size
+                    val totalItems= vocabSets.size
                     val isOdd=totalItems % 2 != 0
                     val fullRowsCount = if (isOdd) totalItems - 1 else totalItems
                     for (i in 0 until fullRowsCount step 2) {
@@ -296,11 +316,11 @@ fun LearningDashBoardScreen(
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             VocabSetCard(
-                                set = recentSets[i],
+                                set = vocabSets[i],
                                 modifier = Modifier.weight(1f)
                             )
                             VocabSetCard(
-                                set = recentSets[i + 1],
+                                set = vocabSets[i + 1],
                                 modifier = Modifier.weight(1f)
                             )
                         }
@@ -311,7 +331,7 @@ fun LearningDashBoardScreen(
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             VocabSetCard(
-                                set = recentSets.last(),
+                                set = vocabSets.last(),
                                 modifier = Modifier.weight(1f)
                             )
                             CreateNewSetCard(

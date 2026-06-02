@@ -1,5 +1,7 @@
 package com.minlish.app.presentation.navigation
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -16,9 +18,14 @@ import com.minlish.app.presentation.screens.auth.*
 import com.minlish.app.presentation.screens.auth.viewmodels.AuthViewModel
 import com.minlish.app.presentation.screens.auth.viewmodels.ForgetPasswordViewModel
 import com.minlish.app.presentation.screens.learning.LearningDashBoardScreen
+import com.minlish.app.presentation.screens.learning.LearningViewModel
 import com.minlish.app.presentation.screens.notifications.NotificationScreen
 import com.minlish.app.presentation.screens.notifications.NotificationViewModel
+import com.minlish.app.presentation.screens.library.LibraryScreen
+import com.minlish.app.presentation.screens.library.WordListScreen
+import com.minlish.app.presentation.screens.vocab.CreateNewSetScreen
 import com.minlish.app.presentation.screens.practice.PracticeArenaScreen
+import com.minlish.app.presentation.screens.practice.PracticeViewModel
 import com.minlish.app.presentation.screens.profile.ProfileScreen
 import com.minlish.app.presentation.screens.profile.ProfileViewModel
 import com.minlish.app.presentation.screens.welcome.LearningGoalScreen
@@ -26,6 +33,7 @@ import com.minlish.app.presentation.screens.welcome.WelcomeScreen
 import com.minlish.app.util.FCMHelper
 import com.minlish.app.util.NotificationBadgeManager
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun AuthNavHost(
     modifier: Modifier = Modifier,
@@ -37,6 +45,8 @@ fun AuthNavHost(
     val context = LocalContext.current
     val profileViewModel: ProfileViewModel = viewModel()
     val profileState by profileViewModel.uiState.collectAsState()
+    val learningViewModel: LearningViewModel = viewModel()
+    val practiceViewModel: PracticeViewModel = viewModel()
 
     // ── Lắng nghe Badge Count sạch sẽ từ Singleton Manager ──
     val unreadBadgeCount by NotificationBadgeManager.badgeCount.collectAsState()
@@ -170,7 +180,8 @@ fun AuthNavHost(
                 },
                 onUserClick = {
                     navController.navigate(NavDestinations.Profile.route)
-                }
+                },
+                viewModel = learningViewModel,
             )
         }
 
@@ -192,7 +203,43 @@ fun AuthNavHost(
             )
         }
 
-        // 3. Tab Practice
+        // 3. Tab Library
+        composable(NavDestinations.Library.route) {
+            LibraryScreen(
+                currentRoute      = currentRoute,
+                onNavigate        = ::onFooterNavigate,
+                onSetClick        = { setName ->
+                    navController.navigate(NavDestinations.WordList.createRoute(setName))
+                },
+                onCreateNewSet    = {
+                    navController.navigate(NavDestinations.CreateNewSet.route)
+                }
+            )
+        }
+
+        // Sub-screen Word List
+        composable(NavDestinations.WordList.route) { backStackEntry ->
+            val setName = backStackEntry.arguments?.getString("setName")?.let {
+                java.net.URLDecoder.decode(it, "UTF-8")
+            } ?: "Vocabulary Set"
+
+            WordListScreen(
+                setName = setName,
+                onBack  = { navController.popBackStack() }
+            )
+        }
+
+        // Sub-screen Create New Set
+        composable(NavDestinations.CreateNewSet.route) {
+            CreateNewSetScreen(
+                onBackClick   = { navController.popBackStack() },
+                onCreateClick = { _, _, _, _ ->
+                    // TODO: gọi API tạo set, sau đó quay về Library
+                    navController.popBackStack()
+                }
+            )
+        }
+
         composable(NavDestinations.Practice.route) {
             PracticeArenaScreen(
                 currentRoute = currentRoute,
@@ -205,7 +252,8 @@ fun AuthNavHost(
                 },
                 onUserClick = {
                     navController.navigate(NavDestinations.Profile.route)
-                }
+                },
+                viewModel = practiceViewModel,
             )
         }
 
@@ -257,3 +305,4 @@ fun AuthNavHost(
         }
     }
 }
+

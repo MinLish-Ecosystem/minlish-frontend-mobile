@@ -3,7 +3,6 @@ package com.minlish.app.presentation.screens.learning
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,30 +23,25 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.VolumeUp
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.draw.scale
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -58,24 +52,14 @@ import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.minlish.app.R
-import com.minlish.app.presentation.components.AppColors.OnSurfaceVariant
-import com.minlish.app.presentation.components.AppColors.Surface
-import com.minlish.app.presentation.components.AppHeader
-import com.minlish.app.presentation.components.Footer
 
-data class FlashcardData(
-    val category: String,
-    val word: String,
-    val phonetic: String,
-    val partOfSpeech: String,
-    val definition: String,
-    val example: String,
-    val imageUrl: String,
-    val currentProgress: Int,
-    val totalCards: Int
-)
 @Composable
-fun FlashCardTopBar(currentProgress: Int,totalQuestion: Int,onExitClick: () -> Unit,onMoreClick: () -> Unit){
+fun FlashCardTopBar(
+    currentProgress: Int,
+    totalQuestion: Int,
+    onExitClick: () -> Unit,
+    onMoreClick: () -> Unit
+){
     Surface(
         color = Color.White,
         shadowElevation = 6.dp
@@ -306,7 +290,7 @@ fun FlashCardCard(flashcardData: FlashcardData,onPronunciationClick: () -> Unit)
                     text = flashcardData.word,
                     style = MaterialTheme.typography.displayLarge.copy(
                         fontWeight = FontWeight.Bold,
-                        fontSize = 48.sp
+                        fontSize = 36.sp
                     ),
                     color = Color(0xFF1B1B23), // on-surface
                     textAlign = TextAlign.Center,
@@ -356,7 +340,7 @@ fun FlashCardCard(flashcardData: FlashcardData,onPronunciationClick: () -> Unit)
                     Surface(
                         modifier = Modifier.fillMaxWidth(),
                         shape=RoundedCornerShape(8.dp),
-                        color = Color(0xFFFCF8FF), // surface-container-lowest
+                        color = Color(0xFFFCF8FF),
                         border = BorderStroke(
                             width = 10.dp,
                             brush = Brush.horizontalGradient(
@@ -382,54 +366,75 @@ fun FlashCardCard(flashcardData: FlashcardData,onPronunciationClick: () -> Unit)
     }
 }
 @Composable
-fun flashCardScreen() {
-    var currentOption by remember { mutableStateOf("Easy") }
-    val mockFlashcard = FlashcardData(
-        category = "IELTS Core",
-        word = "Exuberance",
-        phonetic = "/ɪɡˈzuːbərəns/",
-        partOfSpeech = "Noun",
-        definition = "The quality of being full of energy, excitement, and cheerfulness; ebullience.",
-        example = "Her natural exuberance made her the life of the party.",
-        imageUrl = "https://example.com/image.jpg",
-        currentProgress = 13,
-        totalCards = 20
-    )
+fun FlashCardScreen(viewModel: FlashcardViewModel,onExitClick: () -> Unit, onMoreClick: () -> Unit) {
+    val isLoading by viewModel.isLoading
+    val error by viewModel.errorMessage
+    val selectedAnswer by viewModel.selectedAnswer
+    val currentCardData = viewModel.currentCard.value
+    val totalCards = viewModel.totalCards
+    LaunchedEffect("user_001") {
+        viewModel.loadFlashcardSet("user_001")
+    }
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
             FlashCardTopBar(
-                currentProgress = 13,
-                totalQuestion = 20,
-                onExitClick = {},
-                onMoreClick = {},
+                currentProgress =viewModel.currentIndex.value+1,
+                totalQuestion = totalCards.value,
+                onExitClick = onExitClick,
+                onMoreClick = onMoreClick,
             )
         },
         bottomBar = {
             FlashCardBottomBar(
                 answerOptions = listOf("Again", "Hard", "Good", "Easy"),
-                onClick = {selectedOption ->
-                    currentOption = selectedOption}
+                onClick = {answer ->
+                    viewModel.onAnswerSelected(answer)}
             )
         }
     ) { paddingValues ->
+        if (isLoading) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+            return@Scaffold
+        }
+
+        if (error != null) {
+            Column(
+                modifier = Modifier.fillMaxSize().padding(paddingValues),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text("Lỗi: $error", color = MaterialTheme.colorScheme.error)
+                Button(onClick = { viewModel.loadFlashcardSet("user_001") }) {
+                    Text("Thử lại")
+                }
+            }
+            return@Scaffold
+        }
         Column(modifier = Modifier
             .fillMaxSize()
             .padding(paddingValues)
-            .background(Color(0xFFF5F2FE)) // surface background
+            .background(Color(0xFFF5F2FE))
             .padding(horizontal = 16.dp, vertical = 8.dp),
             ){
-
-            FlashCardCard(flashcardData = mockFlashcard,{})
-            Text(
-                text="Bạn đang bấm ${currentOption}",
-                style = MaterialTheme.typography.bodySmall.copy(
-                    fontSize = 14.sp,
-                    fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
-                ),
-                color = Color(0xFF464554),
-                modifier = Modifier.padding(16.dp)
-            )
+            currentCardData?.let { card ->
+                FlashCardCard(flashcardData = card,{})
+                selectedAnswer?.let { answer ->
+                    Text(
+                        text = "Bạn đang bấm ${answer}",
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            fontSize = 14.sp,
+                            fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
+                        ),
+                        color = Color(0xFF464554),
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
+            } ?: run {
+                Text("No card data available", modifier = Modifier.padding(16.dp))
+                }
         }
 
     }
