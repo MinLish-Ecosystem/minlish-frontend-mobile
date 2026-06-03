@@ -1,5 +1,6 @@
 package com.minlish.app.presentation.screens.auth
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
@@ -19,6 +20,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.delay
 import com.minlish.app.presentation.components.TopBar
@@ -36,10 +39,12 @@ fun VerifyEmailScreen(
     onChangeEmail: () -> Unit = {},
     viewModel: AuthViewModel = viewModel()
 ) {
-    val email = viewModel.email
+
+    val state = viewModel.uiState.collectAsStateWithLifecycle()
 
     var otpValue by remember { mutableStateOf("") }
     var secondsLeft by remember { mutableIntStateOf(599) }
+    val context = LocalContext.current
 
     LaunchedEffect(Unit) {
         while (secondsLeft > 0) {
@@ -54,6 +59,10 @@ fun VerifyEmailScreen(
                 is AuthUiEvent.VerifyEmailSuccess -> {
                     onVerifyEmailSuccess()
                 }
+                is AuthUiEvent.ShowError -> {
+                    Toast.makeText(context, event.message, Toast.LENGTH_LONG).show()
+                }
+
                 else -> {}
             }
         }
@@ -82,8 +91,8 @@ fun VerifyEmailScreen(
             verticalArrangement = Arrangement.spacedBy(32.dp)
         ) {
             VerifyEmailCard(
-                isLoading = viewModel.isLoading,
-                email = email,
+                isLoading = state.value.isLoading,
+                email = state.value.email,
                 otpValue = otpValue,
                 timerText = timerText,
                 secondsLeft = secondsLeft,
@@ -94,6 +103,7 @@ fun VerifyEmailScreen(
                     secondsLeft = 599
                 },
                 onVerifyClick = {
+                    val email = state.value.email
                     viewModel.verifyEmail(email, otpValue)
                 }
             )

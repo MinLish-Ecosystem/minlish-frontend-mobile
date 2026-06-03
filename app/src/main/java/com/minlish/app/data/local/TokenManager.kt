@@ -9,7 +9,6 @@ object TokenManager {
     private const val KEY_ACCESS_TOKEN = "access_token"
     private const val KEY_REFRESH_TOKEN = "refresh_token"
     private const val KEY_USER_ID = "user_id"
-
     private lateinit var prefs: SharedPreferences
 
     fun init(context: Context) {

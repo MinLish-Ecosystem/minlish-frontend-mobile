@@ -1,5 +1,6 @@
 package com.minlish.app.presentation.screens.auth
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -10,10 +11,12 @@ import androidx.compose.material.icons.filled.LockReset
 import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -21,10 +24,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.minlish.app.ui.theme.*
 import com.minlish.app.presentation.components.TopBar
-import com.minlish.app.presentation.screens.auth.viewmodels.AuthViewModel
 import com.minlish.app.presentation.screens.auth.viewmodels.ForgetPasswordUiEvent
 import com.minlish.app.presentation.screens.auth.viewmodels.ForgetPasswordViewModel
 import kotlinx.coroutines.flow.collectLatest
@@ -37,7 +40,9 @@ fun ForgotPasswordScreen(
     onSendResetSuccess: () -> Unit = {},
     onReturnToLogin: () -> Unit = {}
 ) {
-    var email by remember { mutableStateOf("") }
+
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
 
     LaunchedEffect(Unit) {
         viewModel.uiEvent.collectLatest { event ->
@@ -45,6 +50,10 @@ fun ForgotPasswordScreen(
                 is ForgetPasswordUiEvent.ForgotPasswordSuccess -> {
                     onSendResetSuccess()
                 }
+                is ForgetPasswordUiEvent.ShowError -> {
+                    Toast.makeText(context, event.message, Toast.LENGTH_LONG).show()
+                }
+
                 else -> {
 
                 }
@@ -68,9 +77,9 @@ fun ForgotPasswordScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             ForgotPasswordCard(
-                isLoading = viewModel.isLoading,
-                email = email,
-                onEmailChange = {email = it},
+                isLoading = state.isLoading,
+                email = state.email,
+                onEmailChange = {viewModel.updateEmail(it)},
                 onSendResetLink = {email ->
                     viewModel.forgotPassword(email)
                 },

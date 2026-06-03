@@ -1,5 +1,6 @@
 package com.minlish.app.presentation.screens.auth
 
+import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -34,7 +35,9 @@ import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.minlish.app.R
 import com.minlish.app.presentation.screens.auth.viewmodels.AuthUiEvent
@@ -55,15 +58,18 @@ fun LoginScreen(
     onSignUpClick: () -> Unit
 ) {
 
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
+    val state = viewModel.uiState.collectAsStateWithLifecycle()
     var passwordVisible by remember { mutableStateOf(false) }
+    val context = LocalContext.current
 
     LaunchedEffect(Unit) {
         viewModel.uiEvent.collectLatest { event ->
             when (event) {
                 is AuthUiEvent.LoginSuccess -> {
                     onLoginSuccess()
+                }
+                is AuthUiEvent.ShowError -> {
+                    Toast.makeText(context, event.message, Toast.LENGTH_LONG).show()
                 }
 
                 else -> {
@@ -82,12 +88,12 @@ fun LoginScreen(
     ) {
         BrandingSection()
         Spacer(modifier = Modifier.height(40.dp))
-        EmailField(email = email, onEmailChange = {email = it})
+        EmailField(email = state.value.email, onEmailChange = {viewModel.updateEmail(it)})
         Spacer(modifier = Modifier.height(16.dp))
         PasswordField(
-            password = password,
+            password = state.value.password,
             passwordVisible = passwordVisible,
-            onPasswordChange = {password = it},
+            onPasswordChange = {viewModel.updatePassword(it)},
             onToggleVisibility = {passwordVisible = !passwordVisible},
             onForgotPasswordClick = {
                 onForgotPasswordClick()
@@ -95,9 +101,9 @@ fun LoginScreen(
         )
         Spacer(modifier = Modifier.height(24.dp))
         SignInButton(
-            isLoading = viewModel.isLoading,
+            isLoading = state.value.isLoading,
             onSignInClick = {
-            viewModel.login(email, password)
+            viewModel.login(state.value.email, state.value.password)
         })
         Spacer(modifier = Modifier.height(24.dp))
         DividerWithText()

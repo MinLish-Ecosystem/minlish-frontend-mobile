@@ -34,13 +34,10 @@ class TokenAuthenticator : Authenticator {
     }
 
     override fun authenticate(route: Route?, response: Response): Request? {
-        Log.d("TokenAuthenticator", "401 detected — trying refresh...")
-
         val currentToken = TokenManager.getAccessToken()
         val refreshToken = TokenManager.getRefreshToken()
 
         if (refreshToken.isNullOrEmpty()) {
-            Log.d("TokenAuthenticator", "Token invalid — logging out")
             handleLogOut()
             return null
         }
@@ -61,9 +58,7 @@ class TokenAuthenticator : Authenticator {
                     null
                 }
             }
-            Log.d("TokenAuthenticator", newTokens.toString())
             if (newTokens != null) {
-                Log.d("TokenAuthenticator", "Token refreshed successfully ✅")
                 val userId = TokenManager.getUserId()
                 TokenManager.saveTokens(
                     accessToken = newTokens.accessToken,
@@ -75,7 +70,6 @@ class TokenAuthenticator : Authenticator {
                     .header("Authorization", "Bearer ${newTokens.accessToken}")
                     .build()
             } else {
-                Log.d("TokenAuthenticator", "Refresh failed — logging out ❌")
                 handleLogOut()
                 return null
             }

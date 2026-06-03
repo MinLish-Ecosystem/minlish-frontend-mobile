@@ -1,4 +1,5 @@
 package com.minlish.app.presentation.screens.auth
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
@@ -12,16 +13,19 @@ import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.*
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.minlish.app.presentation.screens.auth.components.SecurityCheckList
 import com.minlish.app.presentation.components.TopBar
@@ -53,6 +57,9 @@ fun ResetPasswordScreen(
     val otpComplete = otpValue.length == 6
 
     var secondsLeft by remember { mutableIntStateOf(10) }
+    val context = LocalContext.current
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+
 
     LaunchedEffect(Unit) {
         viewModel.uiEvent.collectLatest { event ->
@@ -60,6 +67,10 @@ fun ResetPasswordScreen(
                 is ForgetPasswordUiEvent.ResetPasswordSuccess -> {
                     onResetPasswordSuccess()
                 }
+                is ForgetPasswordUiEvent.ShowError -> {
+                    Toast.makeText(context, event.message, Toast.LENGTH_LONG).show()
+                }
+
                 else -> {}
             }
         }
@@ -106,7 +117,7 @@ fun ResetPasswordScreen(
             HorizontalDivider(color = MinlishSurfaceContainerHigh)
 
             ResetPasswordCard(
-                isLoading = viewModel.isLoading,
+                isLoading = state.isLoading,
                 newPassword = newPassword,
                 confirmPassword = confirmPassword,
                 newPasswordVisible = newPasswordVisible,

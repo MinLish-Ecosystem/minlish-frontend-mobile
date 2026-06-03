@@ -2,6 +2,7 @@ package com.minlish.app.presentation.screens.profile
 
 import android.app.Application
 import android.content.Context
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -9,11 +10,13 @@ import com.minlish.app.data.local.TokenManager
 import com.minlish.app.data.local.entity.UserEntity
 import com.minlish.app.data.repository.AuthRepository
 import com.minlish.app.data.repository.UserRepository
+import com.minlish.app.presentation.screens.auth.viewmodels.AuthUIState
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -52,8 +55,9 @@ class ProfileViewModel(private val userRepo: UserRepository = UserRepository()) 
         }
 
         viewModelScope.launch {
-            userProfile.collect { user ->
+            userProfile.collectLatest { user ->
                 user?.let { u ->
+                    Log.d("Check", u.name)
                     val year = u.createdAt?.substring(0, 4) ?: "2026"
                     _uiState.update {
                         it.copy(
@@ -198,4 +202,8 @@ class ProfileViewModel(private val userRepo: UserRepository = UserRepository()) 
 
     fun dismissSuccess() { _uiState.update { it.copy(saveSuccess = false) } }
     fun dismissError() { _uiState.update { it.copy(errorMessage = null) } }
+
+    fun resetViewModel() {
+        _uiState.value = ProfileUiState()
+    }
 }

@@ -1,6 +1,7 @@
 package com.minlish.app.presentation.navigation
 
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -63,6 +64,7 @@ fun AuthNavHost(
             profileViewModel.loadProfileData()
         } else {
             NotificationBadgeManager.stopPolling()
+            TokenManager.clear()
         }
     }
 
@@ -70,7 +72,6 @@ fun AuthNavHost(
         navController.navigate(label) {
             popUpTo(NavDestinations.Learning.route) { saveState = true }
             launchSingleTop = true
-            restoreState = true
         }
     }
     val authViewModel: AuthViewModel = viewModel()
@@ -85,8 +86,7 @@ fun AuthNavHost(
 
         composable(NavDestinations.Welcome.route) {
             WelcomeScreen(
-                onGetStartedClick = { navController.navigate(NavDestinations.Register.route) },
-                onLogInClick = { navController.navigate(NavDestinations.Login.route) }
+                onGetStartedClick = { navController.navigate(NavDestinations.Login.route) },
             )
         }
 
@@ -100,7 +100,10 @@ fun AuthNavHost(
                 },
                 onGoogleSignInClick = {},
                 onForgotPasswordClick = { navController.navigate(NavDestinations.ForgotPassword.route) },
-                onSignUpClick = { navController.navigate(NavDestinations.Register.route) }
+                onSignUpClick = {
+                    authViewModel.resetViewModel()
+                    navController.navigate(NavDestinations.Register.route)
+                }
             )
         }
 
@@ -110,7 +113,10 @@ fun AuthNavHost(
                 onRegisterSuccess = {
                     navController.navigate(NavDestinations.VerifyEmail.route)
                 },
-                onSignInClick = { navController.navigate(NavDestinations.Login.route) }
+                onSignInClick = {
+                    authViewModel.resetViewModel()
+                    navController.navigate(NavDestinations.Login.route)
+                }
             )
         }
 
@@ -205,13 +211,10 @@ fun AuthNavHost(
             )
         }
 
-        // 2. Tab Analytics
         composable(NavDestinations.Analytics.route) {
             AnalyticsScreen(
                 currentRoute = currentRoute,
                 onNavigate = ::onFooterNavigate,
-                userName = profileState.displayName.ifEmpty { "User" },
-                userAvatarUrl = profileState.avatar ?: "",
                 viewModel = viewModel<AnalyticsViewModel>(),
                 unreadCount = unreadBadgeCount,
                 onNotificationClick = {
@@ -301,13 +304,13 @@ fun AuthNavHost(
                 onNotificationClick = {
                     navController.navigate(NavDestinations.Notifications.route)
                 },
-                onUserClick = { /* Already on Profile */ },
                 onLogOutClick = {
                     FCMHelper.deleteFCMToken(context) {
                         TokenManager.clear()
-                        navController.navigate(NavDestinations.Welcome.route) {
-                            popUpTo(0) { inclusive = true }
-                        }
+                    }
+                    profileViewModel.resetViewModel()
+                    navController.navigate(NavDestinations.Welcome.route) {
+                        popUpTo(0) { inclusive = true }
                     }
                 }
             )

@@ -1,6 +1,7 @@
 package com.minlish.app.data.repository
 
 
+import android.util.Log
 import com.minlish.app.data.dto.request.ForgotPasswordRequest
 import com.minlish.app.data.dto.response.ApiResponse
 import com.minlish.app.data.dto.response.LoginData
@@ -19,7 +20,7 @@ class AuthRepository {
         return try {
             val response = authApi.login(LoginRequest(email.trim(), password))
             val loginData = response.data ?: throw Exception("Login data is null")
-            loginData.accessToken
+            Log.d("Login", loginData.user.name)
             TokenManager.saveTokens(
                 accessToken =  loginData.accessToken,
                 refreshToken = loginData.refreshToken,

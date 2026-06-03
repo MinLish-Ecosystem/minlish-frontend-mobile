@@ -37,15 +37,12 @@ import com.minlish.app.ui.theme.*
 fun AnalyticsScreen(
     currentRoute: String = "analytics",
     onNavigate: (String) -> Unit = {},
-    userName: String = "User",
-    userAvatarUrl: String = "",
     viewModel: AnalyticsViewModel = viewModel(),
     unreadCount: Int = 0,
     onNotificationClick: () -> Unit = {},
     onUserClick: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
-
     Scaffold(
         modifier       = Modifier.fillMaxSize(),
         topBar         = {

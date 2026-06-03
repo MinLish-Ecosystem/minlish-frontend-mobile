@@ -65,7 +65,6 @@ private val onBoardingPages = listOf(
 @Composable
 fun WelcomeScreen(
     onGetStartedClick: () -> Unit = {},
-    onLogInClick: () -> Unit = {}
 ) {
     val pagerState = rememberPagerState(pageCount = {onBoardingPages.size})
     LaunchedEffect(Unit) {
@@ -133,8 +132,7 @@ fun WelcomeScreen(
 
             Column {
                 WelcomeBottomActions(
-                    onGetStartedClick,
-                    onLogInClick
+                    onGetStartedClick
                 )
                 Spacer(modifier = Modifier.height(48.dp))
             }
@@ -225,8 +223,7 @@ private fun WelcomeText(title: String, description: String, modifier: Modifier) 
 
 @Composable
 private fun WelcomeBottomActions(
-    onGetStartedClick: () -> Unit,
-    onLogInClick: () -> Unit
+    onGetStartedClick: () -> Unit
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -256,24 +253,6 @@ private fun WelcomeBottomActions(
                     contentDescription = null,
                     tint = Color.White,
                     modifier = Modifier.size(20.dp)
-                )
-            }
-        }
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
-        ) {
-            Text(
-                text = "Already have an account ?",
-                fontSize = 16.sp,
-                color = MinlishOnSurfaceVariant
-            )
-            TextButton(onClick = onLogInClick) {
-                Text(
-                    text = "Sign In",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = MinlishPrimary
                 )
             }
         }

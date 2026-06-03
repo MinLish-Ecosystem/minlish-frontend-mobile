@@ -16,8 +16,6 @@ import com.minlish.app.di.DatabaseModule
 import com.minlish.app.presentation.navigation.AuthNavHost
 import com.minlish.app.presentation.navigation.NavDestinations
 import com.minlish.app.ui.theme.MinLishMobileTheme
-import com.minlish.app.presentation.screens.practice.PracticeArenaScreen
-import com.minlish.app.presentation.screens.practice.PracticeViewModel
 import com.minlish.app.util.SessionExpiredEvent
 
 class MainActivity : ComponentActivity() {
@@ -72,6 +70,3 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
-
-
-

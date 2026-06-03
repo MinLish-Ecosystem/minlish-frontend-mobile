@@ -1,5 +1,6 @@
 package com.minlish.app.presentation.screens.auth
 
+import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -35,7 +36,9 @@ import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.minlish.app.R
 import com.minlish.app.presentation.screens.auth.components.ProgressHeader
@@ -56,20 +59,22 @@ fun RegisterScreen(
     onRegisterSuccess: () -> Unit,
     onSignInClick: () -> Unit
 ) {
-    var fullName by remember {  mutableStateOf("") }
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
+    val state = viewModel.uiState.collectAsStateWithLifecycle()
     var passwordVisible by remember { mutableStateOf(false) }
 
-    val hasMinLength = password.length >= 8
-    val hasUppercase = password.any {it.isUpperCase()}
-    val hasNumberOrSymbol = password.any {!it.isLetterOrDigit() || it.isDigit()}
+    val hasMinLength = state.value.password.length >= 8
+    val hasUppercase = state.value.password.any {it.isUpperCase()}
+    val hasNumberOrSymbol = state.value.password.any {!it.isLetterOrDigit() || it.isDigit()}
+    val context = LocalContext.current
 
     LaunchedEffect(Unit) {
         viewModel.uiEvent.collectLatest { event ->
             when (event) {
                 is AuthUiEvent.RegisterSuccess -> {
                     onRegisterSuccess()
+                }
+                is AuthUiEvent.ShowError -> {
+                    Toast.makeText(context, event.message, Toast.LENGTH_LONG).show()
                 }
 
                 else -> {}
@@ -92,14 +97,14 @@ fun RegisterScreen(
         Spacer(modifier = Modifier.height(20.dp))
         BrandingSection()
         Spacer(modifier = Modifier.height(20.dp))
-        FullNameField(fullName = fullName, onFullNameChange = {fullName = it})
+        FullNameField(fullName = state.value.name, onFullNameChange = {viewModel.updateName(it)})
         Spacer(modifier = Modifier.height(16.dp))
-        EmailField(email = email, onEmailChange = {email = it})
+        EmailField(email = state.value.email, onEmailChange = {viewModel.updateEmail(it)})
         Spacer(modifier = Modifier.height(16.dp))
         PasswordField(
-            password = password,
+            password = state.value.password,
             passwordVisible = passwordVisible,
-            onPasswordChange = {password = it},
+            onPasswordChange = {viewModel.updatePassword(it)},
             onToggleVisibility = {passwordVisible = !passwordVisible}
         )
         SecurityCheckList(
@@ -110,12 +115,17 @@ fun RegisterScreen(
         Spacer(modifier = Modifier.height(16.dp))
         SignUpButton(
             onSignUpClick = {
-                viewModel.register(fullName, password, email)
+                val currentState = state.value
+                viewModel.register(
+                    currentState.name,
+                    currentState.password,
+                    currentState.email
+                )
             } ,
             hasMinLength = hasMinLength,
             hasUppercase = hasUppercase,
             hasNumberOrSymbol = hasNumberOrSymbol,
-            isLoading = viewModel.isLoading
+            isLoading = state.value.isLoading
         )
         Spacer(modifier = Modifier.height(12.dp))
         DividerWithText()
