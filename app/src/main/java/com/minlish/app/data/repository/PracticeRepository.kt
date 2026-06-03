@@ -7,10 +7,14 @@ import com.minlish.app.di.NetworkModule
 
 class PracticeRepository(){
     private val practiceApi = NetworkModule.practiceApi
-    suspend fun getPracticeMode(id: String): Result<PracticeModeDto>{
+    suspend fun getPracticeMode(): Result<PracticeModeDto>{
         return try{
-            val request= practiceApi.getPracticeMode(id)
-            Result.success(request)
+            val response= practiceApi.getPracticeMode()
+            if (response.success && response.data != null) {
+                Result.success(response.data)
+            } else {
+                Result.failure(Exception(response.message ?: "Lỗi không xác định"))
+            }
         }catch (e: Exception){
             Result.failure(e)
         }

@@ -6,8 +6,6 @@ import retrofit2.http.GET
 import retrofit2.http.Path
 
 interface FlashCardApi{
-    @GET("learning/flashcard/{id}")
-    suspend fun getTestSet(
-        @Path("id") id: String
-    ): FlashCardTestDto
+    @GET("learning/flashcard-test")
+    suspend fun getTestSet(): ApiResponse<FlashCardTestDto>
 }

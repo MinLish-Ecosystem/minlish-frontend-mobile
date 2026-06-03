@@ -230,12 +230,12 @@ fun CreateNewSetCard(onCreateNewSetCard: () -> Unit,modifier: Modifier){
 fun LearningDashBoardScreen(
         currentRoute: String,
         onNavigate: (String) -> Unit,
-        userName: String = "User",
-        userAvatarUrl: String = "",
         unreadCount: Int = 0,
         viewModel: LearningViewModel,
         onNotificationClick: () -> Unit = {},
-        onUserClick: () -> Unit = {}
+        onUserClick: () -> Unit = {},
+        onCreateNewSetCard: () -> Unit,
+        onStartSessionClick: () -> Unit,
     ) {
 
     val vocabSets by viewModel.vocabSets
@@ -245,7 +245,7 @@ fun LearningDashBoardScreen(
     val error by viewModel.errorMessage
 
     LaunchedEffect(Unit) {
-        viewModel.loadDashBoardData("user_001")
+        viewModel.loadDashBoardData()
     }
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -278,7 +278,7 @@ fun LearningDashBoardScreen(
                 verticalArrangement = Arrangement.Center
             ) {
                 Text("Lỗi: $error", color = MaterialTheme.colorScheme.error)
-                Button(onClick = { viewModel.loadDashBoardData("user_001") }) {
+                Button(onClick = { viewModel.loadDashBoardData() }) {
                     Text("Thử lại")
                 }
             }
@@ -293,7 +293,7 @@ fun LearningDashBoardScreen(
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
             item{
-                HeroSessionCard(newWords=newWords, reviewsDue =reviewsDue , onStartSessionClick = {})
+                HeroSessionCard(newWords=newWords, reviewsDue =reviewsDue , onStartSessionClick = onStartSessionClick)
             }
             item{
                 Text(
@@ -335,7 +335,7 @@ fun LearningDashBoardScreen(
                                 modifier = Modifier.weight(1f)
                             )
                             CreateNewSetCard(
-                                onCreateNewSetCard = {},
+                                onCreateNewSetCard = onCreateNewSetCard,
                                 modifier = Modifier.weight(1f)
                             )
                         }
@@ -345,7 +345,7 @@ fun LearningDashBoardScreen(
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             CreateNewSetCard(
-                                onCreateNewSetCard = {},
+                                onCreateNewSetCard = onCreateNewSetCard,
                                 modifier = Modifier.weight(1f)
                             )
                             Spacer(modifier = Modifier.weight(1f))

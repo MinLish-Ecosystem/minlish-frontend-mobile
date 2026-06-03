@@ -17,6 +17,8 @@ import com.minlish.app.presentation.screens.analytics.AnalyticsViewModel
 import com.minlish.app.presentation.screens.auth.*
 import com.minlish.app.presentation.screens.auth.viewmodels.AuthViewModel
 import com.minlish.app.presentation.screens.auth.viewmodels.ForgetPasswordViewModel
+import com.minlish.app.presentation.screens.learning.FlashCardScreen
+import com.minlish.app.presentation.screens.learning.FlashcardViewModel
 import com.minlish.app.presentation.screens.learning.LearningDashBoardScreen
 import com.minlish.app.presentation.screens.learning.LearningViewModel
 import com.minlish.app.presentation.screens.notifications.NotificationScreen
@@ -26,6 +28,7 @@ import com.minlish.app.presentation.screens.library.WordListScreen
 import com.minlish.app.presentation.screens.vocab.CreateNewSetScreen
 import com.minlish.app.presentation.screens.practice.PracticeArenaScreen
 import com.minlish.app.presentation.screens.practice.PracticeViewModel
+import com.minlish.app.presentation.screens.practice.getRoute
 import com.minlish.app.presentation.screens.profile.ProfileScreen
 import com.minlish.app.presentation.screens.profile.ProfileViewModel
 import com.minlish.app.presentation.screens.welcome.LearningGoalScreen
@@ -47,6 +50,7 @@ fun AuthNavHost(
     val profileState by profileViewModel.uiState.collectAsState()
     val learningViewModel: LearningViewModel = viewModel()
     val practiceViewModel: PracticeViewModel = viewModel()
+    val flashCardViewModel: FlashcardViewModel = viewModel()
 
     // ── Lắng nghe Badge Count sạch sẽ từ Singleton Manager ──
     val unreadBadgeCount by NotificationBadgeManager.badgeCount.collectAsState()
@@ -172,8 +176,6 @@ fun AuthNavHost(
             LearningDashBoardScreen(
                 currentRoute = currentRoute,
                 onNavigate = ::onFooterNavigate,
-                userName = profileState.displayName.ifEmpty { "User" },
-                userAvatarUrl = profileState.avatar ?: "",
                 unreadCount = unreadBadgeCount,
                 onNotificationClick = {
                     navController.navigate(NavDestinations.Notifications.route)
@@ -182,6 +184,24 @@ fun AuthNavHost(
                     navController.navigate(NavDestinations.Profile.route)
                 },
                 viewModel = learningViewModel,
+                onCreateNewSetCard = {
+                    navController.navigate(NavDestinations.CreateNewSet.route)
+                },
+                onStartSessionClick = {
+                    navController.navigate(NavDestinations.FlashCardTest.route)
+                }
+            )
+        }
+        composable(NavDestinations.FlashCardTest.route){
+            LaunchedEffect(Unit) {
+                FCMHelper.registerFCMToken(context)
+            }
+            FlashCardScreen(
+                viewModel=flashCardViewModel,
+                onExitClick = {
+                    navController.popBackStack()
+                },
+                onMoreClick = {}
             )
         }
 
@@ -213,6 +233,12 @@ fun AuthNavHost(
                 },
                 onCreateNewSet    = {
                     navController.navigate(NavDestinations.CreateNewSet.route)
+                },
+                onNotificationClick = {
+                    navController.navigate(NavDestinations.Notifications.route)
+                },
+                onUserClick = {
+                    navController.navigate(NavDestinations.Profile.route)
                 }
             )
         }
@@ -254,6 +280,14 @@ fun AuthNavHost(
                     navController.navigate(NavDestinations.Profile.route)
                 },
                 viewModel = practiceViewModel,
+                onPracticeClick = { mode ->
+                    val route = mode.getRoute()
+                    if (route != null) {
+                        navController.navigate(route)
+                    } else {
+                        android.util.Log.w("PracticeArena", "Unknown practice mode type: ${mode.id}")
+                    }
+                }
             )
         }
 

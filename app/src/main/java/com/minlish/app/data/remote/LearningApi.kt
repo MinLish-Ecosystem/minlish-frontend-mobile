@@ -8,8 +8,6 @@ import retrofit2.http.POST
 import retrofit2.http.Path
 
 interface LearningApi {
-    @GET("learning/dashboard/{id}")
-    suspend fun getLearningSet(
-        @Path("id") id: String
-    ): LearningDto
+    @GET("learning/home")
+    suspend fun getLearningSet(): ApiResponse<LearningDto>
 }

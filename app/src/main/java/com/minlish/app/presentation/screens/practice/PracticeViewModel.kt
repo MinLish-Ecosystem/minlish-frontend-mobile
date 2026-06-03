@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.minlish.app.data.mapper.PracticeModeMapper
 import com.minlish.app.data.repository.PracticeRepository
+import com.minlish.app.presentation.navigation.NavDestinations
 import com.minlish.app.presentation.screens.learning.VocabSet
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -19,18 +20,18 @@ data class PracticeMode(
     var isComingSoon: Boolean,
     val iconName: ImageVector,
     val gradientColor: Brush,
-    val buttonText: String
+    val buttonText: String,
 )
 class PracticeViewModel(): ViewModel(){
     val practiceRepository= PracticeRepository()
     val practiceModes = mutableStateOf<List<PracticeMode>>(emptyList())
     val isLoading = mutableStateOf(false)
     val errorMessage = mutableStateOf<String?>(null)
-    fun loadPracticeModes(id: String){
+    fun loadPracticeModes(){
         isLoading.value = true
         viewModelScope.launch{
             val result = withContext(Dispatchers.IO) {
-                practiceRepository.getPracticeMode(id)
+                practiceRepository.getPracticeMode()
             }
             result.onSuccess { practiceModeDto ->
                 val newList = PracticeModeMapper.mapToUiList(practiceModeDto.practiceModes)

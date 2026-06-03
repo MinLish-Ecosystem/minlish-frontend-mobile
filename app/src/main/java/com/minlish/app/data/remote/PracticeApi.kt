@@ -6,8 +6,6 @@ import retrofit2.http.GET
 import retrofit2.http.Path
 
 interface PracticeApi{
-    @GET("practice/{id}")
-    suspend fun getPracticeMode(
-        @Path("id") id: String
-    ): PracticeModeDto
+    @GET("practice//practice-modes")
+    suspend fun getPracticeMode(): ApiResponse<PracticeModeDto>
 }

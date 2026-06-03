@@ -28,12 +28,12 @@ class LearningViewModel(): ViewModel(){
     val reviewsDueCount = mutableStateOf(0)
     val isLoading = mutableStateOf(false)
     val errorMessage = mutableStateOf<String?>(null)
-    fun loadDashBoardData(userId: String){
+    fun loadDashBoardData(){
         viewModelScope.launch(Dispatchers.Default){
             isLoading.value = true
             errorMessage.value = null
             val result = withContext(Dispatchers.IO) {
-                learningRepository.getLearningSet(userId)
+                learningRepository.getLearningSet()
             }
             result.onSuccess { learningDto ->
                 vocabSets.value = VocabSetMapper.mapToUiList(learningDto.vocabSets)

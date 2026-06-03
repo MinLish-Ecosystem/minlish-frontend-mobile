@@ -6,10 +6,14 @@ import com.minlish.app.di.NetworkModule
 
 class FlashCardRepository(){
     private val flashCardApi = NetworkModule.flashCardApi
-    suspend fun getLearningSet(userId: String): Result<FlashCardTestDto> {
+    suspend fun getLearningSet(): Result<FlashCardTestDto> {
         return try{
-            val request= flashCardApi.getTestSet(userId)
-            Result.success(request)
+            val response= flashCardApi.getTestSet()
+            if (response.success && response.data != null) {
+                Result.success(response.data)
+            } else {
+                Result.failure(Exception(response.message ?: "Lỗi không xác định"))
+            }
         }catch (e: Exception){
             Result.failure(e)
         }

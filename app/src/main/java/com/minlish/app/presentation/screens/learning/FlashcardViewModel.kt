@@ -38,12 +38,12 @@ class FlashcardViewModel(): ViewModel(){
         flashcards.value.size
     }
 
-    fun loadFlashcardSet(userId: String){
+    fun loadFlashcardSet(){
         viewModelScope.launch {
             isLoading.value=true
             errorMessage.value = null
             val result = withContext(Dispatchers.IO) {
-                flashCardRepository.getLearningSet(userId)
+                flashCardRepository.getLearningSet()
             }
             result.onSuccess { dto ->
                 flashcards.value = FlashCardMapper.mapToUiList(

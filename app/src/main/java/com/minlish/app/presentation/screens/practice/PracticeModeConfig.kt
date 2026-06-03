@@ -19,7 +19,7 @@ val ALL_PRACTICE_MODES = listOf(
         gradientColor = Brush.horizontalGradient(
             colors = listOf(Color(0xFF667EEA), Color(0xFF764BA2))
         ),
-        buttonText = "Start Review"
+        buttonText = "Start Review",
     ),
     PracticeMode(
         id = "vocabulary_quiz",

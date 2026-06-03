@@ -198,13 +198,14 @@ fun PracticeArenaScreen(
         viewModel: PracticeViewModel,
         unreadCount: Int = 0,
         onNotificationClick: () -> Unit = {},
-        onUserClick: () -> Unit = {}
+        onUserClick: () -> Unit = {},
+        onPracticeClick: (PracticeMode) -> Unit = {}
     ) {
     val loading by viewModel.isLoading
     val practiceModes by viewModel.practiceModes
     val error by viewModel.errorMessage
     LaunchedEffect(Unit) {
-        viewModel.loadPracticeModes("user_001")
+        viewModel.loadPracticeModes()
     }
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -236,7 +237,7 @@ fun PracticeArenaScreen(
                 verticalArrangement = Arrangement.Center
             ) {
                 Text("Lỗi: $error", color = MaterialTheme.colorScheme.error)
-                Button(onClick = { viewModel.loadPracticeModes("user_001") }) {
+                Button(onClick = { viewModel.loadPracticeModes() }) {
                     Text("Thử lại")
                 }
             }
@@ -274,7 +275,10 @@ fun PracticeArenaScreen(
                 contentPadding = PaddingValues(vertical = 8.dp)
             ) {
                 items(practiceModes) { mode ->
-                    PracticeArenaCard(practiceMode = mode, onClick = {})
+                    PracticeArenaCard(
+                        practiceMode = mode,
+                        onClick = { onPracticeClick(mode) }
+                    )
                 }
             }
         }

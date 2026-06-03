@@ -365,6 +365,7 @@ fun FlashCardCard(flashcardData: FlashcardData,onPronunciationClick: () -> Unit)
         }
     }
 }
+
 @Composable
 fun FlashCardScreen(viewModel: FlashcardViewModel,onExitClick: () -> Unit, onMoreClick: () -> Unit) {
     val isLoading by viewModel.isLoading
@@ -372,8 +373,8 @@ fun FlashCardScreen(viewModel: FlashcardViewModel,onExitClick: () -> Unit, onMor
     val selectedAnswer by viewModel.selectedAnswer
     val currentCardData = viewModel.currentCard.value
     val totalCards = viewModel.totalCards
-    LaunchedEffect("user_001") {
-        viewModel.loadFlashcardSet("user_001")
+    LaunchedEffect(Unit) {
+        viewModel.loadFlashcardSet()
     }
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -407,7 +408,7 @@ fun FlashCardScreen(viewModel: FlashcardViewModel,onExitClick: () -> Unit, onMor
                 verticalArrangement = Arrangement.Center
             ) {
                 Text("Lỗi: $error", color = MaterialTheme.colorScheme.error)
-                Button(onClick = { viewModel.loadFlashcardSet("user_001") }) {
+                Button(onClick = { viewModel.loadFlashcardSet() }) {
                     Text("Thử lại")
                 }
             }

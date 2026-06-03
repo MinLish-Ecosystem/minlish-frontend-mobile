@@ -24,4 +24,5 @@ sealed class NavDestinations(val route: String) {
 
     data object CreateNewSet : NavDestinations("create_new_set")
     data object Notifications  : NavDestinations("notifications")
+    data object FlashCardTest: NavDestinations("flash_card_test")
 }

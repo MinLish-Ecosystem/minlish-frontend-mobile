@@ -73,29 +73,5 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-@Composable
-fun MainScreen() {
-    var currentRoute by remember { mutableStateOf("Practice") }
-    val practiceViewModel = remember { PracticeViewModel() }
-    when (currentRoute) {
-        "Learning" -> {
-        }
 
-        "Practice" -> {
-            PracticeArenaScreen(
-                currentRoute=currentRoute,
-                viewModel= practiceViewModel,
-                onNavigate = { newRoute -> currentRoute = newRoute },
-            )
-        }
-
-        "Profile" -> {
-            // ProfileScreen(...)
-        }
-
-        else -> {
-            // Màn hình mặc định
-        }
-    }
-}
 

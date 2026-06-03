@@ -42,9 +42,12 @@ data class MockSetData(
 @Composable
 fun LibraryScreen(
     currentRoute: String = "library",
+    unreadCount: Int = 0,
     onNavigate: (String) -> Unit = {},
     onSetClick: (String) -> Unit = {},
     onCreateNewSet: () -> Unit = {},
+    onNotificationClick: () -> Unit = {},
+    onUserClick: () -> Unit = {},
 ) {
     var selectedSubTab by remember { mutableStateOf("My Sets") }
     var searchQuery by remember { mutableStateOf("") }
@@ -111,7 +114,9 @@ fun LibraryScreen(
         modifier = Modifier.fillMaxSize(),
         topBar = {
             AppHeader(
-                onNotificationClick = {}
+                onNotificationClick = onNotificationClick,
+                onUserClick = onUserClick,
+                unreadCount = unreadCount,
             )
         },
         bottomBar = {
