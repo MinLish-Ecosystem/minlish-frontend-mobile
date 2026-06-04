@@ -174,7 +174,7 @@ fun VocabSetCard(set: VocabSet,onClick: (VocabSet) -> Unit,modifier: Modifier){
                         maxLines = 1
                     )
                     Text(
-                        text = "10 words",
+                        text = "${set.wordCount} words",
                         fontSize = 11.sp,
                         color = Color(0xFF464554),
                         modifier = Modifier.padding(bottom = 4.dp)

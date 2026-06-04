@@ -56,6 +56,9 @@ fun AddWordScreen(
     val addSuccess by remember { viewModel.addSuccess }
     val isLookingUp by remember { viewModel.isLookingUp }
     val errorMessage by remember { viewModel.errorMessage }
+    val lookupResult by remember { viewModel.lookupResult }
+    var audioUrl        by remember { mutableStateOf("") }
+    var imageUrl        by remember { mutableStateOf("") }
 
     LaunchedEffect(addSuccess) {
         if (addSuccess) {
@@ -64,13 +67,45 @@ fun AddWordScreen(
             onBack()
         }
     }
-
+    fun clearForm() {
+        pronunciation = ""
+        meaning = ""
+        descriptionEN = ""
+        example = ""
+        collocation = ""
+        relatedWord = ""
+        note = ""
+        audioUrl = ""
+        imageUrl = ""
+    }
     LaunchedEffect(errorMessage) {
         errorMessage?.let { msg ->
-            Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
+            if (msg.contains("not found", ignoreCase = true)) {
+                clearForm()
+                Toast.makeText(context, "⚠️ $msg. Form cleared.", Toast.LENGTH_LONG).show()
+            } else {
+                Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
+            }
         }
     }
 
+    LaunchedEffect(lookupResult) {
+        lookupResult?.let { response ->
+            pronunciation = response.phonetic ?: ""
+            audioUrl = response.audio ?: ""
+            imageUrl = if (word.isNotBlank()) {
+                "https://picsum.photos/seed/${word.trim().lowercase()}/400/300"
+            } else ""
+            val def = response.meanings?.firstOrNull()?.definitions?.firstOrNull()
+            meaning = def?.definition ?: ""
+            descriptionEN = def?.definition ?: ""
+
+            example = response.meanings?.flatMap { it.definitions }
+                ?.firstOrNull { !it.example.isNullOrBlank() }?.example ?: ""
+
+            Toast.makeText(context, "✨ Details auto-filled!", Toast.LENGTH_SHORT).show()
+        }
+    }
     Scaffold(
         containerColor = AddWordColors.Background,
         topBar = {
@@ -127,7 +162,9 @@ fun AddWordScreen(
                                     example = example,
                                     collocation = collocation,
                                     relatedWord = relatedWord,
-                                    note = note
+                                    note = note,
+                                    audioUrl = audioUrl,
+                                    imageUrl = imageUrl
                                 )
                             }
                         },
@@ -206,15 +243,7 @@ fun AddWordScreen(
                         Button(
                             onClick = {
                                 if (word.isNotBlank()) {
-                                    viewModel.lookupWord(word) { result ->
-                                        pronunciation = result.phonetic ?: ""
-                                        val def = result.meanings.firstOrNull()?.definitions?.firstOrNull()
-                                        meaning = def?.definition ?: ""
-                                        descriptionEN = def?.definition ?: ""
-                                        example = result.meanings.flatMap { it.definitions }
-                                            .firstOrNull { !it.example.isNullOrBlank() }?.example ?: ""
-                                        Toast.makeText(context, "Details auto-filled!", Toast.LENGTH_SHORT).show()
-                                    }
+                                    viewModel.lookupWord(word)  // ✅ Không còn callback nữa
                                 } else {
                                     Toast.makeText(context, "Please enter a word first!", Toast.LENGTH_SHORT).show()
                                 }
