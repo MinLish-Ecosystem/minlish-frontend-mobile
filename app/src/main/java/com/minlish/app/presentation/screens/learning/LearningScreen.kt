@@ -115,9 +115,9 @@ private fun StatItem(label: String, value: Int) {
 }
 // viết thêm cái click để trả tham s
 @Composable
-fun VocabSetCard(set: VocabSet,modifier: Modifier){
+fun VocabSetCard(set: VocabSet,onClick: (VocabSet) -> Unit,modifier: Modifier){
     Card(
-        modifier = modifier.width(160.dp).height(140.dp).clickable{}, // viết sau
+        modifier = modifier.width(160.dp).height(140.dp).clickable{onClick(set)},
         shape=RoundedCornerShape(12.dp),
         colors= CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -174,7 +174,7 @@ fun VocabSetCard(set: VocabSet,modifier: Modifier){
                         maxLines = 1
                     )
                     Text(
-                        text = "10 words",
+                        text = "${set.wordCount} words",
                         fontSize = 11.sp,
                         color = Color(0xFF464554),
                         modifier = Modifier.padding(bottom = 4.dp)
@@ -226,6 +226,7 @@ fun LearningDashBoardScreen(
     viewModel: LearningViewModel,
     onCreateNewSetCard: () -> Unit,
     onStartSessionClick: () -> Unit,
+    onVocabSetClick: (VocabSet) -> Unit,
 ) {
 
     val vocabSets by viewModel.vocabSets
@@ -288,8 +289,8 @@ fun LearningDashBoardScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        VocabSetCard(set = vocabSets[i], modifier = Modifier.weight(1f))
-                        VocabSetCard(set = vocabSets[i + 1], modifier = Modifier.weight(1f))
+                        VocabSetCard(set = vocabSets[i], onClick = onVocabSetClick,modifier = Modifier.weight(1f))
+                        VocabSetCard(set = vocabSets[i + 1],onClick=onVocabSetClick, modifier = Modifier.weight(1f))
                     }
                 }
                 if (isOdd) {
@@ -297,7 +298,7 @@ fun LearningDashBoardScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        VocabSetCard(set = vocabSets.last(), modifier = Modifier.weight(1f))
+                        VocabSetCard(set = vocabSets.last(), onClick = onVocabSetClick, modifier = Modifier.weight(1f))
                         CreateNewSetCard(onCreateNewSetCard = onCreateNewSetCard, modifier = Modifier.weight(1f))
                     }
                 } else {

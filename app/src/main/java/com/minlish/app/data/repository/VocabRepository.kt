@@ -144,4 +144,17 @@ class VocabRepository(private val api: VocabApi = NetworkModule.vocabApi) {
             VocabResult.Error(e.localizedMessage ?: "Không tìm thấy từ vựng trong từ điển")
         }
     }
+
+    suspend fun deleteWord(setId: String, wordId: String): VocabResult<Unit> {
+        return try {
+            val response = api.deleteWord(setId, wordId)
+            if (response.success) {
+                VocabResult.Success(Unit)
+            } else {
+                VocabResult.Error(response.message ?: "Delete failed")
+            }
+        } catch (e: Exception) {
+            VocabResult.Error(e.message ?: "Network error")
+        }
+    }
 }

@@ -38,6 +38,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
@@ -199,6 +200,11 @@ fun FlashCardBottomBar(answerOptions: List<String>, onClick: (String) -> Unit){
 @Composable
 fun FlashCardCard(flashcardData: FlashcardData){
     val mediaPlayer = remember { MediaPlayer() }
+    DisposableEffect(Unit) {
+        onDispose {
+            mediaPlayer.release()
+        }
+    }
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -407,15 +413,14 @@ fun CompletionScreen(onDoneClick: () -> Unit) {
 @Composable
 fun FlashCardScreen(
     viewModel: FlashcardViewModel,
-    setId: String? = null,
     onExitClick: () -> Unit,
     onMoreClick: () -> Unit
 ) {
     val isLoading by viewModel.isLoading
     val error by viewModel.errorMessage
     val selectedAnswer by viewModel.selectedAnswer
-    val currentCardData = viewModel.currentCard.value
-    val totalCards = viewModel.totalCards
+    val currentCardData by viewModel.currentCard
+    val totalCards by viewModel.totalCards
     val isCompleted by viewModel.isCompleted
     LaunchedEffect(Unit) {
         viewModel.loadFlashcardSet()
@@ -431,7 +436,7 @@ fun FlashCardScreen(
         topBar = {
             FlashCardTopBar(
                 currentProgress =viewModel.currentIndex.value+1,
-                totalQuestion = totalCards.value,
+                totalQuestion = totalCards,
                 onExitClick = onExitClick,
                 onMoreClick = onMoreClick,
             )

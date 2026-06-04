@@ -158,6 +158,10 @@ fun AppNavHost(
                 },
                 onStartSessionClick = {
                     navController.navigate(NavDestinations.FlashCardTest.route)
+                },
+                onVocabSetClick = { vocabSet ->
+                    val encodedName = java.net.URLEncoder.encode(vocabSet.title, "UTF-8")
+                    navController.navigate("word_list/${vocabSet.id}/$encodedName")
                 }
             )
         }
@@ -172,14 +176,12 @@ fun AppNavHost(
                 }
             )
         ){ backStackEntry ->
-            val setId = backStackEntry.arguments?.getString("setId")
             val flashCardViewModel: FlashcardViewModel = viewModel()
             LaunchedEffect(Unit) {
                 FCMHelper.registerFCMToken(context)
             }
             FlashCardScreen(
                 viewModel=flashCardViewModel,
-                setId = setId,
                 onExitClick = {
                     navController.popBackStack(NavDestinations.Learning.route, inclusive = false)
                     flashCardViewModel.resetState()

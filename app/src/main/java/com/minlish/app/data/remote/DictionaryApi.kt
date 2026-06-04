@@ -17,7 +17,7 @@ data class DictionaryResponse(
     val word: String,
     val phonetic: String? = null,
     val audio: String? = null,
-    val meanings: List<DictionaryMeaning> = emptyList(),
+    val meanings: List<DictionaryMeaning>? = null,
     val sourceUrl: String? = null
 )
 
