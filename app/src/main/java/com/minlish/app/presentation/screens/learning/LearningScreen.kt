@@ -132,7 +132,7 @@ fun VocabSetCard(set: VocabSet,modifier: Modifier){
                     )
             )
             Box(
-                modifier = Modifier.padding(16.dp)
+                modifier = Modifier.padding(12.dp)
             ) {
                 Column {
                     Row(
@@ -174,10 +174,10 @@ fun VocabSetCard(set: VocabSet,modifier: Modifier){
                         maxLines = 1
                     )
                     Text(
-                        text = "${set.wordCount} words",
+                        text = "10 words",
                         fontSize = 11.sp,
                         color = Color(0xFF464554),
-                        modifier = Modifier.padding(top = 4.dp)
+                        modifier = Modifier.padding(bottom = 4.dp)
                     )
                 }
             }

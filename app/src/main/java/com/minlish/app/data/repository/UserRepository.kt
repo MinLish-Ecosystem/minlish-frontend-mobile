@@ -21,8 +21,7 @@ class UserRepository {
     private val userDao = DatabaseModule.userDao
     private val statsApi = NetworkModule.statsApi
 
-    fun getLocalUserProfile(): Flow<UserEntity?> {
-        val userId = TokenManager.getUserId() ?: ""
+    fun getLocalUserProfile(userId: String): Flow<UserEntity?> {
         return userDao.getUserById(userId)
     }
 

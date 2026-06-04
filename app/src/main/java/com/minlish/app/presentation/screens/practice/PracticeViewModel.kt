@@ -38,9 +38,8 @@ class PracticeViewModel(): ViewModel(){
                 practiceModes.value = newList.toList()
             }.onFailure { error->
                 errorMessage.value = error.message ?: "Lỗi không xác định"
-
             }
+            isLoading.value = false
         }
-        isLoading.value = false
     }
 }

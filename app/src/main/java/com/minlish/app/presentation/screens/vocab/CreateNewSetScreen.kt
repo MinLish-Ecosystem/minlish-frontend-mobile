@@ -56,7 +56,7 @@ private val CATEGORIES = listOf("Academic", "Business", "Travel", "Casual", "Gen
 @Composable
 fun CreateNewSetScreen(
     onBackClick: () -> Unit = {},
-    onCreateClick: (title: String, description: String, category: String, isPublic: Boolean) -> Unit = { _, _, _, _ -> }
+    onCreateClick: (title: String, description: String, category: String, isPublic: Boolean, words: List<WordEntry>) -> Unit = { _, _, _, _, _ -> }
 ) {
     var setName         by remember { mutableStateOf("") }
     var description     by remember { mutableStateOf("") }
@@ -78,7 +78,7 @@ fun CreateNewSetScreen(
                 canCreate = canCreate,
                 onClick = {
                     if (canCreate) {
-                        onCreateClick(setName, description, selectedCategory, isPublic)
+                        onCreateClick(setName, description, selectedCategory, isPublic, words)
                     }
                 }
             )

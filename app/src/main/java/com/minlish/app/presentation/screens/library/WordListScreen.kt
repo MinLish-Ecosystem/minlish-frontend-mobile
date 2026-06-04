@@ -26,6 +26,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.minlish.app.presentation.screens.library.WordListViewModel
 
 data class WordItem(
     val word: String,
@@ -62,11 +64,17 @@ enum class WordStatus(
 
 @Composable
 fun WordListScreen(
+    setId: String,
     setName: String,
     onBack: () -> Unit,
+    onStartSession: (String) -> Unit = {},
+    onAddWordClick: (String) -> Unit = {},
+    viewModel: WordListViewModel = viewModel(),
     modifier: Modifier = Modifier
 ) {
     var searchQuery by remember { mutableStateOf("") }
+    var selectedFilter by remember { mutableStateOf("All") }
+    var showFilterMenu by remember { mutableStateOf(false) }
 
     val surfaceColor = Color(0xFFFFFFFF)
     val surfaceVariantColor = Color(0xFFF3F4F6)
@@ -77,43 +85,48 @@ fun WordListScreen(
     val onPrimaryContainerColor = Color(0xFF312E81)
     val outlineVariantColor = Color(0xFFE5E7EB)
 
-    val sampleWords = remember {
-        listOf(
-            WordItem(
-                word = "Leverage",
-                phonetic = "/ˈlev.ɚ.ɪdʒ/",
-                status = WordStatus.MASTERED,
-                definition = "To use something that you already have in order to achieve something new or better."
-            ),
-            WordItem(
-                word = "Synergy",
-                phonetic = "/ˈsɪn.ɚ.dʒi/",
-                status = WordStatus.LEARNING,
-                definition = "The combined power of a group of things when they are working together that is greater than the total power achieved by each working separately."
-            ),
-            WordItem(
-                word = "Paradigm",
-                phonetic = "/ˈper.ə.daɪm/",
-                status = WordStatus.NEW,
-                definition = "A model of something, or a very clear and typical example of something."
-            ),
-            WordItem(
-                word = "Stakeholder",
-                phonetic = "/ˈsteɪkˌhoʊl.dɚ/",
-                status = WordStatus.MASTERED,
-                definition = "A person or group of people who own a share in a business; someone who has an interest in the success of a plan, system, or organization."
-            )
-        )
+    val words by viewModel.words
+    val isLoading by viewModel.isLoading
+    val errorMessage by viewModel.errorMessage
+    val totalCount by viewModel.totalCount
+    val masteredCount by viewModel.masteredCount
+    val learningCount by viewModel.learningCount
+
+    LaunchedEffect(setId, searchQuery) {
+        viewModel.loadWords(setId, searchQuery)
     }
 
-    val filteredWords = remember(searchQuery) {
-        if (searchQuery.isBlank()) {
-            sampleWords
+    val wordItems = remember(words) {
+        words.map { response ->
+            val status = when (response.status?.lowercase()) {
+                "mastered" -> WordStatus.MASTERED
+                "learning", "review" -> WordStatus.LEARNING
+                else -> WordStatus.NEW
+            }
+            WordItem(
+                word = response.word,
+                phonetic = response.pronunciation ?: "",
+                status = status,
+                definition = response.meaning
+            )
+        }
+    }
+
+    val filteredWords = remember(searchQuery, wordItems, selectedFilter) {
+        val list = if (searchQuery.isBlank()) {
+            wordItems
         } else {
-            sampleWords.filter {
+            wordItems.filter {
                 it.word.contains(searchQuery, ignoreCase = true) ||
                         it.definition.contains(searchQuery, ignoreCase = true)
             }
+        }
+        when (selectedFilter) {
+            "A -> Z" -> list.sortedBy { it.word.lowercase() }
+            "Z -> A" -> list.sortedByDescending { it.word.lowercase() }
+            "Mastered" -> list.filter { it.status == WordStatus.MASTERED }
+            "Learning" -> list.filter { it.status == WordStatus.LEARNING }
+            else -> list
         }
     }
 
@@ -193,7 +206,7 @@ fun WordListScreen(
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             CardStats(
-                                count = "42",
+                                count = totalCount.toString(),
                                 label = "Total",
                                 valueColor = onSurfaceColor,
                                 containerColor = surfaceVariantColor,
@@ -201,7 +214,7 @@ fun WordListScreen(
                             )
 
                             CardStats(
-                                count = "12",
+                                count = masteredCount.toString(),
                                 label = "Mastered",
                                 valueColor = WordStatus.MASTERED.color,
                                 containerColor = WordStatus.MASTERED.containerColor,
@@ -209,7 +222,7 @@ fun WordListScreen(
                             )
 
                             CardStats(
-                                count = "5",
+                                count = learningCount.toString(),
                                 label = "Learning",
                                 valueColor = WordStatus.LEARNING.color,
                                 containerColor = WordStatus.LEARNING.containerColor,
@@ -222,7 +235,7 @@ fun WordListScreen(
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             Button(
-                                onClick = {},
+                                onClick = { onStartSession(setId) },
                                 modifier = Modifier
                                     .weight(1f)
                                     .height(48.dp),
@@ -232,7 +245,7 @@ fun WordListScreen(
                                     contentColor = Color.White
                                 ),
                                 elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp)
-                            ) {
+                             ) {
                                 Row(
                                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                                     verticalAlignment = Alignment.CenterVertically
@@ -250,7 +263,7 @@ fun WordListScreen(
                             }
 
                             Button(
-                                onClick = {},
+                                onClick = { onAddWordClick(setId) },
                                 modifier = Modifier
                                     .height(48.dp)
                                     .border(
@@ -329,132 +342,172 @@ fun WordListScreen(
                             fontSize = 16.sp
                         )
 
-                        TextButton(
-                            onClick = {},
-                            contentPadding = PaddingValues(horizontal = 8.dp)
-                        ) {
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                verticalAlignment = Alignment.CenterVertically
+                        Box {
+                            TextButton(
+                                onClick = { showFilterMenu = true },
+                                contentPadding = PaddingValues(horizontal = 8.dp)
                             ) {
-                                Icon(
-                                    imageVector = Icons.AutoMirrored.Filled.Sort,
-                                    contentDescription = null,
-                                    tint = primaryColor,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                                Text(
-                                    text = "Filter",
-                                    color = primaryColor,
-                                    fontWeight = FontWeight.Medium,
-                                    fontSize = 14.sp
-                                )
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Filled.Sort,
+                                        contentDescription = null,
+                                        tint = primaryColor,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    Text(
+                                        text = if (selectedFilter == "All") "Filter" else selectedFilter,
+                                        color = primaryColor,
+                                        fontWeight = FontWeight.Medium,
+                                        fontSize = 14.sp
+                                    )
+                                }
+                            }
+                            DropdownMenu(
+                                expanded = showFilterMenu,
+                                onDismissRequest = { showFilterMenu = false }
+                            ) {
+                                listOf("All", "A -> Z", "Z -> A", "Mastered", "Learning").forEach { option ->
+                                    DropdownMenuItem(
+                                        text = { Text(option) },
+                                        onClick = {
+                                            selectedFilter = option
+                                            showFilterMenu = false
+                                        }
+                                    )
+                                }
                             }
                         }
                     }
                 }
             }
 
-            items(filteredWords) { item ->
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 6.dp)
-                ) {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(containerColor = surfaceColor),
-                        shape = RoundedCornerShape(12.dp),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-                    ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.Top
-                            ) {
-                                Column {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                    ) {
-                                        Text(
-                                            text = item.word,
-                                            color = onSurfaceColor,
-                                            fontWeight = FontWeight.Bold,
-                                            fontSize = 18.sp
-                                        )
-
-                                        IconButton(
-                                            onClick = {},
-                                            modifier = Modifier.size(24.dp)
-                                        ) {
-                                            Icon(
-                                                imageVector = Icons.AutoMirrored.Filled.VolumeUp,
-                                                contentDescription = "Play pronunciation",
-                                                tint = onSurfaceVariantColor,
-                                                modifier = Modifier.size(20.dp)
-                                            )
-                                        }
-                                    }
-
-                                    Text(
-                                        text = item.phonetic,
-                                        color = onSurfaceVariantColor,
-                                        fontWeight = FontWeight.Medium,
-                                        fontSize = 14.sp
-                                    )
-                                }
-
-                                Box(
-                                    modifier = Modifier
-                                        .background(
-                                            color = item.status.containerColor,
-                                            shape = RoundedCornerShape(6.dp)
-                                        )
-                                        .padding(horizontal = 8.dp, vertical = 4.dp)
-                                ) {
-                                    Text(
-                                        text = item.status.label.uppercase(),
-                                        color = item.status.onContainerColor,
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 10.sp
-                                    )
-                                }
-                            }
-
-                            HorizontalDivider(
-                                modifier = Modifier.padding(vertical = 4.dp),
-                                color = outlineVariantColor.copy(alpha = 0.5f),
-                                thickness = 1.dp
-                            )
-
-                            Text(
-                                text = item.definition,
-                                color = onSurfaceColor,
-                                fontSize = 14.sp
-                            )
-                        }
-                    }
-
+            if (isLoading) {
+                item {
                     Box(
                         modifier = Modifier
-                            .align(Alignment.CenterStart)
-                            .width(4.dp)
-                            .height(84.dp)
-                            .background(
-                                color = item.status.color,
-                                shape = RoundedCornerShape(
-                                    topStart = 12.dp,
-                                    bottomStart = 12.dp
+                            .fillMaxWidth()
+                            .padding(24.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(color = primaryColor)
+                    }
+                }
+            } else if (errorMessage != null) {
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(24.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(text = errorMessage!!, color = Color.Red)
+                    }
+                }
+            } else {
+                items(filteredWords) { item ->
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 6.dp)
+                    ) {
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(containerColor = surfaceColor),
+                            shape = RoundedCornerShape(12.dp),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.Top
+                                ) {
+                                    Column {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                        ) {
+                                            Text(
+                                                text = item.word,
+                                                color = onSurfaceColor,
+                                                fontWeight = FontWeight.Bold,
+                                                fontSize = 18.sp
+                                            )
+
+                                            IconButton(
+                                                onClick = {},
+                                                modifier = Modifier.size(24.dp)
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.AutoMirrored.Filled.VolumeUp,
+                                                    contentDescription = "Play pronunciation",
+                                                    tint = onSurfaceVariantColor,
+                                                    modifier = Modifier.size(20.dp)
+                                                )
+                                            }
+                                        }
+
+                                        Text(
+                                            text = item.phonetic,
+                                            color = onSurfaceVariantColor,
+                                            fontWeight = FontWeight.Medium,
+                                            fontSize = 14.sp
+                                        )
+                                    }
+
+                                    Box(
+                                        modifier = Modifier
+                                            .background(
+                                                color = item.status.containerColor,
+                                                shape = RoundedCornerShape(6.dp)
+                                            )
+                                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                                    ) {
+                                        Text(
+                                            text = item.status.label.uppercase(),
+                                            color = item.status.onContainerColor,
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 10.sp
+                                        )
+                                    }
+                                }
+
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(vertical = 4.dp),
+                                    color = outlineVariantColor.copy(alpha = 0.5f),
+                                    thickness = 1.dp
                                 )
-                            )
-                    )
+
+                                Text(
+                                    text = item.definition,
+                                    color = onSurfaceColor,
+                                    fontSize = 14.sp
+                                )
+                            }
+                        }
+
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.CenterStart)
+                                .width(4.dp)
+                                .height(84.dp)
+                                .background(
+                                    color = item.status.color,
+                                    shape = RoundedCornerShape(
+                                        topStart = 12.dp,
+                                        bottomStart = 12.dp
+                                    )
+                                )
+                        )
+                    }
                 }
             }
         }

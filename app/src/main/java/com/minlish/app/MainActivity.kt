@@ -16,7 +16,6 @@ import com.minlish.app.di.DatabaseModule
 import com.minlish.app.presentation.components.AppShell
 import com.minlish.app.presentation.navigation.NavDestinations
 import com.minlish.app.ui.theme.MinLishMobileTheme
-import com.minlish.app.util.SessionExpiredEvent
 
 class MainActivity : ComponentActivity() {
     @RequiresApi(Build.VERSION_CODES.O)
@@ -34,14 +33,6 @@ class MainActivity : ComponentActivity() {
                 LaunchedEffect(Unit) {
                     if (TokenManager.isLoggedIn()) {
                         syncManager.syncAll()
-                    }
-                }
-
-                LaunchedEffect(Unit) {
-                    SessionExpiredEvent.flow.collect {
-                        navController.navigate(NavDestinations.Login.route) {
-                            popUpTo(0) { inclusive = true}
-                        }
                     }
                 }
 

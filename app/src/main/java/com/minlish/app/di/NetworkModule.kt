@@ -11,7 +11,9 @@ import com.minlish.app.data.remote.interceptor.ErrorInterceptor
 import okhttp3.Interceptor
 import com.minlish.app.data.remote.FlashCardApi
 import com.minlish.app.data.remote.LearningApi
+import com.minlish.app.data.remote.VocabApi
 import com.minlish.app.data.remote.PracticeApi
+import com.minlish.app.data.remote.DictionaryApi
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -43,4 +45,6 @@ object NetworkModule {
     val learningApi: LearningApi = retrofit.create(LearningApi::class.java)
     val flashCardApi: FlashCardApi =retrofit.create(FlashCardApi::class.java)
     val practiceApi: PracticeApi = retrofit.create(PracticeApi::class.java)
+    val vocabApi: VocabApi = retrofit.create(VocabApi::class.java)
+    val dictionaryApi: DictionaryApi = retrofit.create(DictionaryApi::class.java)
 }

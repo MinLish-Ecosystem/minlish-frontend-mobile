@@ -23,7 +23,10 @@ import com.minlish.app.presentation.screens.notifications.NotificationScreen
 import com.minlish.app.presentation.screens.notifications.NotificationViewModel
 import com.minlish.app.presentation.screens.library.LibraryScreen
 import com.minlish.app.presentation.screens.library.WordListScreen
+import com.minlish.app.presentation.screens.library.WordListViewModel
 import com.minlish.app.presentation.screens.vocab.CreateNewSetScreen
+import com.minlish.app.presentation.screens.vocab.VocabViewModel
+import com.minlish.app.presentation.screens.vocab.AddWordScreen
 import com.minlish.app.presentation.screens.practice.PracticeArenaScreen
 import com.minlish.app.presentation.screens.practice.PracticeViewModel
 import com.minlish.app.presentation.screens.practice.getRoute
@@ -39,7 +42,8 @@ import com.minlish.app.util.NotificationBadgeManager
 fun AuthNavHost(
     modifier: Modifier = Modifier,
     navController: NavHostController,
-    startDestination: String
+    startDestination: String,
+    profileViewModel: ProfileViewModel
 ) {
     val context = LocalContext.current
     val authViewModel: AuthViewModel = viewModel()
@@ -132,9 +136,6 @@ fun AuthNavHost(
             )
         }
 
-        // ── Main App Tabs (ViewModels được khởi tạo cục bộ tại đây để tự hủy khi Logout) ──
-
-        // 1. Tab Learning
         composable(NavDestinations.Learning.route) {
             val learningViewModel: LearningViewModel = viewModel()
             LaunchedEffect(Unit) {
@@ -152,21 +153,32 @@ fun AuthNavHost(
             )
         }
 
-        composable(NavDestinations.FlashCardTest.route){
+        composable(
+            route = NavDestinations.FlashCardTest.route,
+            arguments = listOf(
+                androidx.navigation.navArgument("setId") {
+                    type = androidx.navigation.NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
+            )
+        ){ backStackEntry ->
+            val setId = backStackEntry.arguments?.getString("setId")
             val flashCardViewModel: FlashcardViewModel = viewModel()
             LaunchedEffect(Unit) {
                 FCMHelper.registerFCMToken(context)
             }
             FlashCardScreen(
-                viewModel = flashCardViewModel,
+                viewModel=flashCardViewModel,
+                setId = setId,
                 onExitClick = {
-                    navController.popBackStack()
+                    navController.popBackStack(NavDestinations.Learning.route, inclusive = false)
+                    flashCardViewModel.resetState()
                 },
                 onMoreClick = {}
             )
         }
 
-        // 2. Tab Analytics
         composable(NavDestinations.Analytics.route) {
             val analyticsViewModel: AnalyticsViewModel = viewModel()
             AnalyticsScreen(
@@ -174,41 +186,95 @@ fun AuthNavHost(
             )
         }
 
-        // 3. Tab Library
         composable(NavDestinations.Library.route) {
+            val vocabViewModel: VocabViewModel = viewModel()
             LibraryScreen(
-                onSetClick = { setName ->
-                    navController.navigate(NavDestinations.WordList.createRoute(setName))
+                onSetClick = { setId, setName ->
+                    navController.navigate(NavDestinations.WordList.createRoute(setId, setName))
                 },
                 onCreateNewSet = {
                     navController.navigate(NavDestinations.CreateNewSet.route)
-                }
+                },
+                viewModel = vocabViewModel
             )
         }
 
-        // Sub-screen Word List
         composable(NavDestinations.WordList.route) { backStackEntry ->
+            val setId = backStackEntry.arguments?.getString("setId") ?: ""
             val setName = backStackEntry.arguments?.getString("setName")?.let {
                 java.net.URLDecoder.decode(it, "UTF-8")
             } ?: "Vocabulary Set"
 
             WordListScreen(
+                setId = setId,
                 setName = setName,
-                onBack = { navController.popBackStack() }
-            )
-        }
-
-        // Sub-screen Create New Set
-        composable(NavDestinations.CreateNewSet.route) {
-            CreateNewSetScreen(
-                onBackClick = { navController.popBackStack() },
-                onCreateClick = { _, _, _, _ ->
-                    navController.popBackStack()
+                onBack  = { navController.popBackStack() },
+                onStartSession = { id ->
+                    navController.navigate(NavDestinations.FlashCardTest.createRoute(id))
+                },
+                onAddWordClick = { id ->
+                    navController.navigate(NavDestinations.AddWord.createRoute(id))
                 }
             )
         }
 
-        // 4. Tab Practice
+        composable(NavDestinations.AddWord.route) { backStackEntry ->
+            val setId = backStackEntry.arguments?.getString("setId") ?: ""
+            val parentEntry = remember(backStackEntry) {
+                navController.previousBackStackEntry
+            }
+            val wordListViewModel: WordListViewModel = if (parentEntry != null) {
+                viewModel(parentEntry)
+            } else {
+                viewModel()
+            }
+
+            AddWordScreen(
+                setId = setId,
+                onBack = { navController.popBackStack() },
+                viewModel = wordListViewModel
+            )
+        }
+
+        composable(NavDestinations.CreateNewSet.route) { backStackEntry ->
+            val parentEntry = remember(backStackEntry) {
+                try {
+                    navController.getBackStackEntry(NavDestinations.Library.route)
+                } catch (e: IllegalArgumentException) {
+                    null
+                }
+            }
+            val vocabViewModel: VocabViewModel = if (parentEntry != null) {
+                viewModel(parentEntry)
+            } else {
+                viewModel()
+            }
+
+            val uiState by vocabViewModel.uiState.collectAsState()
+            val context = LocalContext.current
+            LaunchedEffect(uiState.createSuccess) {
+                if (uiState.createSuccess) {
+                    vocabViewModel.resetCreateSuccess()
+                    navController.popBackStack()
+                }
+            }
+
+            LaunchedEffect(uiState.errorMessage) {
+                uiState.errorMessage?.let { msg ->
+                    android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_LONG).show()
+                    vocabViewModel.clearError()
+                }
+            }
+
+            CreateNewSetScreen(
+                onBackClick = { navController.popBackStack() },
+                onCreateClick = { title, description, category, isPublic, words ->
+                    vocabViewModel.createSet(title, description, category, isPublic, words)
+                }
+            )
+        }
+
+        // Tab Practice
         composable(NavDestinations.Practice.route) {
             val practiceViewModel: PracticeViewModel = viewModel()
             PracticeArenaScreen(
@@ -226,12 +292,13 @@ fun AuthNavHost(
 
         // 5. Tab Profile
         composable(NavDestinations.Profile.route) {
-            val profileViewModel: ProfileViewModel = viewModel()
             ProfileScreen(
                 viewModel = profileViewModel,
                 onLogOutClick = {
                     FCMHelper.deleteFCMToken(context) {
                         TokenManager.clear()
+                        profileViewModel.resetState()
+                        navController.clearAllTabStates()
                         navController.navigate(NavDestinations.Welcome.route) {
                             popUpTo(0) { inclusive = true }
                         }
@@ -240,7 +307,6 @@ fun AuthNavHost(
             )
         }
 
-        // 6. Màn hình Notifications
         composable(NavDestinations.Notifications.route) {
             val notifViewModel: NotificationViewModel = viewModel()
             NotificationScreen(

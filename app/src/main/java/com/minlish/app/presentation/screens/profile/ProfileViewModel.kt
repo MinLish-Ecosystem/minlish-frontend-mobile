@@ -9,11 +9,14 @@ import com.minlish.app.data.local.TokenManager
 import com.minlish.app.data.local.entity.UserEntity
 import com.minlish.app.data.repository.AuthRepository
 import com.minlish.app.data.repository.UserRepository
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -43,41 +46,63 @@ class ProfileViewModel(private val userRepo: UserRepository = UserRepository()) 
     private val _uiState = MutableStateFlow(ProfileUiState())
     val uiState: StateFlow<ProfileUiState> = _uiState.asStateFlow()
 
-    val userProfile = userRepo.getLocalUserProfile()
+    private val _currentUserId = MutableStateFlow<String?>(null)
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val userProfile: StateFlow<UserEntity?> = _currentUserId
+        .flatMapLatest { userId ->
+            if (userId.isNullOrEmpty()) {
+                flowOf(null)
+            } else {
+                userRepo.getLocalUserProfile(userId)
+            }
+        }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
     init {
         viewModelScope.launch {
-            userRepo.refreshUserProfile()
-        }
-
-        viewModelScope.launch {
             userProfile.collect { user ->
-                user?.let { u ->
-                    val year = u.createdAt?.substring(0, 4) ?: "2026"
+                if (user != null) {
+                    val year = user.createdAt?.substring(0, 4) ?: "2026"
                     _uiState.update {
                         it.copy(
-                            displayName = u.name,
-                            email = u.email,
-                            avatar = u.avatar,
+                            displayName = user.name,
+                            email = user.email,
+                            avatar = user.avatar,
                             joinYear = year
                         )
                     }
                 }
             }
         }
-        loadProfileData()
+
+        val savedUserId = TokenManager.getUserId()
+        if (!savedUserId.isNullOrEmpty()) {
+            _currentUserId.value = savedUserId
+            loadProfileData()
+        }
     }
 
     fun loadProfileData() {
+        val userId = TokenManager.getUserId()
+        if (userId.isNullOrEmpty()) return
+
+        _currentUserId.value = userId
+
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
             try {
+                val profileDeferred = async { userRepo.getProfile() }
                 val learningDeferred = async { userRepo.getLearningProfile() }
                 val streakDeferred = async { userRepo.getCurrentStreak() }
 
+                val profileRes = profileDeferred.await()
                 val learningRes = learningDeferred.await()
                 val streakRes = streakDeferred.await()
+
+                if (profileRes.isSuccess) {
+                    userRepo.refreshUserProfile()
+                }
 
                 if (learningRes.isSuccess) {
                     val learning = learningRes.getOrThrow()
@@ -112,6 +137,11 @@ class ProfileViewModel(private val userRepo: UserRepository = UserRepository()) 
                 }
             }
         }
+    }
+
+    fun resetState() {
+        _currentUserId.value = null
+        _uiState.value = ProfileUiState()
     }
 
     fun updateDisplayName(value: String) { _uiState.update { it.copy(displayName = value) } }

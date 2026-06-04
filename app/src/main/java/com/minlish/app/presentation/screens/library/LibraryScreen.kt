@@ -22,10 +22,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.minlish.app.presentation.screens.vocab.VocabViewModel
 
 
 
 data class MockSetData(
+    val id: String,
     val title: String,
     val description: String,
     val wordCount: Int,
@@ -34,62 +37,71 @@ data class MockSetData(
     val statusColor: Color,
     val statusIcon: androidx.compose.ui.graphics.vector.ImageVector,
     val statusText: String,
-    val progressBrush: Brush
+    val progressBrush: Brush,
+    val category: String,
+    val isPublic: Boolean
 )
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun LibraryScreen(
     modifier: Modifier = Modifier,
-    onSetClick: (String) -> Unit = {},
+    onSetClick: (String, String) -> Unit = { _, _ -> },
     onCreateNewSet: () -> Unit = {},
+    viewModel: VocabViewModel = viewModel()
 ) {
+    val uiState by viewModel.uiState.collectAsState()
     var selectedSubTab by remember { mutableStateOf("My Sets") }
     var searchQuery by remember { mutableStateOf("") }
     
-    // Mock data for "My Sets"
-    val mySets = remember {
-        listOf(
+    LaunchedEffect(selectedSubTab, searchQuery) {
+        if (selectedSubTab == "My Sets") {
+            viewModel.loadSets(searchQuery)
+        }
+    }
+    
+    // Map backend sets to "My Sets" UI representation
+    val mySets = remember(uiState.sets) {
+        uiState.sets.map { setResponse ->
+            val colorTheme = setResponse.colorTheme
+            val accentColor = when (colorTheme) {
+                "blue" -> Color(0xFF3B82F6)
+                "emerald" -> Color(0xFF10B981)
+                "amber" -> Color(0xFFF59E0B)
+                "purple" -> Color(0xFF8B5CF6)
+                "rose" -> Color(0xFFF43F5E)
+                "cyan" -> Color(0xFF06B6D4)
+                else -> Color(0xFF8B5CF6)
+            }
+            val progressBrush = when (colorTheme) {
+                "blue" -> Brush.horizontalGradient(listOf(Color(0xFF3B82F6), Color(0xFF60A5FA)))
+                "emerald" -> Brush.horizontalGradient(listOf(Color(0xFF10B981), Color(0xFF34D399)))
+                "amber" -> Brush.horizontalGradient(listOf(Color(0xFFF59E0B), Color(0xFFFBBF24)))
+                "purple" -> Brush.horizontalGradient(listOf(Color(0xFF8B5CF6), Color(0xFFA78BFA)))
+                "rose" -> Brush.horizontalGradient(listOf(Color(0xFFF43F5E), Color(0xFFFB7185)))
+                "cyan" -> Brush.horizontalGradient(listOf(Color(0xFF06B6D4), Color(0xFF22D3EE)))
+                else -> Brush.horizontalGradient(listOf(Color(0xFF8B5CF6), Color(0xFFA78BFA)))
+            }
+            val masteryPct = setResponse.progress?.masteredPct ?: 0
+            val statusColor = if (masteryPct == 100) Color(0xFF10B981) else if (masteryPct > 0) Color(0xFFF59E0B) else Color(0xFFC7C4D7)
+            val statusIcon = if (masteryPct == 100) Icons.Default.CheckCircle else if (masteryPct > 0) Icons.Default.TrendingUp else Icons.Default.HourglassEmpty
+            val statusText = if (masteryPct > 0) "$masteryPct% Mastered" else "Not started"
+            
             MockSetData(
-                title = "IELTS Core",
-                description = "Essential vocabulary for academic reading and writing.",
-                wordCount = 150,
-                masteryPercent = 65,
-                accentColor = Color(0xFF06B6D4), // accent-cyan
-                statusColor = Color(0xFF10B981), // success
-                statusIcon = Icons.Default.CheckCircle,
-                statusText = "65% Mastered",
-                progressBrush = Brush.linearGradient(
-                    colors = listOf(Color(0xFFF093FB), Color(0xFFF5576C))
-                )
-            ),
-            MockSetData(
-                title = "Phrasal Verbs II",
-                description = "Common phrasal verbs for everyday conversation.",
-                wordCount = 85,
-                masteryPercent = 30,
-                accentColor = Color(0xFFF59E0B), // accent-amber
-                statusColor = Color(0xFFF59E0B), // warning
-                statusIcon = Icons.Default.TrendingUp,
-                statusText = "30% Mastered",
-                progressBrush = Brush.horizontalGradient(
-                    colors = listOf(Color(0xFFF59E0B), Color(0xFFF59E0B))
-                )
-            ),
-            MockSetData(
-                title = "Business Idioms",
-                description = "Expressions used in professional environments.",
-                wordCount = 42,
-                masteryPercent = 0,
-                accentColor = Color(0xFFF43F5E), // accent-rose
-                statusColor = Color(0xFFC7C4D7), // outline-variant
-                statusIcon = Icons.Default.HourglassEmpty,
-                statusText = "Not started",
-                progressBrush = Brush.horizontalGradient(
-                    colors = listOf(Color(0xFFE4E1ED), Color(0xFFE4E1ED))
-                )
+                id = setResponse.id,
+                title = setResponse.name,
+                description = setResponse.description ?: "",
+                wordCount = setResponse.totalWords,
+                masteryPercent = masteryPct,
+                accentColor = accentColor,
+                statusColor = statusColor,
+                statusIcon = statusIcon,
+                statusText = statusText,
+                progressBrush = progressBrush,
+                category = setResponse.category,
+                isPublic = setResponse.isPublic
             )
-        )
+        }
     }
 
     // Color definitions based on the HTML mockup
@@ -104,6 +116,7 @@ fun LibraryScreen(
     val accentBlueColor = Color(0xFF3B82F6)
     val accentEmeraldColor = Color(0xFF10B981)
     val accentAmberColor = Color(0xFFF59E0B)
+
 
     Box(
         modifier = modifier
@@ -121,34 +134,59 @@ fun LibraryScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(surfaceContainerHighColor, shape = RoundedCornerShape(12.dp))
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(surfaceContainerHighColor)
                     .padding(4.dp),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 listOf("My Sets", "Explore").forEach { tab ->
                     val isSelected = selectedSubTab == tab
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(if (isSelected) surfaceContainerLowestColor else Color.Transparent)
-                            .clickable { selectedSubTab = tab }
-                            .padding(vertical = 10.dp)
-                            .then(
-                                if (isSelected) Modifier.shadow(1.dp, RoundedCornerShape(8.dp)) else Modifier
+                    if (isSelected) {
+                        Card(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clickable { selectedSubTab = tab },
+                            shape = RoundedCornerShape(6.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = surfaceContainerLowestColor
                             ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = tab,
-                            color = if (isSelected) onSurfaceColor else onSurfaceVariantColor,
-                            fontWeight = FontWeight.Medium,
-                            fontSize = 14.sp
-                        )
+                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 10.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = tab,
+                                    color = onSurfaceColor,
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 14.sp
+                                )
+                            }
+                        }
+                    } else {
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(RoundedCornerShape(6.dp))
+                                .clickable { selectedSubTab = tab }
+                                .padding(vertical = 10.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = tab,
+                                color = onSurfaceVariantColor,
+                                fontWeight = FontWeight.Medium,
+                                fontSize = 14.sp
+                            )
+                        }
                     }
                 }
             }
         }
+
 
         if (selectedSubTab == "Explore") {
             item {
@@ -200,7 +238,7 @@ fun LibraryScreen(
                             .height(192.dp)
                             .shadow(8.dp, RoundedCornerShape(16.dp))
                             .clip(RoundedCornerShape(16.dp))
-                            .clickable { onSetClick("Business English") }
+                            .clickable { onSetClick("mock_featured_id", "Business English") }
                     ) {
                         AsyncImage(
                             model = "https://lh3.googleusercontent.com/aida-public/AB6AXuDGpBVgr4REf_p5hjaYzH75aDJ8xz8JzwRTn-niaXN3GUkA_uFtO5ya57A5pskbx7jVWHHCWjDxaiGLhZ2QFk31GuB_M-A6JE-2aMu-DAmOtNMvfJIguazIz7a3D8CW6sQ1H0HoP7L1AVRmGee7t6E3Ncg4s8h_FjVAxYrO31nw4twNypuwvkGtjUMJ3BAdLqgwjMTeho0KqZ5Ux3RsF3MS34dhqNnXZP2E-Fbyre8cJSsrMwU9wkpy_xUWcuI979TCd7Gq3uyA8kw",
@@ -282,7 +320,7 @@ fun LibraryScreen(
                             icon = Icons.Default.Work,
                             accentColor = accentBlueColor,
                             iconBgColor = primary50Color,
-                            onClick = { onSetClick("TOEIC Essential 500") }
+                            onClick = { onSetClick("mock_toeic_id", "TOEIC Essential 500") }
                         )
 
                         TrendingTopicItem(
@@ -291,7 +329,7 @@ fun LibraryScreen(
                             icon = Icons.Default.FlightTakeoff,
                             accentColor = accentEmeraldColor,
                             iconBgColor = Color(0xFFF5F2FE),
-                            onClick = { onSetClick("Travel & Tourism") }
+                            onClick = { onSetClick("mock_travel_id", "Travel & Tourism") }
                         )
 
                         TrendingTopicItem(
@@ -300,7 +338,7 @@ fun LibraryScreen(
                             icon = Icons.Default.RestaurantMenu,
                             accentColor = accentAmberColor,
                             iconBgColor = Color(0xFFF5F2FE),
-                            onClick = { onSetClick("Dining Out") }
+                            onClick = { onSetClick("mock_dining_id", "Dining Out") }
                         )
                     }
                 }
@@ -355,21 +393,25 @@ fun LibraryScreen(
                             .padding(vertical = 48.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.FolderOpen,
-                                contentDescription = "Empty Folder",
-                                tint = onSurfaceVariantColor,
-                                modifier = Modifier.size(48.dp)
-                            )
-                            Text(
-                                text = "Your sets will appear here",
-                                color = onSurfaceVariantColor,
-                                fontSize = 15.sp
-                            )
+                        if (uiState.isLoading) {
+                            CircularProgressIndicator(color = primaryColor)
+                        } else {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.FolderOpen,
+                                    contentDescription = "Empty Folder",
+                                    tint = onSurfaceVariantColor,
+                                    modifier = Modifier.size(48.dp)
+                                )
+                                Text(
+                                    text = "Your sets will appear here",
+                                    color = onSurfaceVariantColor,
+                                    fontSize = 15.sp
+                                )
+                            }
                         }
                     }
                 }
@@ -391,7 +433,13 @@ fun LibraryScreen(
                             mySets.forEach { setItem ->
                                 VocabularySetCard(
                                     data = setItem,
-                                    onClick = { onSetClick(setItem.title) }
+                                    onClick = { onSetClick(setItem.id, setItem.title) },
+                                    onRename = { name, desc ->
+                                        viewModel.updateSet(setItem.id, name, desc, setItem.category, setItem.isPublic)
+                                    },
+                                    onDelete = {
+                                        viewModel.deleteSet(setItem.id)
+                                    }
                                 )
                             }
                         }
@@ -430,8 +478,82 @@ fun LibraryScreen(
 @Composable
 fun VocabularySetCard(
     data: MockSetData,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onRename: (newName: String, newDesc: String) -> Unit,
+    onDelete: () -> Unit
 ) {
+    var showMenu by remember { mutableStateOf(false) }
+    var showRenameDialog by remember { mutableStateOf(false) }
+    var showDeleteConfirmDialog by remember { mutableStateOf(false) }
+
+    var renameName by remember { mutableStateOf(data.title) }
+    var renameDesc by remember { mutableStateOf(data.description) }
+
+    if (showRenameDialog) {
+        AlertDialog(
+            onDismissRequest = { showRenameDialog = false },
+            title = { Text("Rename Vocabulary Set") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(
+                        value = renameName,
+                        onValueChange = { renameName = it },
+                        label = { Text("Set Name") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = renameDesc,
+                        onValueChange = { renameDesc = it },
+                        label = { Text("Description") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (renameName.isNotBlank()) {
+                            onRename(renameName, renameDesc)
+                            showRenameDialog = false
+                        }
+                    }
+                ) {
+                    Text("Save")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showRenameDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
+    if (showDeleteConfirmDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirmDialog = false },
+            title = { Text("Delete Vocabulary Set") },
+            text = { Text("Are you sure you want to delete this vocabulary set? This action cannot be undone.") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        onDelete()
+                        showDeleteConfirmDialog = false
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444))
+                ) {
+                    Text("Delete", color = Color.White)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteConfirmDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -475,15 +597,36 @@ fun VocabularySetCard(
                             modifier = Modifier.padding(top = 4.dp)
                         )
                     }
-                    IconButton(
-                        onClick = {},
-                        modifier = Modifier.size(24.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.MoreVert,
-                            contentDescription = "More options",
-                            tint = Color(0xFFC7C4D7)
-                        )
+                    Box {
+                        IconButton(
+                            onClick = { showMenu = true },
+                            modifier = Modifier.size(24.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.MoreVert,
+                                contentDescription = "More options",
+                                tint = Color(0xFFC7C4D7)
+                            )
+                        }
+                        DropdownMenu(
+                            expanded = showMenu,
+                            onDismissRequest = { showMenu = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text("Rename") },
+                                onClick = {
+                                    showMenu = false
+                                    showRenameDialog = true
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Delete") },
+                                onClick = {
+                                    showMenu = false
+                                    showDeleteConfirmDialog = true
+                                }
+                            )
+                        }
                     }
                 }
 
@@ -534,7 +677,7 @@ fun VocabularySetCard(
                         .fillMaxWidth()
                         .height(8.dp)
                         .clip(RoundedCornerShape(50))
-                        .background(Color(0xFFE4E1ED)) 
+                        .background(Color(0xFFE4E1ED))
                 ) {
                     Box(
                         modifier = Modifier

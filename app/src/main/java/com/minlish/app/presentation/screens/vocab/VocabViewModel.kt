@@ -19,7 +19,7 @@ data class LibraryUiState(
 )
 
 class VocabViewModel(
-    private val repository: VocabRepository
+    private val repository: VocabRepository = VocabRepository()
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(LibraryUiState())
@@ -33,7 +33,7 @@ class VocabViewModel(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
 
-            when (val result = repository.getUserSets(query = query)) {
+            when (val result = repository.getUserSets(query = query, includeProgress = true)) {
                 is VocabResult.Success -> {
                     _uiState.value = _uiState.value.copy(
                         sets = result.data,
@@ -54,7 +54,8 @@ class VocabViewModel(
         title: String,
         description: String,
         category: String,
-        isPublic: Boolean
+        isPublic: Boolean,
+        words: List<WordEntry>
     ) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isCreating = true, errorMessage = null)
@@ -68,18 +69,76 @@ class VocabViewModel(
                 isPublic = isPublic
             )) {
                 is VocabResult.Success -> {
-                    val updatedSets = listOf(result.data) + _uiState.value.sets
-                    _uiState.value = _uiState.value.copy(
-                        sets = updatedSets,
-                        isCreating = false,
-                        createSuccess = true
-                    )
+                    val setId = result.data.id
+                    var hasError = false
+                    var errorMsg = ""
+
+                    for (word in words) {
+                        if (word.term.isNotBlank() && word.definition.isNotBlank()) {
+                            val req = com.minlish.app.data.remote.AddWordRequest(
+                                word = word.term.trim(),
+                                meaning = word.definition.trim()
+                            )
+                            when (val wordResult = repository.addWord(setId, req)) {
+                                is VocabResult.Error -> {
+                                    hasError = true
+                                    errorMsg = wordResult.message
+                                }
+                                else -> {}
+                            }
+                        }
+                    }
+
+                    if (hasError) {
+                        _uiState.value = _uiState.value.copy(
+                            isCreating = false,
+                            errorMessage = "Bộ từ đã tạo nhưng một số từ gặp lỗi: $errorMsg"
+                        )
+                    } else {
+                        val updatedSets = listOf(result.data) + _uiState.value.sets
+                        _uiState.value = _uiState.value.copy(
+                            sets = updatedSets,
+                            isCreating = false,
+                            createSuccess = true
+                        )
+                    }
+
+                    loadSets()
                 }
                 is VocabResult.Error -> {
                     _uiState.value = _uiState.value.copy(
                         isCreating = false,
                         errorMessage = result.message
                     )
+                }
+            }
+        }
+    }
+
+    fun updateSet(
+        setId: String,
+        title: String,
+        description: String,
+        category: String,
+        isPublic: Boolean
+    ) {
+        viewModelScope.launch {
+            val backendCategory = mapCategoryToBackend(category)
+            when (val result = repository.updateSet(
+                setId = setId,
+                name = title,
+                description = description.ifBlank { null },
+                category = backendCategory,
+                isPublic = isPublic
+            )) {
+                is VocabResult.Success -> {
+                    val updatedSets = _uiState.value.sets.map {
+                        if (it.id == setId) result.data else it
+                    }
+                    _uiState.value = _uiState.value.copy(sets = updatedSets)
+                }
+                is VocabResult.Error -> {
+                    _uiState.value = _uiState.value.copy(errorMessage = result.message)
                 }
             }
         }
