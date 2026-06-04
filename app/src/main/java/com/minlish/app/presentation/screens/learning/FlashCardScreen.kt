@@ -367,14 +367,19 @@ fun FlashCardCard(flashcardData: FlashcardData,onPronunciationClick: () -> Unit)
 }
 
 @Composable
-fun FlashCardScreen(viewModel: FlashcardViewModel,onExitClick: () -> Unit, onMoreClick: () -> Unit) {
+fun FlashCardScreen(
+    viewModel: FlashcardViewModel,
+    setId: String? = null,
+    onExitClick: () -> Unit,
+    onMoreClick: () -> Unit
+) {
     val isLoading by viewModel.isLoading
     val error by viewModel.errorMessage
     val selectedAnswer by viewModel.selectedAnswer
     val currentCardData = viewModel.currentCard.value
     val totalCards = viewModel.totalCards
-    LaunchedEffect(Unit) {
-        viewModel.loadFlashcardSet()
+    LaunchedEffect(setId) {
+        viewModel.loadFlashcardSet(setId)
     }
     Scaffold(
         modifier = Modifier.fillMaxSize(),

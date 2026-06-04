@@ -2,6 +2,7 @@ package com.minlish.app.data.repository
 
 import com.minlish.app.data.dto.FlashCardTestDto
 import com.minlish.app.data.dto.LearningDto
+import com.minlish.app.data.remote.LearningQueueResponse
 import com.minlish.app.di.NetworkModule
 
 class FlashCardRepository(){
@@ -15,6 +16,19 @@ class FlashCardRepository(){
                 Result.failure(Exception(response.message ?: "Lỗi không xác định"))
             }
         }catch (e: Exception){
+            Result.failure(e)
+        }
+    }
+
+    suspend fun getSetLearningQueue(setId: String): Result<LearningQueueResponse> {
+        return try {
+            val response = flashCardApi.getSetLearningQueue(setId)
+            if (response.success && response.data != null) {
+                Result.success(response.data)
+            } else {
+                Result.failure(Exception(response.message ?: "Lỗi không xác định"))
+            }
+        } catch (e: Exception) {
             Result.failure(e)
         }
     }
