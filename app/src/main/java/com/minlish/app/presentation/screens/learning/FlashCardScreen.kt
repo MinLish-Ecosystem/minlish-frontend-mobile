@@ -405,7 +405,12 @@ fun CompletionScreen(onDoneClick: () -> Unit) {
     }
 }
 @Composable
-fun FlashCardScreen(viewModel: FlashcardViewModel,onExitClick: () -> Unit, onMoreClick: () -> Unit) {
+fun FlashCardScreen(
+    viewModel: FlashcardViewModel,
+    setId: String? = null,
+    onExitClick: () -> Unit,
+    onMoreClick: () -> Unit
+) {
     val isLoading by viewModel.isLoading
     val error by viewModel.errorMessage
     val selectedAnswer by viewModel.selectedAnswer
@@ -485,3 +490,4 @@ fun FlashCardScreen(viewModel: FlashcardViewModel,onExitClick: () -> Unit, onMor
 
     }
 }
+
