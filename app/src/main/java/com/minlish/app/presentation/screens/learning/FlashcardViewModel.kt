@@ -7,6 +7,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.minlish.app.data.dto.ReviewItemDto
 import com.minlish.app.data.mapper.FlashCardMapper
 import com.minlish.app.data.repository.FlashCardRepository
 import com.minlish.app.presentation.screens.learning.FlashcardData
@@ -16,6 +17,8 @@ import kotlinx.coroutines.withContext
 
 
 data class FlashcardData(
+    val id: String,
+    val setId: String,
     val category: String,
     val word: String,
     val phonetic: String,
@@ -23,6 +26,7 @@ data class FlashcardData(
     val definition: String,
     val example: String,
     val imageUrl: Int,
+    val audioUrl: String = ""
 )
 class FlashcardViewModel(): ViewModel(){
     val flashCardRepository= FlashCardRepository()
@@ -37,6 +41,11 @@ class FlashcardViewModel(): ViewModel(){
     val totalCards: State<Int> = derivedStateOf {
         flashcards.value.size
     }
+    val isSubmittingBatch = mutableStateOf(false)
+    val isCompleted = mutableStateOf(false)
+
+    private val _pendingReviews = mutableListOf<ReviewItemDto>()
+    private var cardStartTime = System.currentTimeMillis()
 
     fun loadFlashcardSet(){
         viewModelScope.launch {
@@ -46,10 +55,17 @@ class FlashcardViewModel(): ViewModel(){
                 flashCardRepository.getLearningSet()
             }
             result.onSuccess { dto ->
-                flashcards.value = FlashCardMapper.mapToUiList(
+                val newList = FlashCardMapper.mapToUiList(
                     dtoList = dto.flashCardSets,
                 )
-                currentIndex.value = 0
+                if (newList.isEmpty()) {
+                    errorMessage.value = "Không có từ nào cần ôn hôm nay"
+                    flashcards.value = emptyList()
+                } else {
+                    flashcards.value = newList
+                    currentIndex.value = 0
+                    cardStartTime = System.currentTimeMillis()
+                }
             }.onFailure { error ->
                 errorMessage.value = error.message ?: "Lỗi không xác định"
             }
@@ -60,13 +76,54 @@ class FlashcardViewModel(): ViewModel(){
         if (currentIndex.value < flashcards.value.lastIndex) {
             currentIndex.value++
             selectedAnswer.value = null
+            cardStartTime = System.currentTimeMillis()
+        } else {
+            submitBatch()
         }
     }
     fun onAnswerSelected(answer: String) {
+        val card = currentCard.value ?: return
+        val rating = answer.lowercase()
+        val timeSpent = (System.currentTimeMillis() - cardStartTime).toInt()
+        _pendingReviews.add(
+            ReviewItemDto(
+                wordId = card.id,
+                setId = card.setId,
+                rating = rating,
+                timeSpent=timeSpent,
+            )
+        )
         selectedAnswer.value = answer
         viewModelScope.launch {
             kotlinx.coroutines.delay(300)
             nextCard()
         }
+    }
+    fun submitBatch(){
+        viewModelScope.launch {
+            isSubmittingBatch.value=true
+            errorMessage.value=null
+            val reviews = _pendingReviews.toList()
+            val result=withContext(Dispatchers.IO){
+                flashCardRepository.submitBatchReview(reviews)
+            }
+            result.onSuccess {
+                _pendingReviews.clear()
+                isCompleted.value = true
+                android.util.Log.d("BATCH", "✅ Batch success: ${reviews.size} reviews")
+            }.onFailure { error ->
+                errorMessage.value = "Không thể đồng bộ: ${error.message}"
+                android.util.Log.e("BATCH", "❌ Batch failed: ${error.message}")
+            }
+
+            isSubmittingBatch.value = false
+        }
+    }
+    fun resetState() {
+        _pendingReviews.clear()
+        isCompleted.value = false
+        flashcards.value = emptyList()
+        currentIndex.value = 0
+        selectedAnswer.value = null
     }
 }

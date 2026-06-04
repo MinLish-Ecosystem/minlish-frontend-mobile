@@ -1,5 +1,6 @@
 package com.minlish.app.presentation.screens.learning
 
+import android.media.MediaPlayer
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -32,6 +33,7 @@ import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -39,6 +41,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -194,7 +197,8 @@ fun FlashCardBottomBar(answerOptions: List<String>, onClick: (String) -> Unit){
     }
 }
 @Composable
-fun FlashCardCard(flashcardData: FlashcardData,onPronunciationClick: () -> Unit){
+fun FlashCardCard(flashcardData: FlashcardData){
+    val mediaPlayer = remember { MediaPlayer() }
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -262,7 +266,19 @@ fun FlashCardCard(flashcardData: FlashcardData,onPronunciationClick: () -> Unit)
                             )
                     )
                     FloatingActionButton(
-                        onClick = onPronunciationClick,
+                        onClick = {
+                            if (flashcardData.audioUrl.isNotEmpty()) {
+                                mediaPlayer.reset()
+                                mediaPlayer.setDataSource(flashcardData.audioUrl)
+                                mediaPlayer.setOnPreparedListener { mp ->
+                                    mp.start()
+                                }
+                                mediaPlayer.setOnErrorListener { mp, what, extra ->
+                                    true
+                                }
+                                mediaPlayer.prepareAsync()
+                            }
+                        },
                         modifier = Modifier
                             .align(Alignment.BottomEnd)
                             .padding(16.dp),
@@ -365,7 +381,29 @@ fun FlashCardCard(flashcardData: FlashcardData,onPronunciationClick: () -> Unit)
         }
     }
 }
+@Composable
+fun CompletionScreen(onDoneClick: () -> Unit) {
+    Column(
+        modifier = Modifier.fillMaxSize().padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text("🎉", fontSize = 64.sp)
+        Spacer(modifier = Modifier.height(16.dp))
+        Text("Hoàn thành!", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
+        Spacer(modifier = Modifier.height(8.dp))
+        Text("Kết quả đã được lưu", color = Color(0xFF464554))
+        Spacer(modifier = Modifier.height(32.dp))
 
+        Button(
+            onClick = onDoneClick,
+            modifier = Modifier.fillMaxWidth().height(56.dp),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Text("Quay về Dashboard")
+        }
+    }
+}
 @Composable
 fun FlashCardScreen(viewModel: FlashcardViewModel,onExitClick: () -> Unit, onMoreClick: () -> Unit) {
     val isLoading by viewModel.isLoading
@@ -373,9 +411,16 @@ fun FlashCardScreen(viewModel: FlashcardViewModel,onExitClick: () -> Unit, onMor
     val selectedAnswer by viewModel.selectedAnswer
     val currentCardData = viewModel.currentCard.value
     val totalCards = viewModel.totalCards
+    val isCompleted by viewModel.isCompleted
     LaunchedEffect(Unit) {
         viewModel.loadFlashcardSet()
     }
+    // Thành công
+    if (isCompleted) {
+        CompletionScreen(onDoneClick = onExitClick)
+        return
+    }
+
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
@@ -421,7 +466,7 @@ fun FlashCardScreen(viewModel: FlashcardViewModel,onExitClick: () -> Unit, onMor
             .padding(horizontal = 16.dp, vertical = 8.dp),
             ){
             currentCardData?.let { card ->
-                FlashCardCard(flashcardData = card,{})
+                FlashCardCard(flashcardData = card)
                 selectedAnswer?.let { answer ->
                     Text(
                         text = "Bạn đang bấm ${answer}",

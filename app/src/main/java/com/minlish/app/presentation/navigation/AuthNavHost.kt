@@ -199,7 +199,8 @@ fun AuthNavHost(
             FlashCardScreen(
                 viewModel=flashCardViewModel,
                 onExitClick = {
-                    navController.popBackStack()
+                    navController.popBackStack(NavDestinations.Learning.route, inclusive = false)
+                    flashCardViewModel.resetState()
                 },
                 onMoreClick = {}
             )

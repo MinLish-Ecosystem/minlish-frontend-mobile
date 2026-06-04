@@ -8,6 +8,8 @@ object FlashCardMapper{
     fun mapToUiList(dtoList: List<FlashcardContentDto>): List<FlashcardData>{
         return dtoList.map{dto->
             FlashcardData(
+                id= dto.id,
+                setId=dto.setId,
                 category = dto.category,
                 word = dto.word,
                 phonetic = dto.phonetic,
@@ -15,6 +17,7 @@ object FlashCardMapper{
                 definition = dto.definition,
                 example = dto.example,
                 imageUrl = R.drawable.images,
+                audioUrl = dto.audioUrl,
             )
         }
     }
