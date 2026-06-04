@@ -51,47 +51,51 @@ class FlashcardViewModel(): ViewModel() {
         viewModelScope.launch {
             isLoading.value = true
             errorMessage.value = null
-            val result = withContext(Dispatchers.IO) {
-                flashCardRepository.getLearningSet()
-            }
-            result.onSuccess { dto ->
-                val newList = FlashCardMapper.mapToUiList(
-                    dtoList = dto.flashCardSets,
-                )
-                if (newList.isEmpty()) {
-                    errorMessage.value = "Không có từ nào cần ôn hôm nay"
-                    flashcards.value = emptyList()
-                } else {
-                    flashcards.value = newList
-                    currentIndex.value = 0
-                    cardStartTime = System.currentTimeMillis()
+            try {
+                val result = withContext(Dispatchers.IO) {
+                    flashCardRepository.getLearningSet()
                 }
-            }.onFailure { error ->
-                errorMessage.value = error.message ?: "Lỗi không xác định"
-                if (setId != null) {
-                    val result = withContext(Dispatchers.IO) {
-                        flashCardRepository.getSetLearningQueue(setId)
-                    }
-                    result.onSuccess { queueResponse ->
-                        val allCards = queueResponse.newCards + queueResponse.reviewCards
-                        flashcards.value = FlashCardMapper.mapLearningCardDtoListToUiList(allCards)
+                result.onSuccess { dto ->
+                    val newList = FlashCardMapper.mapToUiList(
+                        dtoList = dto.flashCardSets,
+                    )
+                    if (newList.isEmpty()) {
+                        errorMessage.value = "Không có từ nào cần ôn hôm nay"
+                        flashcards.value = emptyList()
+                    } else {
+                        flashcards.value = newList
                         currentIndex.value = 0
-                    }.onFailure { error ->
-                        errorMessage.value = error.message ?: "Lỗi không xác định"
+                        cardStartTime = System.currentTimeMillis()
                     }
-                } else {
-                    val result = withContext(Dispatchers.IO) {
-                        flashCardRepository.getLearningSet()
-                    }
-                    result.onSuccess { dto ->
-                        flashcards.value = FlashCardMapper.mapToUiList(
-                            dtoList = dto.flashCardSets,
-                        )
-                        currentIndex.value = 0
-                    }.onFailure { error ->
-                        errorMessage.value = error.message ?: "Lỗi không xác định"
+                }.onFailure { error ->
+                    errorMessage.value = error.message ?: "Lỗi không xác định"
+                    if (setId != null) {
+                        val result = withContext(Dispatchers.IO) {
+                            flashCardRepository.getSetLearningQueue(setId)
+                        }
+                        result.onSuccess { queueResponse ->
+                            val allCards = queueResponse.newCards + queueResponse.reviewCards
+                            flashcards.value =
+                                FlashCardMapper.mapLearningCardDtoListToUiList(allCards)
+                            currentIndex.value = 0
+                        }.onFailure { error ->
+                            errorMessage.value = error.message ?: "Lỗi không xác định"
+                        }
+                    } else {
+                        val result = withContext(Dispatchers.IO) {
+                            flashCardRepository.getLearningSet()
+                        }
+                        result.onSuccess { dto ->
+                            flashcards.value = FlashCardMapper.mapToUiList(
+                                dtoList = dto.flashCardSets,
+                            )
+                            currentIndex.value = 0
+                        }.onFailure { error ->
+                            errorMessage.value = error.message ?: "Lỗi không xác định"
+                        }
                     }
                 }
+            } finally {
                 isLoading.value = false
             }
         }

@@ -1,5 +1,6 @@
 package com.minlish.app.presentation.screens.library
 
+import android.media.MediaPlayer
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -33,7 +34,8 @@ data class WordItem(
     val word: String,
     val phonetic: String,
     val status: WordStatus,
-    val definition: String
+    val definition: String,
+    val audioUrl: String = ""
 )
 
 enum class WordStatus(
@@ -91,7 +93,12 @@ fun WordListScreen(
     val totalCount by viewModel.totalCount
     val masteredCount by viewModel.masteredCount
     val learningCount by viewModel.learningCount
-
+    val mediaPlayer = remember { MediaPlayer() }
+    DisposableEffect(Unit) {
+        onDispose {
+            mediaPlayer.release()
+        }
+    }
     LaunchedEffect(setId, searchQuery) {
         viewModel.loadWords(setId, searchQuery)
     }
@@ -107,7 +114,8 @@ fun WordListScreen(
                 word = response.word,
                 phonetic = response.pronunciation ?: "",
                 status = status,
-                definition = response.meaning
+                definition = response.meaning,
+                audioUrl = response.audioUrl ?: "" ,
             )
         }
     }
@@ -443,7 +451,19 @@ fun WordListScreen(
                                             )
 
                                             IconButton(
-                                                onClick = {},
+                                                onClick = {
+                                                    if (item.audioUrl.isNotEmpty()) {
+                                                        mediaPlayer.reset()
+                                                        mediaPlayer.setDataSource(item.audioUrl)
+                                                        mediaPlayer.setOnPreparedListener { mp ->
+                                                            mp.start()
+                                                        }
+                                                        mediaPlayer.setOnErrorListener { mp, what, extra ->
+                                                            true
+                                                        }
+                                                        mediaPlayer.prepareAsync()
+                                                    }
+                                                },
                                                 modifier = Modifier.size(24.dp)
                                             ) {
                                                 Icon(
