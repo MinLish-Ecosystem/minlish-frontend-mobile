@@ -109,51 +109,50 @@ class FlashcardViewModel(): ViewModel() {
 
 
     fun onAnswerSelected(answer: String) {
-            val card = currentCard.value ?: return
-            val rating = answer.lowercase()
-            val timeSpent = (System.currentTimeMillis() - cardStartTime).toInt()
-            _pendingReviews.add(
-                ReviewItemDto(
-                    wordId = card.id,
-                    setId = card.setId,
-                    rating = rating,
-                    timeSpent = timeSpent,
-                )
+        val card = currentCard.value ?: return
+        val rating = answer.lowercase()
+        val timeSpent = (System.currentTimeMillis() - cardStartTime).toInt()
+        _pendingReviews.add(
+            ReviewItemDto(
+                wordId = card.id,
+                setId = card.setId,
+                rating = rating,
+                timeSpent = timeSpent,
             )
-            selectedAnswer.value = answer
-            viewModelScope.launch {
-                kotlinx.coroutines.delay(300)
-                nextCard()
-            }
+        )
+        selectedAnswer.value = answer
+        viewModelScope.launch {
+            kotlinx.coroutines.delay(300)
+            nextCard()
         }
+    }
 
     fun submitBatch() {
-            viewModelScope.launch {
-                isSubmittingBatch.value = true
-                errorMessage.value = null
-                val reviews = _pendingReviews.toList()
-                val result = withContext(Dispatchers.IO) {
-                    flashCardRepository.submitBatchReview(reviews)
-                }
-                result.onSuccess {
-                    _pendingReviews.clear()
-                    isCompleted.value = true
-                    android.util.Log.d("BATCH", "✅ Batch success: ${reviews.size} reviews")
-                }.onFailure { error ->
-                    errorMessage.value = "Không thể đồng bộ: ${error.message}"
-                    android.util.Log.e("BATCH", "❌ Batch failed: ${error.message}")
-                }
-
-                isSubmittingBatch.value = false
+        viewModelScope.launch {
+            isSubmittingBatch.value = true
+            errorMessage.value = null
+            val reviews = _pendingReviews.toList()
+            val result = withContext(Dispatchers.IO) {
+                flashCardRepository.submitBatchReview(reviews)
             }
+            result.onSuccess {
+                _pendingReviews.clear()
+                isCompleted.value = true
+                android.util.Log.d("BATCH", "✅ Batch success: ${reviews.size} reviews")
+            }.onFailure { error ->
+                errorMessage.value = "Không thể đồng bộ: ${error.message}"
+                android.util.Log.e("BATCH", "❌ Batch failed: ${error.message}")
+            }
+            isSubmittingBatch.value = false
         }
+    }
 
-        fun resetState() {
-            _pendingReviews.clear()
-            isCompleted.value = false
-            flashcards.value = emptyList()
-            currentIndex.value = 0
-            selectedAnswer.value = null
-        }
+
+    fun resetState() {
+        _pendingReviews.clear()
+        isCompleted.value = false
+        flashcards.value = emptyList()
+        currentIndex.value = 0
+        selectedAnswer.value = null
     }
 }

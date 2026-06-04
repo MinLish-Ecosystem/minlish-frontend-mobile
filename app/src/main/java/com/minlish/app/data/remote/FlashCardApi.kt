@@ -15,6 +15,7 @@ data class SetContextDto(
 
 data class LearningCardDto(
     val id: String,
+    val setId: String,
     val word: String,
     val pronunciation: String?,
     val partOfSpeech: String?,
