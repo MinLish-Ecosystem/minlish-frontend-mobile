@@ -13,7 +13,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.minlish.app.data.local.TokenManager
-import com.minlish.app.presentation.navigation.AuthNavHost
+import com.minlish.app.presentation.navigation.AppNavHost
 import com.minlish.app.presentation.navigation.NavDestinations
 import com.minlish.app.presentation.navigation.clearAllTabStates
 import com.minlish.app.presentation.screens.profile.ProfileViewModel
@@ -95,7 +95,7 @@ fun AppShell(
             }
         }
     ) { innerPadding ->
-        AuthNavHost(
+        AppNavHost(
             navController = navController,
             startDestination = startDestination,
             profileViewModel = globalProfileViewModel,

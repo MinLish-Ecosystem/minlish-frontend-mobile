@@ -26,8 +26,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.delay
 import com.minlish.app.presentation.components.TopBar
 import com.minlish.app.presentation.screens.auth.components.OtpInputField
-import com.minlish.app.presentation.screens.auth.viewmodels.AuthUiEvent
-import com.minlish.app.presentation.screens.auth.viewmodels.AuthViewModel
+import com.minlish.app.presentation.screens.auth.viewmodels.RegisterUiEvent
+import com.minlish.app.presentation.screens.auth.viewmodels.RegisterViewModel
 import com.minlish.app.ui.theme.*
 import kotlinx.coroutines.flow.collectLatest
 
@@ -37,29 +37,26 @@ fun VerifyEmailScreen(
     onBackClick: () -> Unit = {},
     onVerifyEmailSuccess: () -> Unit = {},
     onChangeEmail: () -> Unit = {},
-    viewModel: AuthViewModel = viewModel()
+    viewModel: RegisterViewModel = viewModel()
 ) {
 
     val state = viewModel.uiState.collectAsStateWithLifecycle()
-
-    var otpValue by remember { mutableStateOf("") }
-    var secondsLeft by remember { mutableIntStateOf(599) }
     val context = LocalContext.current
 
     LaunchedEffect(Unit) {
-        while (secondsLeft > 0) {
+        while (state.value.secondsLeft > 0) {
             delay(1000)
-            secondsLeft--
+            viewModel.decrementSeconds()
         }
     }
 
     LaunchedEffect(Unit) {
         viewModel.uiEvent.collectLatest { event ->
             when (event) {
-                is AuthUiEvent.VerifyEmailSuccess -> {
+                is RegisterUiEvent.VerifyEmailSuccess -> {
                     onVerifyEmailSuccess()
                 }
-                is AuthUiEvent.ShowError -> {
+                is RegisterUiEvent.ShowError -> {
                     Toast.makeText(context, event.message, Toast.LENGTH_LONG).show()
                 }
 
@@ -68,8 +65,8 @@ fun VerifyEmailScreen(
         }
     }
 
-    val minutes = secondsLeft / 60
-    val seconds = secondsLeft % 60
+    val minutes = state.value.secondsLeft / 60
+    val seconds = state.value.secondsLeft % 60
     val timerText = "%d:%02d".format(minutes, seconds)
 
     Scaffold(
@@ -93,18 +90,18 @@ fun VerifyEmailScreen(
             VerifyEmailCard(
                 isLoading = state.value.isLoading,
                 email = state.value.email,
-                otpValue = otpValue,
+                otpValue = state.value.otpValue,
                 timerText = timerText,
-                secondsLeft = secondsLeft,
+                secondsLeft = state.value.secondsLeft,
                 onChangeEmail = onChangeEmail,
-                onOtpChange = { if (it.length <= 6) otpValue = it },
+                onOtpChange = { if (it.length <= 6) viewModel.updateOtp(it) },
                 onResendCode = {
                     viewModel.resendVerifyEmailOtp()
-                    secondsLeft = 599
+                    viewModel.updateSecondsLeft(599)
                 },
                 onVerifyClick = {
                     val email = state.value.email
-                    viewModel.verifyEmail(email, otpValue)
+                    viewModel.verifyEmail(email, state.value.otpValue)
                 }
             )
         }

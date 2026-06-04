@@ -42,8 +42,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.minlish.app.R
-import com.minlish.app.presentation.screens.auth.viewmodels.AuthUiEvent
-import com.minlish.app.presentation.screens.auth.viewmodels.AuthViewModel
+import com.minlish.app.presentation.screens.auth.viewmodels.LoginUiEvent
+import com.minlish.app.presentation.screens.auth.viewmodels.LoginViewModel
 import com.minlish.app.ui.theme.MinlishGradient
 import com.minlish.app.ui.theme.MinlishOnSurface
 import com.minlish.app.ui.theme.MinlishOutline
@@ -53,29 +53,25 @@ import kotlinx.coroutines.flow.collectLatest
 
 @Composable
 fun LoginScreen(
-    viewModel: AuthViewModel = viewModel(),
+    viewModel: LoginViewModel = viewModel(),
     onLoginSuccess: () -> Unit,
     onGoogleSignInClick: () -> Unit,
     onForgotPasswordClick: () -> Unit,
     onSignUpClick: () -> Unit
 ) {
 
-    val state = viewModel.uiState.collectAsStateWithLifecycle()
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
     var passwordVisible by remember { mutableStateOf(false) }
     val context = LocalContext.current
 
     LaunchedEffect(Unit) {
         viewModel.uiEvent.collectLatest { event ->
             when (event) {
-                is AuthUiEvent.LoginSuccess -> {
+                is LoginUiEvent.LoginSuccess -> {
                     onLoginSuccess()
                 }
-                is AuthUiEvent.ShowError -> {
+                is LoginUiEvent.ShowError -> {
                     Toast.makeText(context, event.message, Toast.LENGTH_LONG).show()
-                }
-
-                else -> {
-
                 }
             }
         }
@@ -92,10 +88,10 @@ fun LoginScreen(
     ) {
         BrandingSection()
         Spacer(modifier = Modifier.height(40.dp))
-        EmailField(email = state.value.email, onEmailChange = {viewModel.updateEmail(it)})
+        EmailField(email = state.email, onEmailChange = {viewModel.updateEmail(it)})
         Spacer(modifier = Modifier.height(16.dp))
         PasswordField(
-            password = state.value.password,
+            password = state.password,
             passwordVisible = passwordVisible,
             onPasswordChange = {viewModel.updatePassword(it)},
             onToggleVisibility = {passwordVisible = !passwordVisible},
@@ -105,9 +101,9 @@ fun LoginScreen(
         )
         Spacer(modifier = Modifier.height(24.dp))
         SignInButton(
-            isLoading = state.value.isLoading,
+            isLoading = state.isLoading,
             onSignInClick = {
-            viewModel.login(state.value.email, state.value.password)
+            viewModel.login(state.email, state.password)
         })
         Spacer(modifier = Modifier.height(24.dp))
         DividerWithText()
@@ -117,6 +113,7 @@ fun LoginScreen(
         })
         Spacer(modifier = Modifier.height(32.dp))
         SignUpButton(onSignUpClick = {
+            viewModel.resetViewModel()
             onSignUpClick()
         })
     }
@@ -213,9 +210,7 @@ private fun PasswordField(
             )
 
             TextButton(
-                onClick = {
-                    onForgotPasswordClick()
-                },
+                onClick = onForgotPasswordClick,
                 contentPadding = PaddingValues(0.dp)
             ) {
                 Text(

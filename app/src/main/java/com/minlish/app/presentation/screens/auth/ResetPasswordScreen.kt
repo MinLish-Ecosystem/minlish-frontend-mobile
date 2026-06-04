@@ -30,7 +30,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.minlish.app.presentation.screens.auth.components.SecurityCheckList
 import com.minlish.app.presentation.components.TopBar
 import com.minlish.app.presentation.screens.auth.components.OtpInputField
-import com.minlish.app.presentation.screens.auth.viewmodels.AuthViewModel
 import com.minlish.app.presentation.screens.auth.viewmodels.ForgetPasswordUiEvent
 import com.minlish.app.presentation.screens.auth.viewmodels.ForgetPasswordViewModel
 import com.minlish.app.ui.theme.*
@@ -44,21 +43,18 @@ fun ResetPasswordScreen(
     onBackClick: () -> Unit = {},
     onResetPasswordSuccess: () -> Unit = {}
 ) {
-    var otpValue by remember { mutableStateOf("") }
-    var newPassword by remember {mutableStateOf("")}
-    var confirmPassword by remember { mutableStateOf("") }
+
     var newPasswordVisible by remember { mutableStateOf(false) }
     var confirmPasswordVisible by remember { mutableStateOf(false) }
-
-    val hasMinLength = newPassword.length >= 8
-    val hasUppercase = newPassword.any {it.isUpperCase()}
-    val hasNumberOrSymbol = newPassword.any {!it.isLetterOrDigit() || it.isDigit()}
-    val passwordsMatch = newPassword == confirmPassword && confirmPassword.isNotEmpty()
-    val otpComplete = otpValue.length == 6
-
-    var secondsLeft by remember { mutableIntStateOf(10) }
-    val context = LocalContext.current
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+
+    val hasMinLength = state.newPassword.length >= 8
+    val hasUppercase = state.newPassword.any {it.isUpperCase()}
+    val hasNumberOrSymbol = state.newPassword.any {!it.isLetterOrDigit() || it.isDigit()}
+    val passwordsMatch = state.newPassword == state.confirmPassword && state.confirmPassword.isNotEmpty()
+    val otpComplete = state.otpValue.length == 6
+
+    val context = LocalContext.current
 
 
     LaunchedEffect(Unit) {
@@ -77,12 +73,12 @@ fun ResetPasswordScreen(
     }
 
     LaunchedEffect(Unit) {
-        while (secondsLeft > 0) {
+        while (state.secondsLeft > 0) {
             delay(1000)
-            secondsLeft--
+            viewModel.decrementSeconds()
         }
     }
-    val timerText = "%d:%02d".format(secondsLeft / 60, secondsLeft % 60)
+    val timerText = "%d:%02d".format(state.secondsLeft / 60, state.secondsLeft % 60)
 
 
     Scaffold(
@@ -105,21 +101,21 @@ fun ResetPasswordScreen(
         ) {
             Spacer(modifier = Modifier.height(16.dp))
             OtpSection(
-                otpValue = otpValue,
+                otpValue = state.otpValue,
                 timerText = timerText,
-                secondsLeft = secondsLeft,
-                onOtpChange = { if (it.length <= 6) otpValue = it },
+                secondsLeft = state.secondsLeft,
+                onOtpChange = { if (it.length <= 6) viewModel.updateOtp(it) },
                 onResendOTP = {
                     viewModel.resendForgotPasswordEmail()
-                    secondsLeft = 599
+                    viewModel.updateSecondsLeft(599)
                 }
             )
             HorizontalDivider(color = MinlishSurfaceContainerHigh)
 
             ResetPasswordCard(
                 isLoading = state.isLoading,
-                newPassword = newPassword,
-                confirmPassword = confirmPassword,
+                newPassword = state.newPassword,
+                confirmPassword = state.confirmPassword,
                 newPasswordVisible = newPasswordVisible,
                 confirmPasswordVisible = confirmPasswordVisible,
                 hasMinLength = hasMinLength,
@@ -127,12 +123,12 @@ fun ResetPasswordScreen(
                 hasNumberOrSymbol = hasNumberOrSymbol,
                 passwordsMatch = passwordsMatch,
                 otpComplete = otpComplete,
-                onNewPasswordChange = { newPassword = it },
-                onConfirmPasswordChange = { confirmPassword = it },
+                onNewPasswordChange = { viewModel.updatePassword(it) },
+                onConfirmPasswordChange = { viewModel.updateConfirmPassword(it) },
                 onToggleNewPassword = { newPasswordVisible = !newPasswordVisible },
                 onToggleConfirmPassword = { confirmPasswordVisible = !confirmPasswordVisible },
                 onResetPassword = {
-                    viewModel.resetPassword(newPassword, otpValue)
+                    viewModel.resetPassword()
                 }
             )
         }

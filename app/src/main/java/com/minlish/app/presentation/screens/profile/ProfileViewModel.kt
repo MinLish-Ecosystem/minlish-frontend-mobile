@@ -9,17 +9,30 @@ import com.minlish.app.data.local.TokenManager
 import com.minlish.app.data.local.entity.UserEntity
 import com.minlish.app.data.repository.AuthRepository
 import com.minlish.app.data.repository.UserRepository
+import com.minlish.app.presentation.screens.auth.viewmodels.LoginUiEvent
+import com.minlish.app.presentation.screens.auth.viewmodels.RegisterUIState
+import com.minlish.app.presentation.screens.auth.viewmodels.RegisterUiEvent
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+
+
+sealed interface ProfileUiEvent {
+    object LogOutSuccess: ProfileUiEvent
+    data class ShowError(val message: String?) : ProfileUiEvent
+}
 
 data class ProfileUiState(
     val displayName: String = "",
@@ -41,8 +54,13 @@ data class ProfileUiState(
     val errorMessage: String? = null
 )
 
-class ProfileViewModel(private val userRepo: UserRepository = UserRepository()) : ViewModel() {
+class ProfileViewModel(
+    private val userRepo: UserRepository = UserRepository(),
+    private val authRepo: AuthRepository = AuthRepository()
+) : ViewModel() {
 
+    private val _uiEvent = Channel<ProfileUiEvent>()
+    val uiEvent = _uiEvent.receiveAsFlow()
     private val _uiState = MutableStateFlow(ProfileUiState())
     val uiState: StateFlow<ProfileUiState> = _uiState.asStateFlow()
 
@@ -222,6 +240,23 @@ class ProfileViewModel(private val userRepo: UserRepository = UserRepository()) 
                 _uiState.update {
                     it.copy(isSaving = false, errorMessage = e.message)
                 }
+            }
+        }
+    }
+
+    fun logout() {
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                authRepo.logout()
+                    .onSuccess {
+                        _uiEvent.send(ProfileUiEvent.LogOutSuccess)
+                        resetState()
+                    }
+                    .onFailure {e ->
+                        val errorMessage = e.message ?: "LogOut Failed"
+                        _uiState.update { it.copy(errorMessage = errorMessage)  }
+                        _uiEvent.send(ProfileUiEvent.ShowError(errorMessage))
+                    }
             }
         }
     }

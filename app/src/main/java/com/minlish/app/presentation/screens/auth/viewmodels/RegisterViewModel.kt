@@ -1,5 +1,9 @@
 package com.minlish.app.presentation.screens.auth.viewmodels
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.minlish.app.data.repository.AuthRepository
@@ -13,46 +17,29 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 
-sealed interface AuthUiEvent {
-    object RegisterSuccess : AuthUiEvent
-    object LoginSuccess: AuthUiEvent
-    object VerifyEmailSuccess: AuthUiEvent
-    data class ShowError(val message: String?) : AuthUiEvent
+sealed interface RegisterUiEvent {
+    object RegisterSuccess : RegisterUiEvent
+    object VerifyEmailSuccess: RegisterUiEvent
+    data class ShowError(val message: String?) : RegisterUiEvent
 }
 
-data class AuthUIState(
+data class RegisterUIState(
     val name: String = "",
     val email: String = "",
     val password: String = "",
+    val otpValue: String = "",
+    val secondsLeft: Int = 599,
     val isLoading: Boolean = false,
     val errorMessage: String? = null
 )
 
-class AuthViewModel: ViewModel() {
+class RegisterViewModel: ViewModel() {
     private val repository = AuthRepository()
 
-    private val _uiEvent = Channel<AuthUiEvent>()
-    private val _uiState = MutableStateFlow(AuthUIState())
+    private val _uiEvent = Channel<RegisterUiEvent>()
+    private val _uiState = MutableStateFlow(RegisterUIState())
     val uiEvent = _uiEvent.receiveAsFlow()
-    val uiState: StateFlow<AuthUIState> = _uiState.asStateFlow()
-    fun login(email: String, password: String) {
-        viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true)  }
-
-            withContext(Dispatchers.IO) {
-                repository.login(email, password)
-                    .onSuccess {
-                        _uiEvent.send(AuthUiEvent.LoginSuccess)
-                    }
-                    .onFailure { e ->
-                        val errorMessage = e.message ?: "Login Failed"
-                         _uiState.update { it.copy(errorMessage = errorMessage)}
-                        _uiEvent.send(AuthUiEvent.ShowError(errorMessage))
-                    }
-                }
-            _uiState.update { it.copy(isLoading = false)  }
-        }
-    }
+    val uiState: StateFlow<RegisterUIState> = _uiState.asStateFlow()
 
     fun verifyEmail(email: String, otp: String) {
         viewModelScope.launch {
@@ -61,12 +48,13 @@ class AuthViewModel: ViewModel() {
             withContext(Dispatchers.IO) {
                 repository.verifyEmail(email, otp)
                     .onSuccess {
-                        _uiEvent.send(AuthUiEvent.VerifyEmailSuccess)
+                        _uiEvent.send(RegisterUiEvent.VerifyEmailSuccess)
+                        resetViewModel()
                     }
                     .onFailure { e ->
                         val errorMessage = e.message ?: "Verify Failed"
                         _uiState.update { it.copy(errorMessage = errorMessage)  }
-                        _uiEvent.send(AuthUiEvent.ShowError(errorMessage))
+                        _uiEvent.send(RegisterUiEvent.ShowError(errorMessage))
                     }
                 }
             _uiState.update { it.copy(isLoading = false)  }
@@ -80,12 +68,12 @@ class AuthViewModel: ViewModel() {
             withContext(Dispatchers.IO) {
                 repository.register(fullName, email, password)
                     .onSuccess {
-                        _uiEvent.send(AuthUiEvent.RegisterSuccess)
+                        _uiEvent.send(RegisterUiEvent.RegisterSuccess)
                     }
                     .onFailure { e ->
                         val errorMessage = e.message ?: "Register Failed"
                         _uiState.update { it.copy(errorMessage = errorMessage)  }
-                        _uiEvent.send(AuthUiEvent.ShowError(errorMessage))
+                        _uiEvent.send(RegisterUiEvent.ShowError(errorMessage))
                     }
                 }
             _uiState.update { it.copy(isLoading = false)  }
@@ -105,7 +93,7 @@ class AuthViewModel: ViewModel() {
                     .onFailure { e ->
                         val errorMessage = e.message ?: "Register Failed"
                         _uiState.update { it.copy(errorMessage = errorMessage)  }
-                        _uiEvent.send(AuthUiEvent.ShowError(errorMessage))
+                        _uiEvent.send(RegisterUiEvent.ShowError(errorMessage))
                     }
                 }
             _uiState.update { it.copy(isLoading = false)  }
@@ -124,7 +112,20 @@ class AuthViewModel: ViewModel() {
         _uiState.update { it.copy(password = password) }
     }
 
+    fun updateOtp(otpValue: String) {
+        _uiState.update { it.copy(otpValue = otpValue) }
+    }
+
+    fun updateSecondsLeft(secondsLeft: Int) {
+        _uiState.update { it.copy(secondsLeft = secondsLeft) }
+    }
+
+    fun decrementSeconds() {
+        _uiState.update { it.copy(secondsLeft = it.secondsLeft - 1)
+        }
+    }
+
     fun resetViewModel() {
-        _uiState.value = AuthUIState()
+        _uiState.value = RegisterUIState()
     }
 }
