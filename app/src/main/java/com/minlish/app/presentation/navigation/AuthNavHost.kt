@@ -25,7 +25,10 @@ import com.minlish.app.presentation.screens.notifications.NotificationScreen
 import com.minlish.app.presentation.screens.notifications.NotificationViewModel
 import com.minlish.app.presentation.screens.library.LibraryScreen
 import com.minlish.app.presentation.screens.library.WordListScreen
+import com.minlish.app.presentation.screens.library.WordListViewModel
 import com.minlish.app.presentation.screens.vocab.CreateNewSetScreen
+import com.minlish.app.presentation.screens.vocab.VocabViewModel
+import com.minlish.app.presentation.screens.vocab.AddWordScreen
 import com.minlish.app.presentation.screens.practice.PracticeArenaScreen
 import com.minlish.app.presentation.screens.practice.PracticeViewModel
 import com.minlish.app.presentation.screens.practice.getRoute
@@ -51,11 +54,10 @@ fun AuthNavHost(
     val learningViewModel: LearningViewModel = viewModel()
     val practiceViewModel: PracticeViewModel = viewModel()
     val flashCardViewModel: FlashcardViewModel = viewModel()
+    val vocabViewModel: VocabViewModel = viewModel()
 
-    // ── Lắng nghe Badge Count sạch sẽ từ Singleton Manager ──
     val unreadBadgeCount by NotificationBadgeManager.badgeCount.collectAsState()
 
-    // Quản lý vòng đời Polling: start khi đã đăng nhập, stop khi logout
     val isLoggedIn = TokenManager.isLoggedIn()
     LaunchedEffect(isLoggedIn) {
         if (isLoggedIn) {
@@ -81,7 +83,6 @@ fun AuthNavHost(
         startDestination = startDestination,
         modifier = modifier
     ) {
-        // ── Auth screens — giữ nguyên 100% ──
 
         composable(NavDestinations.Welcome.route) {
             WelcomeScreen(
@@ -165,9 +166,6 @@ fun AuthNavHost(
             )
         }
 
-        // ── Main App Tabs ──
-
-        // 1. Tab Learning
         composable(NavDestinations.Learning.route) {
             LaunchedEffect(Unit) {
                 FCMHelper.registerFCMToken(context)
@@ -192,12 +190,23 @@ fun AuthNavHost(
                 }
             )
         }
-        composable(NavDestinations.FlashCardTest.route){
+        composable(
+            route = NavDestinations.FlashCardTest.route,
+            arguments = listOf(
+                androidx.navigation.navArgument("setId") {
+                    type = androidx.navigation.NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
+            )
+        ){ backStackEntry ->
+            val setId = backStackEntry.arguments?.getString("setId")
             LaunchedEffect(Unit) {
                 FCMHelper.registerFCMToken(context)
             }
             FlashCardScreen(
                 viewModel=flashCardViewModel,
+                setId = setId,
                 onExitClick = {
                     navController.popBackStack()
                 },
@@ -205,7 +214,6 @@ fun AuthNavHost(
             )
         }
 
-        // 2. Tab Analytics
         composable(NavDestinations.Analytics.route) {
             AnalyticsScreen(
                 currentRoute = currentRoute,
@@ -223,13 +231,12 @@ fun AuthNavHost(
             )
         }
 
-        // 3. Tab Library
         composable(NavDestinations.Library.route) {
             LibraryScreen(
                 currentRoute      = currentRoute,
                 onNavigate        = ::onFooterNavigate,
-                onSetClick        = { setName ->
-                    navController.navigate(NavDestinations.WordList.createRoute(setName))
+                onSetClick        = { setId, setName ->
+                    navController.navigate(NavDestinations.WordList.createRoute(setId, setName))
                 },
                 onCreateNewSet    = {
                     navController.navigate(NavDestinations.CreateNewSet.route)
@@ -239,29 +246,69 @@ fun AuthNavHost(
                 },
                 onUserClick = {
                     navController.navigate(NavDestinations.Profile.route)
-                }
+                },
+                viewModel = vocabViewModel
             )
         }
 
-        // Sub-screen Word List
         composable(NavDestinations.WordList.route) { backStackEntry ->
+            val setId = backStackEntry.arguments?.getString("setId") ?: ""
             val setName = backStackEntry.arguments?.getString("setName")?.let {
                 java.net.URLDecoder.decode(it, "UTF-8")
             } ?: "Vocabulary Set"
 
             WordListScreen(
+                setId = setId,
                 setName = setName,
-                onBack  = { navController.popBackStack() }
+                onBack  = { navController.popBackStack() },
+                onStartSession = { id ->
+                    navController.navigate(NavDestinations.FlashCardTest.createRoute(id))
+                },
+                onAddWordClick = { id ->
+                    navController.navigate(NavDestinations.AddWord.createRoute(id))
+                }
             )
         }
 
-        // Sub-screen Create New Set
+        composable(NavDestinations.AddWord.route) { backStackEntry ->
+            val setId = backStackEntry.arguments?.getString("setId") ?: ""
+            val parentEntry = remember(backStackEntry) {
+                navController.previousBackStackEntry
+            }
+            val wordListViewModel: WordListViewModel = if (parentEntry != null) {
+                viewModel(parentEntry)
+            } else {
+                viewModel()
+            }
+
+            AddWordScreen(
+                setId = setId,
+                onBack = { navController.popBackStack() },
+                viewModel = wordListViewModel
+            )
+        }
+
         composable(NavDestinations.CreateNewSet.route) {
+            val uiState by vocabViewModel.uiState.collectAsState()
+            val context = LocalContext.current
+            LaunchedEffect(uiState.createSuccess) {
+                if (uiState.createSuccess) {
+                    vocabViewModel.resetCreateSuccess()
+                    navController.popBackStack()
+                }
+            }
+
+            LaunchedEffect(uiState.errorMessage) {
+                uiState.errorMessage?.let { msg ->
+                    android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_LONG).show()
+                    vocabViewModel.clearError()
+                }
+            }
+
             CreateNewSetScreen(
                 onBackClick   = { navController.popBackStack() },
-                onCreateClick = { _, _, _, _ ->
-                    // TODO: gọi API tạo set, sau đó quay về Library
-                    navController.popBackStack()
+                onCreateClick = { title, description, category, isPublic, words ->
+                    vocabViewModel.createSet(title, description, category, isPublic, words)
                 }
             )
         }
@@ -291,7 +338,6 @@ fun AuthNavHost(
             )
         }
 
-        // 4. Tab Profile
         composable(NavDestinations.Profile.route) {
             ProfileScreen(
                 currentRoute = currentRoute,
@@ -301,7 +347,7 @@ fun AuthNavHost(
                 onNotificationClick = {
                     navController.navigate(NavDestinations.Notifications.route)
                 },
-                onUserClick = { /* Already on Profile */ },
+                onUserClick = {},
                 onLogOutClick = {
                     FCMHelper.deleteFCMToken(context) {
                         TokenManager.clear()
@@ -313,7 +359,6 @@ fun AuthNavHost(
             )
         }
 
-        // 5. Màn hình Notifications
         composable(NavDestinations.Notifications.route) {
             val notifViewModel = viewModel<NotificationViewModel>()
             NotificationScreen(
@@ -332,7 +377,6 @@ fun AuthNavHost(
                             }
                         }
                     }
-                    // Làm tươi nóng badge ngay lập tức
                     NotificationBadgeManager.refreshBadge()
                 }
             )

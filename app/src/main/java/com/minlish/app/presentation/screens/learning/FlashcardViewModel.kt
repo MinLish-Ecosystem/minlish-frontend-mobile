@@ -38,20 +38,33 @@ class FlashcardViewModel(): ViewModel(){
         flashcards.value.size
     }
 
-    fun loadFlashcardSet(){
+    fun loadFlashcardSet(setId: String? = null){
         viewModelScope.launch {
             isLoading.value=true
             errorMessage.value = null
-            val result = withContext(Dispatchers.IO) {
-                flashCardRepository.getLearningSet()
-            }
-            result.onSuccess { dto ->
-                flashcards.value = FlashCardMapper.mapToUiList(
-                    dtoList = dto.flashCardSets,
-                )
-                currentIndex.value = 0
-            }.onFailure { error ->
-                errorMessage.value = error.message ?: "Lỗi không xác định"
+            if (setId != null) {
+                val result = withContext(Dispatchers.IO) {
+                    flashCardRepository.getSetLearningQueue(setId)
+                }
+                result.onSuccess { queueResponse ->
+                    val allCards = queueResponse.newCards + queueResponse.reviewCards
+                    flashcards.value = FlashCardMapper.mapLearningCardDtoListToUiList(allCards)
+                    currentIndex.value = 0
+                }.onFailure { error ->
+                    errorMessage.value = error.message ?: "Lỗi không xác định"
+                }
+            } else {
+                val result = withContext(Dispatchers.IO) {
+                    flashCardRepository.getLearningSet()
+                }
+                result.onSuccess { dto ->
+                    flashcards.value = FlashCardMapper.mapToUiList(
+                        dtoList = dto.flashCardSets,
+                    )
+                    currentIndex.value = 0
+                }.onFailure { error ->
+                    errorMessage.value = error.message ?: "Lỗi không xác định"
+                }
             }
             isLoading.value = false
         }
