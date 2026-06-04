@@ -32,7 +32,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
+
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -52,8 +52,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.room.util.copy
-import com.minlish.app.presentation.components.AppHeader
-import com.minlish.app.presentation.components.Footer
 
 
 @Composable
@@ -191,48 +189,28 @@ fun PracticeArenaCard(practiceMode: PracticeMode, onClick: () -> Unit){
 }
 @Composable
 fun PracticeArenaScreen(
-        currentRoute: String,
-        onNavigate: (String) -> Unit,
-        userName: String = "User",
-        userAvatarUrl: String = "",
-        viewModel: PracticeViewModel,
-        unreadCount: Int = 0,
-        onNotificationClick: () -> Unit = {},
-        onUserClick: () -> Unit = {},
-        onPracticeClick: (PracticeMode) -> Unit = {}
-    ) {
+    viewModel: PracticeViewModel,
+    modifier: Modifier = Modifier,
+    onPracticeClick: (PracticeMode) -> Unit = {}
+) {
     val loading by viewModel.isLoading
     val practiceModes by viewModel.practiceModes
     val error by viewModel.errorMessage
     LaunchedEffect(Unit) {
         viewModel.loadPracticeModes()
     }
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        topBar = {
-            AppHeader(
-                unreadCount = unreadCount,
-                onNotificationClick = onNotificationClick,
-                onUserClick = onUserClick
-            )
-        },
-        bottomBar = {
-            Footer(
-                currentRoute = currentRoute,
-                onNavigate = onNavigate
-            )
-        }
-    ) { paddingValues ->
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(Color(0xFFFCF8FF))
+    ) {
         if (loading) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
             }
-            return@Scaffold
-        }
-
-        if (error != null) {
+        } else if (error != null) {
             Column(
-                modifier = Modifier.fillMaxSize().padding(paddingValues),
+                modifier = Modifier.fillMaxSize(),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
@@ -241,44 +219,42 @@ fun PracticeArenaScreen(
                     Text("Thử lại")
                 }
             }
-            return@Scaffold
-        }
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .background(Color(0xFFFCF8FF)) // surface background
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            // Header Section
-            Column(modifier = Modifier.padding(vertical = 8.dp)) {
-                Text(
-                    text = "Practice Arena",
-                    style = MaterialTheme.typography.headlineLarge.copy(
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 32.sp
-                    ),
-                    color = Color(0xFF1B1B23) // on-background
-                )
-                Text(
-                    text = "Choose a mode to sharpen your English skills today.",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = Color(0xFF464554), // on-surface-variant
-                    modifier = Modifier.padding(top = 4.dp)
-                )
-            }
-
-            // Practice Modes List
-            LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                contentPadding = PaddingValues(vertical = 8.dp)
+        } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                items(practiceModes) { mode ->
-                    PracticeArenaCard(
-                        practiceMode = mode,
-                        onClick = { onPracticeClick(mode) }
+                // Header Section
+                Column(modifier = Modifier.padding(vertical = 8.dp)) {
+                    Text(
+                        text = "Practice Arena",
+                        style = MaterialTheme.typography.headlineLarge.copy(
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 32.sp
+                        ),
+                        color = Color(0xFF1B1B23) // on-background
                     )
+                    Text(
+                        text = "Choose a mode to sharpen your English skills today.",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = Color(0xFF464554), // on-surface-variant
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+                }
+
+                // Practice Modes List
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    contentPadding = PaddingValues(vertical = 8.dp)
+                ) {
+                    items(practiceModes) { mode ->
+                        PracticeArenaCard(
+                            practiceMode = mode,
+                            onClick = { onPracticeClick(mode) }
+                        )
+                    }
                 }
             }
         }

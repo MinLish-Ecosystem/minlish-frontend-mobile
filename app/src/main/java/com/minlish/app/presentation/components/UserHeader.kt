@@ -16,6 +16,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -30,7 +31,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
-import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.launch
 import com.minlish.app.R
 import com.minlish.app.presentation.screens.profile.ProfileViewModel
@@ -49,7 +49,7 @@ object NotificationColors {
     val PressedIconTint = Color.White
 }
 
-@OptIn(DelicateCoroutinesApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppHeader(
     unreadCount: Int = 0,
@@ -58,7 +58,7 @@ fun AppHeader(
     modifier: Modifier = Modifier,
     viewModel: ProfileViewModel = viewModel()
 ) {
-
+    val coroutineScope = rememberCoroutineScope()
     val state by viewModel.uiState.collectAsState()
 
     val textGradientBrush = Brush.linearGradient(
@@ -108,7 +108,7 @@ fun AppHeader(
                 onClick = {
                     isNotificationActive = true
                     onNotificationClick()
-                    kotlinx.coroutines.GlobalScope.launch {
+                    coroutineScope.launch {
                         kotlinx.coroutines.delay(150)
                         isNotificationActive = false
                     }

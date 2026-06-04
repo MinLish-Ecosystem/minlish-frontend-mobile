@@ -9,8 +9,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.compose.rememberNavController
 import com.minlish.app.data.local.TokenManager
 import com.minlish.app.presentation.screens.analytics.AnalyticsScreen
 import com.minlish.app.presentation.screens.analytics.AnalyticsViewModel
@@ -40,39 +38,10 @@ import com.minlish.app.util.NotificationBadgeManager
 @Composable
 fun AuthNavHost(
     modifier: Modifier = Modifier,
-    navController: NavHostController = rememberNavController(),
-    startDestination: String = NavDestinations.Welcome.route,
+    navController: NavHostController,
+    startDestination: String
 ) {
-    val currentBackStack by navController.currentBackStackEntryAsState()
-    val currentRoute = currentBackStack?.destination?.route ?: NavDestinations.Learning.route
     val context = LocalContext.current
-    val profileViewModel: ProfileViewModel = viewModel()
-    val profileState by profileViewModel.uiState.collectAsState()
-    val learningViewModel: LearningViewModel = viewModel()
-    val practiceViewModel: PracticeViewModel = viewModel()
-    val flashCardViewModel: FlashcardViewModel = viewModel()
-
-    // ── Lắng nghe Badge Count sạch sẽ từ Singleton Manager ──
-    val unreadBadgeCount by NotificationBadgeManager.badgeCount.collectAsState()
-
-    // Quản lý vòng đời Polling: start khi đã đăng nhập, stop khi logout
-    val isLoggedIn = TokenManager.isLoggedIn()
-    LaunchedEffect(isLoggedIn) {
-        if (isLoggedIn) {
-            NotificationBadgeManager.startPolling()
-            profileViewModel.loadProfileData()
-        } else {
-            NotificationBadgeManager.stopPolling()
-        }
-    }
-
-    fun onFooterNavigate(label: String) {
-        navController.navigate(label) {
-            popUpTo(NavDestinations.Learning.route) { saveState = true }
-            launchSingleTop = true
-            restoreState = true
-        }
-    }
     val authViewModel: AuthViewModel = viewModel()
     val forgotPasswordViewModel: ForgetPasswordViewModel = viewModel()
 
@@ -81,8 +50,6 @@ fun AuthNavHost(
         startDestination = startDestination,
         modifier = modifier
     ) {
-        // ── Auth screens — giữ nguyên 100% ──
-
         composable(NavDestinations.Welcome.route) {
             WelcomeScreen(
                 onGetStartedClick = { navController.navigate(NavDestinations.Register.route) },
@@ -148,7 +115,7 @@ fun AuthNavHost(
                 onBackClick = { navController.popBackStack() },
                 onResetPasswordSuccess = {
                     navController.navigate(NavDestinations.Login.route) {
-                        popUpTo(NavDestinations.Login.route) {inclusive = true}
+                        popUpTo(NavDestinations.Login.route) { inclusive = true }
                     }
                 }
             )
@@ -165,24 +132,16 @@ fun AuthNavHost(
             )
         }
 
-        // ── Main App Tabs ──
+        // ── Main App Tabs (ViewModels được khởi tạo cục bộ tại đây để tự hủy khi Logout) ──
 
         // 1. Tab Learning
         composable(NavDestinations.Learning.route) {
+            val learningViewModel: LearningViewModel = viewModel()
             LaunchedEffect(Unit) {
                 FCMHelper.registerFCMToken(context)
             }
 
             LearningDashBoardScreen(
-                currentRoute = currentRoute,
-                onNavigate = ::onFooterNavigate,
-                unreadCount = unreadBadgeCount,
-                onNotificationClick = {
-                    navController.navigate(NavDestinations.Notifications.route)
-                },
-                onUserClick = {
-                    navController.navigate(NavDestinations.Profile.route)
-                },
                 viewModel = learningViewModel,
                 onCreateNewSetCard = {
                     navController.navigate(NavDestinations.CreateNewSet.route)
@@ -192,12 +151,14 @@ fun AuthNavHost(
                 }
             )
         }
+
         composable(NavDestinations.FlashCardTest.route){
+            val flashCardViewModel: FlashcardViewModel = viewModel()
             LaunchedEffect(Unit) {
                 FCMHelper.registerFCMToken(context)
             }
             FlashCardScreen(
-                viewModel=flashCardViewModel,
+                viewModel = flashCardViewModel,
                 onExitClick = {
                     navController.popBackStack()
                 },
@@ -207,38 +168,20 @@ fun AuthNavHost(
 
         // 2. Tab Analytics
         composable(NavDestinations.Analytics.route) {
+            val analyticsViewModel: AnalyticsViewModel = viewModel()
             AnalyticsScreen(
-                currentRoute = currentRoute,
-                onNavigate = ::onFooterNavigate,
-                userName = profileState.displayName.ifEmpty { "User" },
-                userAvatarUrl = profileState.avatar ?: "",
-                viewModel = viewModel<AnalyticsViewModel>(),
-                unreadCount = unreadBadgeCount,
-                onNotificationClick = {
-                    navController.navigate(NavDestinations.Notifications.route)
-                },
-                onUserClick = {
-                    navController.navigate(NavDestinations.Profile.route)
-                }
+                viewModel = analyticsViewModel
             )
         }
 
         // 3. Tab Library
         composable(NavDestinations.Library.route) {
             LibraryScreen(
-                currentRoute      = currentRoute,
-                onNavigate        = ::onFooterNavigate,
-                onSetClick        = { setName ->
+                onSetClick = { setName ->
                     navController.navigate(NavDestinations.WordList.createRoute(setName))
                 },
-                onCreateNewSet    = {
+                onCreateNewSet = {
                     navController.navigate(NavDestinations.CreateNewSet.route)
-                },
-                onNotificationClick = {
-                    navController.navigate(NavDestinations.Notifications.route)
-                },
-                onUserClick = {
-                    navController.navigate(NavDestinations.Profile.route)
                 }
             )
         }
@@ -251,34 +194,24 @@ fun AuthNavHost(
 
             WordListScreen(
                 setName = setName,
-                onBack  = { navController.popBackStack() }
+                onBack = { navController.popBackStack() }
             )
         }
 
         // Sub-screen Create New Set
         composable(NavDestinations.CreateNewSet.route) {
             CreateNewSetScreen(
-                onBackClick   = { navController.popBackStack() },
+                onBackClick = { navController.popBackStack() },
                 onCreateClick = { _, _, _, _ ->
-                    // TODO: gọi API tạo set, sau đó quay về Library
                     navController.popBackStack()
                 }
             )
         }
 
+        // 4. Tab Practice
         composable(NavDestinations.Practice.route) {
+            val practiceViewModel: PracticeViewModel = viewModel()
             PracticeArenaScreen(
-                currentRoute = currentRoute,
-                onNavigate = ::onFooterNavigate,
-                userName = profileState.displayName.ifEmpty { "User" },
-                userAvatarUrl = profileState.avatar ?: "",
-                unreadCount = unreadBadgeCount,
-                onNotificationClick = {
-                    navController.navigate(NavDestinations.Notifications.route)
-                },
-                onUserClick = {
-                    navController.navigate(NavDestinations.Profile.route)
-                },
                 viewModel = practiceViewModel,
                 onPracticeClick = { mode ->
                     val route = mode.getRoute()
@@ -291,17 +224,11 @@ fun AuthNavHost(
             )
         }
 
-        // 4. Tab Profile
+        // 5. Tab Profile
         composable(NavDestinations.Profile.route) {
+            val profileViewModel: ProfileViewModel = viewModel()
             ProfileScreen(
-                currentRoute = currentRoute,
-                onNavigate = ::onFooterNavigate,
                 viewModel = profileViewModel,
-                unreadCount = unreadBadgeCount,
-                onNotificationClick = {
-                    navController.navigate(NavDestinations.Notifications.route)
-                },
-                onUserClick = { /* Already on Profile */ },
                 onLogOutClick = {
                     FCMHelper.deleteFCMToken(context) {
                         TokenManager.clear()
@@ -313,9 +240,9 @@ fun AuthNavHost(
             )
         }
 
-        // 5. Màn hình Notifications
+        // 6. Màn hình Notifications
         composable(NavDestinations.Notifications.route) {
-            val notifViewModel = viewModel<NotificationViewModel>()
+            val notifViewModel: NotificationViewModel = viewModel()
             NotificationScreen(
                 onBackClick = { navController.popBackStack() },
                 viewModel = notifViewModel,
@@ -332,11 +259,9 @@ fun AuthNavHost(
                             }
                         }
                     }
-                    // Làm tươi nóng badge ngay lập tức
                     NotificationBadgeManager.refreshBadge()
                 }
             )
         }
     }
 }
-
