@@ -13,10 +13,9 @@ import androidx.navigation.compose.rememberNavController
 import com.minlish.app.data.local.TokenManager
 import com.minlish.app.data.sync.SyncManager
 import com.minlish.app.di.DatabaseModule
-import com.minlish.app.presentation.navigation.AuthNavHost
+import com.minlish.app.presentation.components.AppShell
 import com.minlish.app.presentation.navigation.NavDestinations
 import com.minlish.app.ui.theme.MinLishMobileTheme
-import com.minlish.app.util.SessionExpiredEvent
 
 class MainActivity : ComponentActivity() {
     @RequiresApi(Build.VERSION_CODES.O)
@@ -37,15 +36,7 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
-                LaunchedEffect(Unit) {
-                    SessionExpiredEvent.flow.collect {
-                        navController.navigate(NavDestinations.Login.route) {
-                            popUpTo(0) { inclusive = true}
-                        }
-                    }
-                }
-
-                AuthNavHost(
+                AppShell(
                     navController = navController,
                     modifier = Modifier.fillMaxSize(),
                     startDestination = if (TokenManager.isLoggedIn())
@@ -70,3 +61,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
+
+
+

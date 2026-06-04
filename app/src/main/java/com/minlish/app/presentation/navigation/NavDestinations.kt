@@ -1,5 +1,7 @@
 package com.minlish.app.presentation.navigation
 
+import androidx.navigation.NavController
+
 sealed class NavDestinations(val route: String) {
     data object Welcome        : NavDestinations("welcome")
     data object Login          : NavDestinations("login")
@@ -17,12 +19,34 @@ sealed class NavDestinations(val route: String) {
     data object Practice  : NavDestinations("practice")
 
     // ── Sub-screens ──────────────────────────────────────────────────────────
-    data object WordList : NavDestinations("word_list/{setName}") {
-        fun createRoute(setName: String) =
-            "word_list/${java.net.URLEncoder.encode(setName, "UTF-8")}"
+    data object WordList : NavDestinations("word_list/{setId}/{setName}") {
+        fun createRoute(setId: String, setName: String) =
+            "word_list/$setId/${java.net.URLEncoder.encode(setName, "UTF-8")}"
     }
 
     data object CreateNewSet : NavDestinations("create_new_set")
+    data object AddWord : NavDestinations("add_word/{setId}") {
+        fun createRoute(setId: String) = "add_word/$setId"
+    }
     data object Notifications  : NavDestinations("notifications")
-    data object FlashCardTest: NavDestinations("flash_card_test")
+    data object FlashCardTest: NavDestinations("flash_card_test?setId={setId}") {
+        fun createRoute(setId: String? = null) =
+            if (setId != null) "flash_card_test?setId=$setId" else "flash_card_test"
+    }
+}
+
+fun NavController.clearAllTabStates() {
+    val tabs = listOf(
+        NavDestinations.Learning.route,
+        NavDestinations.Analytics.route,
+        NavDestinations.Library.route,
+        NavDestinations.Practice.route,
+        NavDestinations.Profile.route
+    )
+    tabs.forEach { route ->
+        try {
+            clearBackStack(route)
+        } catch (e: Exception) {
+        }
+    }
 }
