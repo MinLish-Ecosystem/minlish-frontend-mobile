@@ -83,8 +83,12 @@ data class AddWordRequest(
     val partOfSpeech: String? = null,
     val descriptionEN: String? = null,
     val examples: List<String>? = null,
+    val synonyms: List<String>? = null,
+    val antonyms: List<String>? = null,
     val collocations: List<String>? = null,
     val relatedWords: List<String>? = null,
+    val imageUrl: String? = null,
+    val audioUrl: String? = null,
     val note: String? = null
 )
 
@@ -128,4 +132,10 @@ interface VocabApi {
         @Path("id") setId: String,
         @Body body: AddWordRequest
     ): ApiResponse<WordResponse>
+
+    @DELETE("vocab/sets/{setId}/words/{wordId}")
+    suspend fun deleteWord(
+        @Path("setId") setId: String,
+        @Path("wordId") wordId: String
+    ): ApiResponse<Unit>
 }

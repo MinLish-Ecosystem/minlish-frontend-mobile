@@ -340,7 +340,7 @@ private fun FormSection(
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = "(Tùy chọn)",
+                        text = "(Option)",
                         fontSize = 11.sp,
                         color = CreateSetColors.OnSurfaceVariant.copy(alpha = 0.5f)
                     )

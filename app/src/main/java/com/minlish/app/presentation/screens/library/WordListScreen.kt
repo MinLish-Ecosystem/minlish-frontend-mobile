@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -28,6 +29,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.minlish.app.data.remote.WordResponse
 import com.minlish.app.presentation.screens.library.WordListViewModel
 
 data class WordItem(
@@ -94,6 +96,9 @@ fun WordListScreen(
     val masteredCount by viewModel.masteredCount
     val learningCount by viewModel.learningCount
     val mediaPlayer = remember { MediaPlayer() }
+    val isDeleting by remember { viewModel.isDeleting }
+    val deleteSuccess by remember { viewModel.deleteSuccess }
+    val wordToDelete by remember { viewModel.wordToDelete }
     DisposableEffect(Unit) {
         onDispose {
             mediaPlayer.release()
@@ -482,21 +487,71 @@ fun WordListScreen(
                                             fontSize = 14.sp
                                         )
                                     }
-
-                                    Box(
-                                        modifier = Modifier
-                                            .background(
-                                                color = item.status.containerColor,
-                                                shape = RoundedCornerShape(6.dp)
-                                            )
-                                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                                     ) {
-                                        Text(
-                                            text = item.status.label.uppercase(),
-                                            color = item.status.onContainerColor,
-                                            fontWeight = FontWeight.Bold,
-                                            fontSize = 10.sp
-                                        )
+                                        IconButton(onClick = {val originalWord = words.find { it.word == item.word }
+                                            originalWord?.let { viewModel.requestDeleteWord(it) }}) {
+                                            Icon(
+                                                imageVector = Icons.Filled.Delete,
+                                                contentDescription = "Delete word",
+                                                tint = onSurfaceVariantColor
+                                            )
+                                        }
+                                        wordToDelete?.let { word ->
+                                            AlertDialog(
+                                                onDismissRequest = { viewModel.cancelDelete() },
+                                                title = {
+                                                    Text(
+                                                        text = "Delete Word?",
+                                                        fontWeight = FontWeight.Bold
+                                                    )
+                                                },
+                                                text = {
+                                                    Text("Are you sure you want to delete \"${word.word}\"? This action cannot be undone.")
+                                                },
+                                                confirmButton = {
+                                                    Button(
+                                                        onClick = { viewModel.confirmDeleteWord(setId) },
+                                                        enabled = !isDeleting,
+                                                        colors = ButtonDefaults.buttonColors(
+                                                            containerColor = Color(0xFFEF4444)
+                                                        )
+                                                    ) {
+                                                        if (isDeleting) {
+                                                            CircularProgressIndicator(
+                                                                modifier = Modifier.size(16.dp),
+                                                                strokeWidth = 2.dp,
+                                                                color = Color.White
+                                                            )
+                                                        } else {
+                                                            Text("Delete")
+                                                        }
+                                                    }
+                                                },
+                                                dismissButton = {
+                                                    TextButton(onClick = { viewModel.cancelDelete() }) {
+                                                        Text("Cancel")
+                                                    }
+                                                }
+                                            )
+                                        }
+                                        Box(
+                                            modifier = Modifier
+                                                .background(
+                                                    color = item.status.containerColor,
+                                                    shape = RoundedCornerShape(6.dp)
+                                                )
+                                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                                        ) {
+                                            Text(
+                                                text = item.status.label.uppercase(),
+                                                color = item.status.onContainerColor,
+                                                fontWeight = FontWeight.Bold,
+                                                fontSize = 10.sp
+                                            )
+                                        }
                                     }
                                 }
 
