@@ -1,5 +1,7 @@
 package com.minlish.app.presentation.navigation
 
+import androidx.navigation.NavController
+
 sealed class NavDestinations(val route: String) {
     data object Welcome        : NavDestinations("welcome")
     data object Login          : NavDestinations("login")
@@ -30,5 +32,21 @@ sealed class NavDestinations(val route: String) {
     data object FlashCardTest: NavDestinations("flash_card_test?setId={setId}") {
         fun createRoute(setId: String? = null) =
             if (setId != null) "flash_card_test?setId=$setId" else "flash_card_test"
+    }
+}
+
+fun NavController.clearAllTabStates() {
+    val tabs = listOf(
+        NavDestinations.Learning.route,
+        NavDestinations.Analytics.route,
+        NavDestinations.Library.route,
+        NavDestinations.Practice.route,
+        NavDestinations.Profile.route
+    )
+    tabs.forEach { route ->
+        try {
+            clearBackStack(route)
+        } catch (e: Exception) {
+        }
     }
 }

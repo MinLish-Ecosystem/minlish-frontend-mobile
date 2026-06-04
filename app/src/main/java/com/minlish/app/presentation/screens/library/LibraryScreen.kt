@@ -25,8 +25,7 @@ import coil.compose.AsyncImage
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.minlish.app.presentation.screens.vocab.VocabViewModel
 
-import com.minlish.app.presentation.components.AppHeader
-import com.minlish.app.presentation.components.Footer
+
 
 data class MockSetData(
     val id: String,
@@ -46,13 +45,9 @@ data class MockSetData(
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun LibraryScreen(
-    currentRoute: String = "library",
-    unreadCount: Int = 0,
-    onNavigate: (String) -> Unit = {},
+    modifier: Modifier = Modifier,
     onSetClick: (String, String) -> Unit = { _, _ -> },
     onCreateNewSet: () -> Unit = {},
-    onNotificationClick: () -> Unit = {},
-    onUserClick: () -> Unit = {},
     viewModel: VocabViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -122,46 +117,16 @@ fun LibraryScreen(
     val accentEmeraldColor = Color(0xFF10B981)
     val accentAmberColor = Color(0xFFF59E0B)
 
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        topBar = {
-            AppHeader(
-                onNotificationClick = onNotificationClick,
-                onUserClick = onUserClick,
-                unreadCount = unreadCount,
-            )
-        },
-        bottomBar = {
-            Footer(
-                currentRoute = currentRoute,
-                onNavigate   = onNavigate
-            )
-        },
-        floatingActionButton = {
-            if (selectedSubTab == "My Sets") {
-                FloatingActionButton(
-                    onClick = onCreateNewSet,
-                    containerColor = primaryColor,
-                    contentColor = Color.White,
-                    shape = RoundedCornerShape(50),
-                    modifier = Modifier.padding(bottom = 16.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = "Create New Set",
-                        modifier = Modifier.size(28.dp)
-                    )
-                }
-            }
-        },
-        containerColor = surfaceColor
-    ) { innerPadding ->
 
-    LazyColumn(
-        modifier = Modifier
+    Box(
+        modifier = modifier
             .fillMaxSize()
-            .padding(innerPadding)
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+            .background(surfaceColor)
+    ) {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
         // Tab Switcher ("My Sets" and "Explore")
@@ -482,8 +447,32 @@ fun LibraryScreen(
                 }
             }
         }
+        }
+
+        if (selectedSubTab == "My Sets") {
+            FloatingActionButton(
+                onClick = onCreateNewSet,
+                containerColor = Color.Transparent,
+                contentColor = Color.White,
+                shape = RoundedCornerShape(50),
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(end = 16.dp, bottom = 16.dp)
+                    .background(
+                        brush = Brush.linearGradient(
+                            colors = listOf(Color(0xFF667EEA), Color(0xFF764BA2))
+                        ),
+                        shape = RoundedCornerShape(50)
+                    )
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = "Create New Set",
+                    modifier = Modifier.size(28.dp)
+                )
+            }
+        }
     }
-}
 }
 
 @Composable

@@ -25,77 +25,42 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.minlish.app.presentation.components.AppHeader
-import com.minlish.app.presentation.components.Footer
 import com.minlish.app.ui.theme.*
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// Root Screen — per-screen Scaffold pattern
-// ═══════════════════════════════════════════════════════════════════════════════
 
 @Composable
 fun AnalyticsScreen(
-    currentRoute: String = "analytics",
-    onNavigate: (String) -> Unit = {},
-    userName: String = "User",
-    userAvatarUrl: String = "",
-    viewModel: AnalyticsViewModel = viewModel(),
-    unreadCount: Int = 0,
-    onNotificationClick: () -> Unit = {},
-    onUserClick: () -> Unit = {}
+    viewModel: AnalyticsViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    Scaffold(
-        modifier       = Modifier.fillMaxSize(),
-        topBar         = {
-            AppHeader(
-                unreadCount         = unreadCount,
-                onNotificationClick = onNotificationClick,
-                onUserClick         = onUserClick
-            )
-        },
-        bottomBar      = {
-            Footer(
-                currentRoute = currentRoute,
-                onNavigate   = onNavigate
-            )
-        },
-        containerColor = MinlishSurface
-    ) { innerPadding ->
-        LazyColumn(
-            modifier        = Modifier
-                .fillMaxSize()
-                .padding(innerPadding),
-            contentPadding  = PaddingValues(
-                start  = 16.dp,
-                end    = 16.dp,
-                top    = 16.dp,
-                bottom = 24.dp
-            ),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            if (uiState.errorMessage != null) {
-                item {
-                    ErrorAlertCard(
-                        message = uiState.errorMessage!!,
-                        onRetry = { viewModel.refresh() }
-                    )
-                }
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MinlishSurface),
+        contentPadding = PaddingValues(
+            start  = 16.dp,
+            end    = 16.dp,
+            top    = 16.dp,
+            bottom = 24.dp
+        ),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        if (uiState.errorMessage != null) {
+            item {
+                ErrorAlertCard(
+                    message = uiState.errorMessage!!,
+                    onRetry = { viewModel.refresh() }
+                )
             }
-            item { AnalyticsHeader() }
-            item { StatsBentoGrid(uiState) }
-            item { WordsMasteredCard(uiState) }
-            item { WeeklyProgressChart(uiState) }
-            item { MasteryDistributionCard(uiState) }
-            item { ActivityHeatmapCard(uiState) }
         }
+        item { AnalyticsHeader() }
+        item { StatsBentoGrid(uiState) }
+        item { WordsMasteredCard(uiState) }
+        item { WeeklyProgressChart(uiState) }
+        item { MasteryDistributionCard(uiState) }
+        item { ActivityHeatmapCard(uiState) }
     }
 }
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// Header
-// ═══════════════════════════════════════════════════════════════════════════════
 
 @Composable
 private fun AnalyticsHeader() {
@@ -112,10 +77,6 @@ private fun AnalyticsHeader() {
         )
     }
 }
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// Stats Bento Grid — 2 card ngang
-// ═══════════════════════════════════════════════════════════════════════════════
 
 @Composable
 private fun StatsBentoGrid(uiState: AnalyticsUiState) {
@@ -204,10 +165,6 @@ private fun StatCard(
     }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// Words Mastered Card
-// ═══════════════════════════════════════════════════════════════════════════════
-
 @Composable
 private fun WordsMasteredCard(uiState: AnalyticsUiState) {
     Card(
@@ -267,10 +224,6 @@ private fun WordsMasteredCard(uiState: AnalyticsUiState) {
         }
     }
 }
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// Weekly Progress Chart
-// ═══════════════════════════════════════════════════════════════════════════════
 
 @Composable
 private fun WeeklyProgressChart(uiState: AnalyticsUiState) {
@@ -376,10 +329,6 @@ private fun BarChartItem(
     }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// Mastery Distribution
-// ═══════════════════════════════════════════════════════════════════════════════
-
 @Composable
 private fun MasteryDistributionCard(uiState: AnalyticsUiState) {
     val levels = listOf(
@@ -445,10 +394,6 @@ private fun MasteryProgressRow(level: MasteryLevel, barColor: Color) {
         }
     }
 }
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// Activity Heatmap
-// ═══════════════════════════════════════════════════════════════════════════════
 
 @Composable
 private fun ActivityHeatmapCard(uiState: AnalyticsUiState) {
@@ -520,10 +465,6 @@ private fun ActivityHeatmapCard(uiState: AnalyticsUiState) {
     }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// Preview
-// ═══════════════════════════════════════════════════════════════════════════════
-
 @Preview(showBackground = true, backgroundColor = 0xFFFCF8FF)
 @Composable
 fun AnalyticsScreenPreview() {
@@ -531,10 +472,6 @@ fun AnalyticsScreenPreview() {
         AnalyticsScreen()
     }
 }
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// Error Alert Card UI component
-// ═══════════════════════════════════════════════════════════════════════════════
 
 @Composable
 private fun ErrorAlertCard(message: String, onRetry: () -> Unit) {

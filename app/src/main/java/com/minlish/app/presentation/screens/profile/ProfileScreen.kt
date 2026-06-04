@@ -44,8 +44,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.minlish.app.ui.theme.*
 import com.minlish.app.R
-import com.minlish.app.presentation.components.AppHeader
-import com.minlish.app.presentation.components.Footer
 import androidx.compose.runtime.collectAsState
 import android.widget.Toast
 import androidx.compose.runtime.LaunchedEffect
@@ -59,12 +57,8 @@ import coil.compose.AsyncImage
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun ProfileScreen(
-    currentRoute: String = "profile",
-    onNavigate: (String) -> Unit = {},
-    unreadCount: Int = 0,
-    onNotificationClick: () -> Unit = {},
-    onUserClick: () -> Unit = {},
     onLogOutClick: () -> Unit,
+    modifier: Modifier = Modifier,
     viewModel: ProfileViewModel = viewModel()
 ) {
     val state by viewModel.uiState.collectAsState()
@@ -101,27 +95,14 @@ fun ProfileScreen(
         }
     }
 
-    Scaffold(
-        topBar = {
-            AppHeader(
-                unreadCount = unreadCount,
-                onNotificationClick = onNotificationClick,
-                onUserClick = onUserClick,
-                modifier = Modifier,
-            )
-        },
-        containerColor = Color(0xFFF9FAFB),
-        bottomBar = {
-            Footer(
-                currentRoute = currentRoute,
-                onNavigate = onNavigate
-            )
-        }
-    ) { paddingValues ->
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(Color(0xFFF9FAFB))
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
                 .background(MinlishSurface)
         ) {
             if (state.isLoading) {

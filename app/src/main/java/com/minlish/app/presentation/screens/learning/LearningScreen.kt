@@ -37,13 +37,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
 import androidx.compose.ui.draw.drawBehind
-
 import androidx.compose.ui.graphics.PathEffect
-
 import androidx.compose.ui.graphics.drawscope.Stroke
-import com.minlish.app.presentation.components.AppHeader
-import com.minlish.app.presentation.components.NotificationColors
-import com.minlish.app.presentation.components.Footer
 
 @Composable
 fun HeroSessionCard(newWords: Int,reviewsDue: Int,onStartSessionClick: () -> Unit){
@@ -228,15 +223,10 @@ fun CreateNewSetCard(onCreateNewSetCard: () -> Unit,modifier: Modifier){
 
 @Composable
 fun LearningDashBoardScreen(
-        currentRoute: String,
-        onNavigate: (String) -> Unit,
-        unreadCount: Int = 0,
-        viewModel: LearningViewModel,
-        onNotificationClick: () -> Unit = {},
-        onUserClick: () -> Unit = {},
-        onCreateNewSetCard: () -> Unit,
-        onStartSessionClick: () -> Unit,
-    ) {
+    viewModel: LearningViewModel,
+    onCreateNewSetCard: () -> Unit,
+    onStartSessionClick: () -> Unit,
+) {
 
     val vocabSets by viewModel.vocabSets
     val newWords by viewModel.newWordsCount
@@ -247,109 +237,76 @@ fun LearningDashBoardScreen(
     LaunchedEffect(Unit) {
         viewModel.loadDashBoardData()
     }
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        topBar = {
-            AppHeader(
-                unreadCount = unreadCount,
-                onNotificationClick = onNotificationClick,
-                onUserClick = onUserClick
-            )
-        },
-        bottomBar = {
-            Footer(
-                currentRoute = currentRoute,
-                onNavigate = onNavigate
-            )
-        }
-    ) { paddingValues ->
-        // Handle Loading
-        if (loading && vocabSets.isEmpty()) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
-            return@Scaffold
-        }
 
-        if (error != null) {
-            Column(
-                modifier = Modifier.fillMaxSize().padding(paddingValues),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                Text("Lỗi: $error", color = MaterialTheme.colorScheme.error)
-                Button(onClick = { viewModel.loadDashBoardData() }) {
-                    Text("Thử lại")
-                }
-            }
-            return@Scaffold
+    if (loading && vocabSets.isEmpty()) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator()
         }
+        return
+    }
 
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(vertical = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp)
+    if (error != null) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
-            item{
-                HeroSessionCard(newWords=newWords, reviewsDue =reviewsDue , onStartSessionClick = onStartSessionClick)
+            Text("Lỗi: $error", color = MaterialTheme.colorScheme.error)
+            Button(onClick = { viewModel.loadDashBoardData() }) {
+                Text("Thử lại")
             }
-            item{
-                Text(
-                    text = "Your Recent Sets",
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                    modifier = Modifier.padding(horizontal = 16.dp)
-                )
-            }
-            item {
-                Column(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    val totalItems= vocabSets.size
-                    val isOdd=totalItems % 2 != 0
-                    val fullRowsCount = if (isOdd) totalItems - 1 else totalItems
-                    for (i in 0 until fullRowsCount step 2) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            VocabSetCard(
-                                set = vocabSets[i],
-                                modifier = Modifier.weight(1f)
-                            )
-                            VocabSetCard(
-                                set = vocabSets[i + 1],
-                                modifier = Modifier.weight(1f)
-                            )
-                        }
+        }
+        return
+    }
+
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(vertical = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(24.dp)
+    ) {
+        item {
+            HeroSessionCard(newWords = newWords, reviewsDue = reviewsDue, onStartSessionClick = onStartSessionClick)
+        }
+        item {
+            Text(
+                text = "Your Recent Sets",
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
+        }
+        item {
+            Column(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                val totalItems = vocabSets.size
+                val isOdd = totalItems % 2 != 0
+                val fullRowsCount = if (isOdd) totalItems - 1 else totalItems
+                for (i in 0 until fullRowsCount step 2) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        VocabSetCard(set = vocabSets[i], modifier = Modifier.weight(1f))
+                        VocabSetCard(set = vocabSets[i + 1], modifier = Modifier.weight(1f))
                     }
-                    if (isOdd) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            VocabSetCard(
-                                set = vocabSets.last(),
-                                modifier = Modifier.weight(1f)
-                            )
-                            CreateNewSetCard(
-                                onCreateNewSetCard = onCreateNewSetCard,
-                                modifier = Modifier.weight(1f)
-                            )
-                        }
-                    } else {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            CreateNewSetCard(
-                                onCreateNewSetCard = onCreateNewSetCard,
-                                modifier = Modifier.weight(1f)
-                            )
-                            Spacer(modifier = Modifier.weight(1f))
-                        }
+                }
+                if (isOdd) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        VocabSetCard(set = vocabSets.last(), modifier = Modifier.weight(1f))
+                        CreateNewSetCard(onCreateNewSetCard = onCreateNewSetCard, modifier = Modifier.weight(1f))
+                    }
+                } else {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        CreateNewSetCard(onCreateNewSetCard = onCreateNewSetCard, modifier = Modifier.weight(1f))
+                        Spacer(modifier = Modifier.weight(1f))
                     }
                 }
             }

@@ -26,17 +26,12 @@ class MinlishFirebaseMessagingService : FirebaseMessagingService() {
 
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
         Log.d(TAG, "Message received from: ${remoteMessage.from}")
-
         val title = remoteMessage.notification?.title ?: "MinLish"
         val body = remoteMessage.notification?.body ?: ""
 
         showLocalNotification(title, body)
     }
 
-    /**
-     * Khi Firebase cấp token mới hoặc refresh token cũ
-     * → Gửi lên server để cập nhật
-     */
     override fun onNewToken(token: String) {
         Log.d(TAG, "New token received: ${token.take(10)}...")
         CoroutineScope(Dispatchers.IO).launch {
@@ -66,8 +61,6 @@ class MinlishFirebaseMessagingService : FirebaseMessagingService() {
             getSystemService(NotificationManager::class.java)
                 .createNotificationChannel(channel)
         }
-
-        // PendingIntent mở app khi tap notification
         val intent = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             putExtra("from_notification", true)
@@ -76,9 +69,8 @@ class MinlishFirebaseMessagingService : FirebaseMessagingService() {
             this, 0, intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
-
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setSmallIcon(R.mipmap.ic_launcher) // Dùng icon launcher mặc định của app để chắc chắn tồn tại
+            .setSmallIcon(R.mipmap.ic_launcher)
             .setContentTitle(title)
             .setContentText(body)
             .setStyle(NotificationCompat.BigTextStyle().bigText(body))
@@ -86,7 +78,6 @@ class MinlishFirebaseMessagingService : FirebaseMessagingService() {
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)
             .build()
-
         try {
             NotificationManagerCompat.from(this)
                 .notify(System.currentTimeMillis().toInt(), notification)
