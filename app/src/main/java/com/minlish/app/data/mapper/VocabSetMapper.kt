@@ -2,7 +2,7 @@ package com.minlish.app.data.mapper
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Work
-import com.minlish.app.data.dto.VocabSetDto
+import com.minlish.app.data.dto.response.VocabSetDto
 import com.minlish.app.presentation.screens.learning.VocabSet
 import kotlin.random.Random
 

@@ -1,8 +1,6 @@
 package com.minlish.app.data.repository
 
-import com.minlish.app.data.dto.LearningDto
-import com.minlish.app.data.dto.ModeDto
-import com.minlish.app.data.dto.PracticeModeDto
+import com.minlish.app.data.dto.response.PracticeModeDto
 import com.minlish.app.di.NetworkModule
 
 class PracticeRepository(){

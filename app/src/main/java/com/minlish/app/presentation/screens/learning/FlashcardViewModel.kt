@@ -2,18 +2,16 @@ package com.minlish.app.presentation.screens.learning
 
 import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.minlish.app.data.dto.ReviewItemDto
+import com.minlish.app.data.dto.request.ReviewItemDto
 import com.minlish.app.data.mapper.FlashCardMapper
 import com.minlish.app.data.repository.FlashCardRepository
-import com.minlish.app.presentation.screens.learning.FlashcardData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlin.onSuccess
 
 
 data class FlashcardData(

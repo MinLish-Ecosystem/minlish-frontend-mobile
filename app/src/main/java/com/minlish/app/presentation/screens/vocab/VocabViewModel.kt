@@ -2,7 +2,8 @@ package com.minlish.app.presentation.screens.vocab
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.minlish.app.data.remote.VocabSetResponse
+import com.minlish.app.data.dto.request.AddWordRequest
+import com.minlish.app.data.dto.response.VocabSetResponse
 import com.minlish.app.data.repository.VocabRepository
 import com.minlish.app.data.repository.VocabResult
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -75,7 +76,7 @@ class VocabViewModel(
 
                     for (word in words) {
                         if (word.term.isNotBlank() && word.definition.isNotBlank()) {
-                            val req = com.minlish.app.data.remote.AddWordRequest(
+                            val req = AddWordRequest(
                                 word = word.term.trim(),
                                 meaning = word.definition.trim()
                             )

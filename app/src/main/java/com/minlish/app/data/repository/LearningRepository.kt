@@ -1,7 +1,6 @@
 package com.minlish.app.data.repository
 
-import com.minlish.app.data.dto.LearningDto
-import com.minlish.app.data.dto.response.ApiResponse
+import com.minlish.app.data.dto.response.LearningDto
 import com.minlish.app.di.NetworkModule
 
 class LearningRepository(){
