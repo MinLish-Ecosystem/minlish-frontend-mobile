@@ -66,4 +66,16 @@ interface VocabApi {
         @Path("setId") setId: String,
         @Path("wordId") wordId: String
     ): ApiResponse<Unit>
+
+    @POST("vocab/sets/{id}/clone")
+    suspend fun cloneSet(
+        @Path("id") setId: String
+    ): ApiResponse<VocabSetResponse>
+
+    @GET("vocab/public")
+    suspend fun getPublicSets(
+        @Query("category") category: String? = null,
+        @Query("search") search: String? = null,
+        @Query("limit") limit: Int = 20
+    ): ApiResponse<List<VocabSetResponse>>
 }
