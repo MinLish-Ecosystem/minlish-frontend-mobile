@@ -160,8 +160,7 @@ fun AppNavHost(
                     navController.navigate(NavDestinations.FlashCardTest.route)
                 },
                 onVocabSetClick = { vocabSet ->
-                    val encodedName = java.net.URLEncoder.encode(vocabSet.title, "UTF-8")
-                    navController.navigate("word_list/${vocabSet.id}/$encodedName")
+                    navController.navigate(NavDestinations.WordList.createRoute(vocabSet.id, vocabSet.title, false))
                 }
             )
         }
@@ -176,6 +175,7 @@ fun AppNavHost(
                 }
             )
         ){ backStackEntry ->
+            val setId = backStackEntry.arguments?.getString("setId")
             val flashCardViewModel: FlashcardViewModel = viewModel()
             LaunchedEffect(Unit) {
                 FCMHelper.registerFCMToken(context)
@@ -186,7 +186,8 @@ fun AppNavHost(
                     navController.popBackStack(NavDestinations.Learning.route, inclusive = false)
                     flashCardViewModel.resetState()
                 },
-                onMoreClick = {}
+                onMoreClick = {},
+                setId = setId
             )
         }
 
@@ -200,8 +201,8 @@ fun AppNavHost(
         composable(NavDestinations.Library.route) {
             val vocabViewModel: VocabViewModel = viewModel()
             LibraryScreen(
-                onSetClick = { setId, setName ->
-                    navController.navigate(NavDestinations.WordList.createRoute(setId, setName))
+                onSetClick = { setId, setName, isReadOnly ->
+                    navController.navigate(NavDestinations.WordList.createRoute(setId, setName, isReadOnly))
                 },
                 onCreateNewSet = {
                     navController.navigate(NavDestinations.CreateNewSet.route)
@@ -210,15 +211,31 @@ fun AppNavHost(
             )
         }
 
-        composable(NavDestinations.WordList.route) { backStackEntry ->
+        composable(
+            route = NavDestinations.WordList.route,
+            arguments = listOf(
+                androidx.navigation.navArgument("setId") {
+                    type = androidx.navigation.NavType.StringType
+                },
+                androidx.navigation.navArgument("setName") {
+                    type = androidx.navigation.NavType.StringType
+                },
+                androidx.navigation.navArgument("isReadOnly") {
+                    type = androidx.navigation.NavType.BoolType
+                    defaultValue = false
+                }
+            )
+        ) { backStackEntry ->
             val setId = backStackEntry.arguments?.getString("setId") ?: ""
             val setName = backStackEntry.arguments?.getString("setName")?.let {
                 java.net.URLDecoder.decode(it, "UTF-8")
             } ?: "Vocabulary Set"
+            val isReadOnly = backStackEntry.arguments?.getBoolean("isReadOnly") ?: false
 
             WordListScreen(
                 setId = setId,
                 setName = setName,
+                isReadOnly = isReadOnly,
                 onBack  = { navController.popBackStack() },
                 onStartSession = { id ->
                     navController.navigate(NavDestinations.FlashCardTest.createRoute(id))

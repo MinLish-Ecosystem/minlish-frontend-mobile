@@ -13,6 +13,7 @@ import kotlinx.coroutines.launch
 
 data class LibraryUiState(
     val sets: List<VocabSetResponse> = emptyList(),
+    val publicSets: List<VocabSetResponse> = emptyList(),
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
     val isCreating: Boolean = false,
@@ -28,6 +29,7 @@ class VocabViewModel(
 
     init {
         loadSets()
+        loadPublicSets()
     }
 
     fun loadSets(query: String? = null) {
@@ -38,6 +40,27 @@ class VocabViewModel(
                 is VocabResult.Success -> {
                     _uiState.value = _uiState.value.copy(
                         sets = result.data,
+                        isLoading = false
+                    )
+                }
+                is VocabResult.Error -> {
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        errorMessage = result.message
+                    )
+                }
+            }
+        }
+    }
+
+    fun loadPublicSets(query: String? = null) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
+
+            when (val result = repository.getPublicSets(query = query)) {
+                is VocabResult.Success -> {
+                    _uiState.value = _uiState.value.copy(
+                        publicSets = result.data,
                         isLoading = false
                     )
                 }

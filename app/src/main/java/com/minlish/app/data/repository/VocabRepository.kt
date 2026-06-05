@@ -38,6 +38,25 @@ class VocabRepository() {
         }
     }
 
+    suspend fun getPublicSets(
+        query: String? = null,
+        page: Int = 1
+    ): VocabResult<List<VocabSetResponse>> {
+        return try {
+            val response = vocabApi.getPublicSets(
+                q = query?.ifBlank { null },
+                page = page
+            )
+            if (response.success && response.data != null) {
+                VocabResult.Success(response.data.data)
+            } else {
+                VocabResult.Error(response.message)
+            }
+        } catch (e: Exception) {
+            VocabResult.Error(e.localizedMessage ?: "Lỗi không xác định")
+        }
+    }
+
     suspend fun getWords(
         setId: String,
         query: String? = null
