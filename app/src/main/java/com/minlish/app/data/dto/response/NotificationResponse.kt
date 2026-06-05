@@ -1,4 +1,4 @@
-package com.minlish.app.data.dto
+package com.minlish.app.data.dto.response
 
 data class NotificationItemDto(
     val _id: String,
@@ -8,19 +8,22 @@ data class NotificationItemDto(
     val message: String,
     val isRead: Boolean,
     val createdAt: String,
-    val data: Map<String, String> ?= null
+    val data: Map<String, String>? = null
 )
+
 data class PaginationDto(
     val page: Int,
     val limit: Int,
     val total: Int,
     val totalPages: Int
 )
+
 data class NotificationListDto(
     val data: List<NotificationItemDto>,
     val pagination: PaginationDto,
     val unreadCount: Int
 )
+
 data class UnreadCountDto(
     val unreadCount: Int
 )

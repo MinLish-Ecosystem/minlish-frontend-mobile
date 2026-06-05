@@ -113,7 +113,7 @@ class FlashcardViewModel(): ViewModel() {
     fun onAnswerSelected(answer: String) {
         val card = currentCard.value ?: return
         val rating = answer.lowercase()
-        val timeSpent = (System.currentTimeMillis() - cardStartTime).toInt()
+        val timeSpent = ((System.currentTimeMillis() - cardStartTime) / 1000).toInt()
         _pendingReviews.add(
             ReviewItemDto(
                 wordId = card.id,
