@@ -1,5 +1,5 @@
 package com.minlish.app.data.mapper
-import com.minlish.app.data.dto.UserDto
+import com.minlish.app.data.dto.response.UserDto
 import com.minlish.app.data.local.entity.UserEntity
 
 fun UserDto.toEntity(): UserEntity {

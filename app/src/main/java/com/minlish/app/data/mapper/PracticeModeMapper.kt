@@ -1,8 +1,6 @@
 package com.minlish.app.data.mapper
 
-import com.minlish.app.R
-import com.minlish.app.data.dto.ModeDto
-import com.minlish.app.presentation.screens.learning.FlashcardData
+import com.minlish.app.data.dto.response.ModeDto
 import com.minlish.app.presentation.screens.practice.ALL_PRACTICE_MODES
 import com.minlish.app.presentation.screens.practice.PracticeMode
 

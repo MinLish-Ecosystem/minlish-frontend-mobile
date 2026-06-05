@@ -24,6 +24,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.minlish.app.ui.theme.MinLishMobileTheme
+import com.minlish.app.data.dto.request.AddWordRequest
+import com.minlish.app.presentation.components.ImportCsvDialog
 
 private object CreateSetColors {
     val Background      = Color(0xFFF9FAFB)
@@ -39,7 +41,6 @@ private object CreateSetColors {
     val OnPrimaryContainer = Color(0xFF312E81)        
     val Error           = Color(0xFFEF4444)
     val ErrorContainer  = Color(0xFFFEE2E2)
-
     val GradientStart   = Color(0xFF667EEA)
     val GradientEnd     = Color(0xFF764BA2)
 }
@@ -64,7 +65,7 @@ fun CreateNewSetScreen(
     var isPublic        by remember { mutableStateOf(true) }
     var words           by remember { mutableStateOf(listOf<WordEntry>()) }
     var wordIdCounter   by remember { mutableIntStateOf(0) }
-
+    var showImportCsvDialog by remember { mutableStateOf(false) }
     val isNameError = setName.isNotEmpty() && setName.length < 2
     val canCreate   = setName.length >= 2
 
@@ -118,17 +119,40 @@ fun CreateNewSetScreen(
                         fontWeight = FontWeight.Bold,
                         color = CreateSetColors.OnSurface
                     )
-                    Surface(
-                        shape = RoundedCornerShape(6.dp),
-                        color = CreateSetColors.SurfaceVariant
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
-                            text = "${words.size} items",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = CreateSetColors.OnSurfaceVariant,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                        )
+                        TextButton(
+                            onClick = { showImportCsvDialog = true },
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Upload,
+                                contentDescription = null,
+                                tint = CreateSetColors.Primary,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "Import CSV",
+                                color = CreateSetColors.Primary,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+                        Surface(
+                            shape = RoundedCornerShape(6.dp),
+                            color = CreateSetColors.SurfaceVariant
+                        ) {
+                            Text(
+                                text = "${words.size} items",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = CreateSetColors.OnSurfaceVariant,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            )
+                        }
                     }
                 }
             }
@@ -186,6 +210,23 @@ fun CreateNewSetScreen(
             item { Spacer(modifier = Modifier.height(20.dp)) }
         }
     }
+
+    ImportCsvDialog(
+        isOpen = showImportCsvDialog,
+        onDismiss = { showImportCsvDialog = false },
+        setId = null,
+        onWordsParsed = { parsedList: List<AddWordRequest> ->
+            val newEntries = parsedList.map { req ->
+                WordEntry(
+                    id = ++wordIdCounter,
+                    term = req.word,
+                    definition = req.meaning
+                )
+            }
+            words = words + newEntries
+            showImportCsvDialog = false
+        }
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

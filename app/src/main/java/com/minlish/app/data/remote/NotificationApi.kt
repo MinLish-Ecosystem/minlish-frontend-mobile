@@ -1,7 +1,7 @@
 package com.minlish.app.data.remote
 import com.minlish.app.data.dto.response.ApiResponse
-import com.minlish.app.data.dto.NotificationListDto
-import com.minlish.app.data.dto.UnreadCountDto
+import com.minlish.app.data.dto.response.NotificationListDto
+import com.minlish.app.data.dto.response.UnreadCountDto
 import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.PUT

@@ -19,9 +19,9 @@ sealed class NavDestinations(val route: String) {
     data object Practice  : NavDestinations("practice")
 
     // ── Sub-screens ──────────────────────────────────────────────────────────
-    data object WordList : NavDestinations("word_list/{setId}/{setName}") {
-        fun createRoute(setId: String, setName: String) =
-            "word_list/$setId/${java.net.URLEncoder.encode(setName, "UTF-8")}"
+    data object WordList : NavDestinations("word_list/{setId}/{setName}?isReadOnly={isReadOnly}") {
+        fun createRoute(setId: String, setName: String, isReadOnly: Boolean = false) =
+            "word_list/$setId/${java.net.URLEncoder.encode(setName, "UTF-8")}?isReadOnly=$isReadOnly"
     }
 
     data object CreateNewSet : NavDestinations("create_new_set")

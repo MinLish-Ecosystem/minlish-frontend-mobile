@@ -1,4 +1,4 @@
-package com.minlish.app.data.dto
+package com.minlish.app.data.dto.response
 
 data class LearningDto(
     val userId: String,

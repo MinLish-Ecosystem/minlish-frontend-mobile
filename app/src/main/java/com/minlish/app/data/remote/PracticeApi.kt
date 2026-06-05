@@ -1,9 +1,8 @@
 package com.minlish.app.data.remote
 
-import com.minlish.app.data.dto.FlashCardTestDto
-import com.minlish.app.data.dto.PracticeModeDto
+import com.minlish.app.data.dto.response.ApiResponse
+import com.minlish.app.data.dto.response.PracticeModeDto
 import retrofit2.http.GET
-import retrofit2.http.Path
 
 interface PracticeApi{
     @GET("practice//practice-modes")

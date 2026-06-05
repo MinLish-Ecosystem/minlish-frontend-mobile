@@ -1,10 +1,9 @@
 package com.minlish.app.data.repository
 
-import com.minlish.app.data.dto.BatchSubmitReviewDto
-import com.minlish.app.data.dto.FlashCardTestDto
-import com.minlish.app.data.dto.LearningDto
-import com.minlish.app.data.dto.ReviewItemDto
-import com.minlish.app.data.remote.LearningQueueResponse
+import com.minlish.app.data.dto.request.BatchSubmitReviewDto
+import com.minlish.app.data.dto.response.FlashCardTestDto
+import com.minlish.app.data.dto.request.ReviewItemDto
+import com.minlish.app.data.dto.response.LearningQueueResponse
 import com.minlish.app.di.NetworkModule
 
 class FlashCardRepository(){

@@ -1,96 +1,14 @@
 package com.minlish.app.data.remote
 
+import com.minlish.app.data.dto.request.AddWordRequest
+import com.minlish.app.data.dto.request.CreateSetRequest
+import com.minlish.app.data.dto.response.ApiResponse
+import com.minlish.app.data.dto.response.PaginatedData
+import com.minlish.app.data.dto.response.VocabSetResponse
+import com.minlish.app.data.dto.response.WordResponse
 import retrofit2.http.*
 
-data class ApiResponse<T>(
-    val success: Boolean,
-    val message: String,
-    val data: T?
-)
 
-data class VocabSetProgress(
-    val masteredCount: Int,
-    val masteredPct: Int,
-    val learningCount: Int,
-    val newCount: Int,
-    val dueToday: Int,
-    val lastStudied: String?
-)
-
-data class VocabSetResponse(
-    val id: String,
-    val name: String,
-    val description: String?,
-    val category: String,
-    val level: String,
-    val colorTheme: String,
-    val tags: List<String>,
-    val isPublic: Boolean,
-    val totalWords: Int,
-    val learnerCount: Int,
-    val clonedFrom: String?,
-    val createdAt: String,
-    val updatedAt: String,
-    val progress: VocabSetProgress? = null
-)
-
-data class WordResponse(
-    val id: String,
-    val setId: String,
-    val word: String,
-    val pronunciation: String?,
-    val partOfSpeech: String?,
-    val meaning: String,
-    val descriptionEN: String?,
-    val examples: List<String>,
-    val synonyms: List<String>,
-    val antonyms: List<String>,
-    val collocations: List<String>,
-    val relatedWords: List<String> = emptyList(),
-    val note: String?,
-    val imageUrl: String?,
-    val audioUrl: String?,
-    val status: String? = null,
-    val masteryPct: Int? = null
-)
-
-data class PaginatedData<T>(
-    val data: List<T>,
-    val pagination: Pagination
-)
-
-data class Pagination(
-    val page: Int,
-    val limit: Int,
-    val total: Int,
-    val totalPages: Int
-)
-
-data class CreateSetRequest(
-    val name: String,
-    val description: String? = null,
-    val category: String? = null,
-    val level: String? = null,
-    val colorTheme: String? = null,
-    val tags: List<String>? = null,
-    val isPublic: Boolean = false
-)
-
-data class AddWordRequest(
-    val word: String,
-    val meaning: String,
-    val pronunciation: String? = null,
-    val partOfSpeech: String? = null,
-    val descriptionEN: String? = null,
-    val examples: List<String>? = null,
-    val synonyms: List<String>? = null,
-    val antonyms: List<String>? = null,
-    val collocations: List<String>? = null,
-    val relatedWords: List<String>? = null,
-    val imageUrl: String? = null,
-    val audioUrl: String? = null,
-    val note: String? = null
-)
 
 interface VocabApi {
 
@@ -103,6 +21,16 @@ interface VocabApi {
         @Query("page") page: Int = 1,
         @Query("limit") limit: Int = 20,
         @Query("includeProgress") includeProgress: Boolean? = null
+    ): ApiResponse<PaginatedData<VocabSetResponse>>
+
+    @GET("vocab/sets/public")
+    suspend fun getPublicSets(
+        @Query("q") q: String? = null,
+        @Query("category") category: String? = null,
+        @Query("level") level: String? = null,
+        @Query("sortBy") sortBy: String? = null,
+        @Query("page") page: Int = 1,
+        @Query("limit") limit: Int = 20
     ): ApiResponse<PaginatedData<VocabSetResponse>>
 
     @POST("vocab/sets")
@@ -138,4 +66,16 @@ interface VocabApi {
         @Path("setId") setId: String,
         @Path("wordId") wordId: String
     ): ApiResponse<Unit>
+
+    @POST("vocab/sets/{id}/clone")
+    suspend fun cloneSet(
+        @Path("id") setId: String
+    ): ApiResponse<VocabSetResponse>
+
+    @GET("vocab/public")
+    suspend fun getPublicSets(
+        @Query("category") category: String? = null,
+        @Query("search") search: String? = null,
+        @Query("limit") limit: Int = 20
+    ): ApiResponse<List<VocabSetResponse>>
 }

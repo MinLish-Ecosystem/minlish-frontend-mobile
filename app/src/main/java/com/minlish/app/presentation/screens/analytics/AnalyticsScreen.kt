@@ -33,24 +33,28 @@ fun AnalyticsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
+    if (uiState.isLoading) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MinlishSurface),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator(color = MinlishPrimary)
+        }
+        return
+    }
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .background(MinlishSurface),
-        contentPadding = PaddingValues(
-            start  = 16.dp,
-            end    = 16.dp,
-            top    = 16.dp,
-            bottom = 24.dp
-        ),
+        contentPadding = PaddingValues(start = 16.dp,end = 16.dp,top = 16.dp,bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         if (uiState.errorMessage != null) {
             item {
-                ErrorAlertCard(
-                    message = uiState.errorMessage!!,
-                    onRetry = { viewModel.refresh() }
-                )
+                ErrorAlertCard(message = uiState.errorMessage!!, onRetry = { viewModel.refresh() })
             }
         }
         item { AnalyticsHeader() }
@@ -66,12 +70,12 @@ fun AnalyticsScreen(
 private fun AnalyticsHeader() {
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(
-            text  = "Analytics",
+            text = "Analytics",
             style = MaterialTheme.typography.headlineLarge,
             color = MinlishOnSurface
         )
         Text(
-            text  = "Track your language learning journey.",
+            text = "Track your language learning journey.",
             style = MaterialTheme.typography.bodySmall,
             color = MinlishOnSurfaceVariant
         )
@@ -81,26 +85,26 @@ private fun AnalyticsHeader() {
 @Composable
 private fun StatsBentoGrid(uiState: AnalyticsUiState) {
     Row(
-        modifier              = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         StatCard(
-            modifier    = Modifier.weight(1f),
-            icon        = Icons.Filled.LocalFireDepartment,
-            iconTint    = MinlishWarning,
+            modifier = Modifier.weight(1f),
+            icon = Icons.Filled.LocalFireDepartment,
+            iconTint = MinlishWarning,
             iconBgColor = MinlishWarning.copy(alpha = 0.15f),
-            label       = "Current Streak",
-            value       = "${uiState.currentStreak}",
-            unit        = "Days"
+            label = "Current Streak",
+            value = "${uiState.currentStreak}",
+            unit = "Days"
         )
         StatCard(
-            modifier    = Modifier.weight(1f),
-            icon        = Icons.Filled.Timer,
-            iconTint    = MinlishInfo,
+            modifier = Modifier.weight(1f),
+            icon = Icons.Filled.Timer,
+            iconTint = MinlishInfo,
             iconBgColor = MinlishInfo.copy(alpha = 0.15f),
-            label       = "Time Spent",
-            value       = "${uiState.timeSpentHours}",
-            unit        = "Hrs"
+            label = "Time Spent",
+            value = "${uiState.timeSpentHours}",
+            unit = "Hrs"
         )
     }
 }
@@ -116,47 +120,47 @@ private fun StatCard(
     unit: String
 ) {
     Card(
-        modifier  = modifier,
-        shape     = RoundedCornerShape(16.dp),
-        colors    = CardDefaults.cardColors(containerColor = MinlishSurfaceLowest),
+        modifier = modifier,
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MinlishSurfaceLowest),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(
-            modifier            = Modifier.fillMaxWidth().padding(16.dp),
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Box(
-                modifier         = Modifier
+                modifier = Modifier
                     .size(36.dp)
                     .clip(CircleShape)
                     .background(iconBgColor),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector        = icon,
+                    imageVector = icon,
                     contentDescription = null,
-                    tint               = iconTint,
-                    modifier           = Modifier.size(20.dp)
+                    tint = iconTint,
+                    modifier = Modifier.size(20.dp)
                 )
             }
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(
-                    text  = label,
+                    text = label,
                     style = MaterialTheme.typography.labelMedium,
                     color = MinlishOnSurfaceVariant
                 )
                 Row(verticalAlignment = Alignment.Bottom) {
                     Text(
-                        text       = value,
-                        style      = MaterialTheme.typography.headlineMedium,
-                        color      = MinlishOnSurface,
+                        text = value,
+                        style = MaterialTheme.typography.headlineMedium,
+                        color = MinlishOnSurface,
                         fontWeight = FontWeight.Bold
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text     = unit,
-                        style    = MaterialTheme.typography.bodySmall,
-                        color    = MinlishOnSurfaceVariant,
+                        text = unit,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MinlishOnSurfaceVariant,
                         modifier = Modifier.padding(bottom = 3.dp)
                     )
                 }
@@ -168,32 +172,32 @@ private fun StatCard(
 @Composable
 private fun WordsMasteredCard(uiState: AnalyticsUiState) {
     Card(
-        modifier  = Modifier.fillMaxWidth(),
-        shape     = RoundedCornerShape(16.dp),
-        colors    = CardDefaults.cardColors(containerColor = MinlishSurfaceLowest),
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MinlishSurfaceLowest),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Row(
-            modifier              = Modifier.fillMaxWidth().padding(16.dp),
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment     = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(14.dp),
-                verticalAlignment     = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Box(
-                    modifier         = Modifier
+                    modifier = Modifier
                         .size(48.dp)
                         .clip(CircleShape)
                         .background(MinlishSuccess.copy(alpha = 0.15f)),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector        = Icons.Filled.Star,
+                        imageVector = Icons.Filled.Star,
                         contentDescription = null,
-                        tint               = MinlishSuccess,
-                        modifier           = Modifier.size(24.dp)
+                        tint = MinlishSuccess,
+                        modifier = Modifier.size(24.dp)
                     )
                 }
                 Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
@@ -203,9 +207,9 @@ private fun WordsMasteredCard(uiState: AnalyticsUiState) {
                         color = MinlishOnSurfaceVariant
                     )
                     Text(
-                        text       = "${uiState.wordsMastered}",
-                        style      = MaterialTheme.typography.headlineSmall,
-                        color      = MinlishOnSurface,
+                        text = "${uiState.wordsMastered}",
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = MinlishOnSurface,
                         fontWeight = FontWeight.Bold
                     )
                 }
@@ -215,9 +219,9 @@ private fun WordsMasteredCard(uiState: AnalyticsUiState) {
                 shape = RoundedCornerShape(50)
             ) {
                 Text(
-                    text     = "+${uiState.wordsThisWeek} this week",
-                    style    = MaterialTheme.typography.labelSmall,
-                    color    = MinlishSuccess,
+                    text = "+${uiState.wordsThisWeek} this week",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MinlishSuccess,
                     modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
                 )
             }
@@ -230,35 +234,35 @@ private fun WeeklyProgressChart(uiState: AnalyticsUiState) {
     val maxMinutes = uiState.weeklyMinutes.maxOf { it.second }.coerceAtLeast(1)
 
     Card(
-        modifier  = Modifier.fillMaxWidth(),
-        shape     = RoundedCornerShape(16.dp),
-        colors    = CardDefaults.cardColors(containerColor = MinlishSurfaceLowest),
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MinlishSurfaceLowest),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(
-            modifier            = Modifier.fillMaxWidth().padding(16.dp),
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Row(
-                modifier              = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment     = Alignment.Bottom
+                verticalAlignment = Alignment.Bottom
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text(
-                        text  = "Weekly Progress",
+                        text = "Weekly Progress",
                         style = MaterialTheme.typography.headlineSmall,
                         color = MinlishOnSurface
                     )
                     Text(
-                        text  = "Minutes per day",
+                        text = "Minutes per day",
                         style = MaterialTheme.typography.bodySmall,
                         color = MinlishOnSurfaceVariant
                     )
                 }
                 TextButton(onClick = {}) {
                     Text(
-                        text  = "Details",
+                        text = "Details",
                         style = MaterialTheme.typography.labelMedium,
                         color = MinlishPrimary
                     )
@@ -266,16 +270,16 @@ private fun WeeklyProgressChart(uiState: AnalyticsUiState) {
             }
 
             Row(
-                modifier              = Modifier.fillMaxWidth().height(140.dp),
+                modifier = Modifier.fillMaxWidth().height(140.dp),
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 uiState.weeklyMinutes.forEach { (dayLabel, minutes) ->
                     BarChartItem(
-                        modifier       = Modifier.weight(1f).fillMaxHeight(),
-                        dayLabel       = dayLabel,
-                        minutes        = minutes,
+                        modifier = Modifier.weight(1f).fillMaxHeight(),
+                        dayLabel = dayLabel,
+                        minutes = minutes,
                         heightFraction = minutes.toFloat() / maxMinutes,
-                        isHighlighted  = minutes == maxMinutes
+                        isHighlighted = minutes == maxMinutes
                     )
                 }
             }
@@ -293,9 +297,9 @@ private fun BarChartItem(
 ) {
     var triggered by remember { mutableStateOf(false) }
     val animatedFraction by animateFloatAsState(
-        targetValue   = if (triggered) heightFraction else 0f,
+        targetValue = if (triggered) heightFraction else 0f,
         animationSpec = tween(durationMillis = 700),
-        label         = "bar_$dayLabel"
+        label = "bar_$dayLabel"
     )
     LaunchedEffect(Unit) { triggered = true }
 
@@ -303,12 +307,12 @@ private fun BarChartItem(
     val idleColor = Brush.verticalGradient(listOf(MinlishSurfaceHighest, MinlishSurfaceHighest))
 
     Column(
-        modifier            = modifier,
+        modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Bottom
     ) {
         Box(
-            modifier         = Modifier.weight(1f).fillMaxWidth(),
+            modifier = Modifier.weight(1f).fillMaxWidth(),
             contentAlignment = Alignment.BottomCenter
         ) {
             Box(
@@ -321,9 +325,9 @@ private fun BarChartItem(
         }
         Spacer(modifier = Modifier.height(6.dp))
         Text(
-            text       = dayLabel,
-            style      = MaterialTheme.typography.labelSmall,
-            color      = if (isHighlighted) MinlishOnSurface else MinlishOnSurfaceVariant,
+            text = dayLabel,
+            style = MaterialTheme.typography.labelSmall,
+            color = if (isHighlighted) MinlishOnSurface else MinlishOnSurfaceVariant,
             fontWeight = if (isHighlighted) FontWeight.Bold else FontWeight.Normal
         )
     }
@@ -332,23 +336,23 @@ private fun BarChartItem(
 @Composable
 private fun MasteryDistributionCard(uiState: AnalyticsUiState) {
     val levels = listOf(
-        uiState.masteryBeginner     to MinlishAccentCyan,
+        uiState.masteryBeginner to MinlishAccentCyan,
         uiState.masteryIntermediate to MinlishPrimary,
-        uiState.masteryAdvanced     to MinlishSecondary
+        uiState.masteryAdvanced to MinlishSecondary
     )
 
     Card(
-        modifier  = Modifier.fillMaxWidth(),
-        shape     = RoundedCornerShape(16.dp),
-        colors    = CardDefaults.cardColors(containerColor = MinlishSurfaceLowest),
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MinlishSurfaceLowest),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(
-            modifier            = Modifier.fillMaxWidth().padding(16.dp),
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                text  = "Mastery Distribution",
+                text = "Mastery Distribution",
                 style = MaterialTheme.typography.headlineSmall,
                 color = MinlishOnSurface
             )
@@ -363,19 +367,19 @@ private fun MasteryDistributionCard(uiState: AnalyticsUiState) {
 private fun MasteryProgressRow(level: MasteryLevel, barColor: Color) {
     var triggered by remember { mutableStateOf(false) }
     val animatedProgress by animateFloatAsState(
-        targetValue   = if (triggered) level.progress else 0f,
+        targetValue = if (triggered) level.progress else 0f,
         animationSpec = tween(durationMillis = 900),
-        label         = "progress_${level.label}"
+        label = "progress_${level.label}"
     )
     LaunchedEffect(Unit) { triggered = true }
 
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Row(
-            modifier              = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text(text = level.label,               style = MaterialTheme.typography.labelMedium, color = MinlishOnSurface)
-            Text(text = "${level.wordCount} words", style = MaterialTheme.typography.labelSmall,  color = MinlishOnSurfaceVariant)
+            Text(text = level.label, style = MaterialTheme.typography.labelMedium, color = MinlishOnSurface)
+            Text(text = "${level.wordCount} words",style = MaterialTheme.typography.labelSmall,  color = MinlishOnSurfaceVariant)
         }
         Box(
             modifier = Modifier
@@ -398,22 +402,22 @@ private fun MasteryProgressRow(level: MasteryLevel, barColor: Color) {
 @Composable
 private fun ActivityHeatmapCard(uiState: AnalyticsUiState) {
     Card(
-        modifier  = Modifier.fillMaxWidth(),
-        shape     = RoundedCornerShape(16.dp),
-        colors    = CardDefaults.cardColors(containerColor = MinlishSurfaceLowest),
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MinlishSurfaceLowest),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(
-            modifier            = Modifier.fillMaxWidth().padding(16.dp),
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Text(
-                text  = "Activity Map",
+                text = "Activity Map",
                 style = MaterialTheme.typography.headlineSmall,
                 color = MinlishOnSurface
             )
             Text(
-                text  = "Your learning frequency over the last 35 days.",
+                text = "Your learning frequency over the last 35 days.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MinlishOnSurfaceVariant
             )
@@ -423,7 +427,7 @@ private fun ActivityHeatmapCard(uiState: AnalyticsUiState) {
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 weeks.forEach { week ->
                     Row(
-                        modifier              = Modifier.fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         week.forEach { intensity ->
@@ -441,10 +445,9 @@ private fun ActivityHeatmapCard(uiState: AnalyticsUiState) {
                     }
                 }
             }
-
             Spacer(modifier = Modifier.height(4.dp))
             Row(
-                verticalAlignment     = Alignment.CenterVertically,
+                verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 Text(text = "Less", style = MaterialTheme.typography.labelSmall, color = MinlishOnSurfaceVariant)

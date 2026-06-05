@@ -1,13 +1,13 @@
 package com.minlish.app.data.repository
 
 import android.util.Log
-import com.minlish.app.data.dto.DeleteFCMTokenRequest
-import com.minlish.app.data.dto.LearningProfileDto
-import com.minlish.app.data.dto.RegisterFCMTokenRequest
-import com.minlish.app.data.dto.UpdateLearningProfileRequest
-import com.minlish.app.data.dto.UpdateProfileRequest
-import com.minlish.app.data.dto.UserDto
-import com.minlish.app.data.dto.UserPreferencesDto
+import com.minlish.app.data.dto.request.DeleteFCMTokenRequest
+import com.minlish.app.data.dto.request.RegisterFCMTokenRequest
+import com.minlish.app.data.dto.request.UpdateLearningProfileRequest
+import com.minlish.app.data.dto.request.UpdateProfileRequest
+import com.minlish.app.data.dto.response.LearningProfileDto
+import com.minlish.app.data.dto.response.UserDto
+import com.minlish.app.data.dto.response.UserPreferencesDto
 import com.minlish.app.data.local.TokenManager
 import com.minlish.app.data.local.entity.UserEntity
 import com.minlish.app.data.mapper.toEntity

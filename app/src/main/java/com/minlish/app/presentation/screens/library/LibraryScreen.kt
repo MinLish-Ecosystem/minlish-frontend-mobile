@@ -46,7 +46,7 @@ data class MockSetData(
 @Composable
 fun LibraryScreen(
     modifier: Modifier = Modifier,
-    onSetClick: (String, String) -> Unit = { _, _ -> },
+    onSetClick: (String, String, Boolean) -> Unit = { _, _, _ -> },
     onCreateNewSet: () -> Unit = {},
     viewModel: VocabViewModel = viewModel()
 ) {
@@ -57,6 +57,8 @@ fun LibraryScreen(
     LaunchedEffect(selectedSubTab, searchQuery) {
         if (selectedSubTab == "My Sets") {
             viewModel.loadSets(searchQuery)
+        } else {
+            viewModel.loadPublicSets(searchQuery)
         }
     }
     
@@ -97,6 +99,44 @@ fun LibraryScreen(
                 statusColor = statusColor,
                 statusIcon = statusIcon,
                 statusText = statusText,
+                progressBrush = progressBrush,
+                category = setResponse.category,
+                isPublic = setResponse.isPublic
+            )
+        }
+    }
+
+    val exploreSets = remember(uiState.publicSets) {
+        uiState.publicSets.map { setResponse ->
+            val colorTheme = setResponse.colorTheme
+            val accentColor = when (colorTheme) {
+                "blue" -> Color(0xFF3B82F6)
+                "emerald" -> Color(0xFF10B981)
+                "amber" -> Color(0xFFF59E0B)
+                "purple" -> Color(0xFF8B5CF6)
+                "rose" -> Color(0xFFF43F5E)
+                "cyan" -> Color(0xFF06B6D4)
+                else -> Color(0xFF8B5CF6)
+            }
+            val progressBrush = when (colorTheme) {
+                "blue" -> Brush.horizontalGradient(listOf(Color(0xFF3B82F6), Color(0xFF60A5FA)))
+                "emerald" -> Brush.horizontalGradient(listOf(Color(0xFF10B981), Color(0xFF34D399)))
+                "amber" -> Brush.horizontalGradient(listOf(Color(0xFFF59E0B), Color(0xFFFBBF24)))
+                "purple" -> Brush.horizontalGradient(listOf(Color(0xFF8B5CF6), Color(0xFFA78BFA)))
+                "rose" -> Brush.horizontalGradient(listOf(Color(0xFFF43F5E), Color(0xFFFB7185)))
+                "cyan" -> Brush.horizontalGradient(listOf(Color(0xFF06B6D4), Color(0xFF22D3EE)))
+                else -> Brush.horizontalGradient(listOf(Color(0xFF8B5CF6), Color(0xFFA78BFA)))
+            }
+            MockSetData(
+                id = setResponse.id,
+                title = setResponse.name,
+                description = setResponse.description ?: "",
+                wordCount = setResponse.totalWords,
+                masteryPercent = 0,
+                accentColor = accentColor,
+                statusColor = Color(0xFF464554),
+                statusIcon = Icons.Default.People,
+                statusText = "${setResponse.learnerCount} learners",
                 progressBrush = progressBrush,
                 category = setResponse.category,
                 isPublic = setResponse.isPublic
@@ -196,7 +236,7 @@ fun LibraryScreen(
                     modifier = Modifier.fillMaxWidth(),
                     placeholder = {
                         Text(
-                            text = "Search vocabulary sets...",
+                            text = "Search public vocabulary sets...",
                             color = onSurfaceVariantColor,
                             fontSize = 15.sp
                         )
@@ -221,163 +261,58 @@ fun LibraryScreen(
                 )
             }
 
-            item {
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Text(
-                        text = "Featured Set",
-                        color = onSurfaceColor,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp
-                    )
-
+            if (exploreSets.isEmpty()) {
+                item {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(192.dp)
-                            .shadow(8.dp, RoundedCornerShape(16.dp))
-                            .clip(RoundedCornerShape(16.dp))
-                            .clickable { onSetClick("mock_featured_id", "Business English") }
+                            .padding(vertical = 48.dp),
+                        contentAlignment = Alignment.Center
                     ) {
-                        AsyncImage(
-                            model = "https://lh3.googleusercontent.com/aida-public/AB6AXuDGpBVgr4REf_p5hjaYzH75aDJ8xz8JzwRTn-niaXN3GUkA_uFtO5ya57A5pskbx7jVWHHCWjDxaiGLhZ2QFk31GuB_M-A6JE-2aMu-DAmOtNMvfJIguazIz7a3D8CW6sQ1H0HoP7L1AVRmGee7t6E3Ncg4s8h_FjVAxYrO31nw4twNypuwvkGtjUMJ3BAdLqgwjMTeho0KqZ5Ux3RsF3MS34dhqNnXZP2E-Fbyre8cJSsrMwU9wkpy_xUWcuI979TCd7Gq3uyA8kw",
-                            contentDescription = "Featured Set Background",
-                            modifier = Modifier.fillMaxSize(),
-                            contentScale = ContentScale.Crop
-                        )
-
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(
-                                    Brush.verticalGradient(
-                                        colors = listOf(
-                                            Color.Transparent,
-                                            Color(0xFF111827).copy(alpha = 0.85f)
-                                        ),
-                                        startY = 100f
-                                    )
-                                )
-                        )
-
-                        Column(
-                            modifier = Modifier
-                                .align(Alignment.BottomStart)
-                                .padding(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .background(
-                                        primaryColor.copy(alpha = 0.9f),
-                                        shape = RoundedCornerShape(4.dp)
-                                    )
-                                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                        if (uiState.isLoading) {
+                            CircularProgressIndicator(color = primaryColor)
+                        } else {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
+                                Icon(
+                                    imageVector = Icons.Default.FolderOpen,
+                                    contentDescription = "Empty Folder",
+                                    tint = onSurfaceVariantColor,
+                                    modifier = Modifier.size(48.dp)
+                                )
                                 Text(
-                                    text = "Business English",
-                                    color = Color.White,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 11.sp
+                                    text = "No public sets found",
+                                    color = onSurfaceVariantColor,
+                                    fontSize = 15.sp
                                 )
                             }
-
-                            Text(
-                                text = "Tech Startup Meetings",
-                                color = Color.White,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 20.sp
-                            )
-
-                            Text(
-                                text = "Master essential vocabulary for modern tech environments.",
-                                color = Color(0xFFE4E1ED),
-                                fontSize = 13.sp
-                            )
                         }
                     }
                 }
-            }
-
-            item {
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    Text(
-                        text = "Trending Topics",
-                        color = onSurfaceColor,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp
-                    )
-
+            } else {
+                item {
                     Column(
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        TrendingTopicItem(
-                            title = "TOEIC Essential 500",
-                            subtitle = "500 terms • Advanced",
-                            icon = Icons.Default.Work,
-                            accentColor = accentBlueColor,
-                            iconBgColor = primary50Color,
-                            onClick = { onSetClick("mock_toeic_id", "TOEIC Essential 500") }
+                        Text(
+                            text = "Public Vocabulary Sets",
+                            color = onSurfaceColor,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp
                         )
 
-                        TrendingTopicItem(
-                            title = "Travel & Tourism",
-                            subtitle = "120 terms • Intermediate",
-                            icon = Icons.Default.FlightTakeoff,
-                            accentColor = accentEmeraldColor,
-                            iconBgColor = Color(0xFFF5F2FE),
-                            onClick = { onSetClick("mock_travel_id", "Travel & Tourism") }
-                        )
-
-                        TrendingTopicItem(
-                            title = "Dining Out",
-                            subtitle = "85 terms • Beginner",
-                            icon = Icons.Default.RestaurantMenu,
-                            accentColor = accentAmberColor,
-                            iconBgColor = Color(0xFFF5F2FE),
-                            onClick = { onSetClick("mock_dining_id", "Dining Out") }
-                        )
-                    }
-                }
-            }
-
-            item {
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Text(
-                        text = "Categories",
-                        color = onSurfaceColor,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp
-                    )
-
-                    FlowRow(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        listOf("Everyday Life", "Academic", "Medical", "Legal").forEach { category ->
-                            Box(
-                                modifier = Modifier
-                                    .border(
-                                        width = 2.dp,
-                                        color = Color(0xFFF0F4FF),
-                                        shape = RoundedCornerShape(20.dp)
-                                    )
-                                    .background(surfaceContainerLowestColor, shape = RoundedCornerShape(20.dp))
-                                    .clickable {  }
-                                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = category,
-                                    color = onSurfaceColor,
-                                    fontWeight = FontWeight.SemiBold,
-                                    fontSize = 12.sp
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            exploreSets.forEach { setItem ->
+                                VocabularySetCard(
+                                    data = setItem,
+                                    onClick = { onSetClick(setItem.id, setItem.title, true) },
+                                    onRename = { _, _ -> },
+                                    onDelete = {},
+                                    isEditable = false
                                 )
                             }
                         }
@@ -433,7 +368,7 @@ fun LibraryScreen(
                             mySets.forEach { setItem ->
                                 VocabularySetCard(
                                     data = setItem,
-                                    onClick = { onSetClick(setItem.id, setItem.title) },
+                                    onClick = { onSetClick(setItem.id, setItem.title, false) },
                                     onRename = { name, desc ->
                                         viewModel.updateSet(setItem.id, name, desc, setItem.category, setItem.isPublic)
                                     },
@@ -480,7 +415,8 @@ fun VocabularySetCard(
     data: MockSetData,
     onClick: () -> Unit,
     onRename: (newName: String, newDesc: String) -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    isEditable: Boolean = true
 ) {
     var showMenu by remember { mutableStateOf(false) }
     var showRenameDialog by remember { mutableStateOf(false) }
@@ -597,35 +533,37 @@ fun VocabularySetCard(
                             modifier = Modifier.padding(top = 4.dp)
                         )
                     }
-                    Box {
-                        IconButton(
-                            onClick = { showMenu = true },
-                            modifier = Modifier.size(24.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.MoreVert,
-                                contentDescription = "More options",
-                                tint = Color(0xFFC7C4D7)
-                            )
-                        }
-                        DropdownMenu(
-                            expanded = showMenu,
-                            onDismissRequest = { showMenu = false }
-                        ) {
-                            DropdownMenuItem(
-                                text = { Text("Rename") },
-                                onClick = {
-                                    showMenu = false
-                                    showRenameDialog = true
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text("Delete") },
-                                onClick = {
-                                    showMenu = false
-                                    showDeleteConfirmDialog = true
-                                }
-                            )
+                    if (isEditable) {
+                        Box {
+                            IconButton(
+                                onClick = { showMenu = true },
+                                modifier = Modifier.size(24.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.MoreVert,
+                                    contentDescription = "More options",
+                                    tint = Color(0xFFC7C4D7)
+                                )
+                            }
+                            DropdownMenu(
+                                expanded = showMenu,
+                                	onDismissRequest = { showMenu = false }
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text("Rename") },
+                                    onClick = {
+                                        showMenu = false
+                                        showRenameDialog = true
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("Delete") },
+                                    onClick = {
+                                        showMenu = false
+                                        showDeleteConfirmDialog = true
+                                    }
+                                )
+                            }
                         }
                     }
                 }

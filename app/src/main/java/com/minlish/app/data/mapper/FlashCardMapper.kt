@@ -1,9 +1,11 @@
 package com.minlish.app.data.mapper
 
 import com.minlish.app.R
-import com.minlish.app.data.dto.FlashcardContentDto
-import com.minlish.app.data.remote.LearningCardDto
+import com.minlish.app.data.dto.response.FlashcardContentDto
+import com.minlish.app.data.dto.response.LearningCardDto
 import com.minlish.app.presentation.screens.learning.FlashcardData
+
+import com.minlish.app.data.dto.response.WordResponse
 
 object FlashCardMapper{
     fun mapToUiList(dtoList: List<FlashcardContentDto>): List<FlashcardData>{
@@ -35,6 +37,23 @@ object FlashCardMapper{
                 definition = dto.meaning,
                 example = dto.examples.firstOrNull() ?: "",
                 imageUrl = R.drawable.images,
+            )
+        }
+    }
+
+    fun mapWordResponseListToUiList(wordList: List<WordResponse>): List<FlashcardData>{
+        return wordList.map{dto->
+            FlashcardData(
+                id= dto.id,
+                setId=dto.setId,
+                category = "General",
+                word = dto.word,
+                phonetic = dto.pronunciation ?: "",
+                partOfSpeech = dto.partOfSpeech ?: "",
+                definition = dto.meaning,
+                example = dto.examples?.firstOrNull() ?: "",
+                imageUrl = R.drawable.images,
+                audioUrl = dto.audioUrl ?: "",
             )
         }
     }

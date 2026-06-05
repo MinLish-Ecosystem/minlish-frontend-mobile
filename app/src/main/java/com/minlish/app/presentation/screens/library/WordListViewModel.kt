@@ -3,8 +3,9 @@ package com.minlish.app.presentation.screens.library
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.minlish.app.data.remote.DictionaryResponse
-import com.minlish.app.data.remote.WordResponse
+import com.minlish.app.data.dto.request.AddWordRequest
+import com.minlish.app.data.dto.response.DictionaryResponse
+import com.minlish.app.data.dto.response.WordResponse
 import com.minlish.app.data.repository.VocabRepository
 import com.minlish.app.data.repository.VocabResult
 import kotlinx.coroutines.Dispatchers
@@ -71,7 +72,7 @@ class WordListViewModel(
             errorMessage.value = null
             addSuccess.value = false
 
-            val request = com.minlish.app.data.remote.AddWordRequest(
+            val request = AddWordRequest(
                 word = word.trim(),
                 meaning = meaning.trim(),
                 pronunciation = pronunciation.trim().ifBlank { null },

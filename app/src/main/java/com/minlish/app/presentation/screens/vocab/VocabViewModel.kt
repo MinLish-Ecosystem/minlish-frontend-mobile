@@ -2,7 +2,8 @@ package com.minlish.app.presentation.screens.vocab
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.minlish.app.data.remote.VocabSetResponse
+import com.minlish.app.data.dto.request.AddWordRequest
+import com.minlish.app.data.dto.response.VocabSetResponse
 import com.minlish.app.data.repository.VocabRepository
 import com.minlish.app.data.repository.VocabResult
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -12,6 +13,7 @@ import kotlinx.coroutines.launch
 
 data class LibraryUiState(
     val sets: List<VocabSetResponse> = emptyList(),
+    val publicSets: List<VocabSetResponse> = emptyList(),
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
     val isCreating: Boolean = false,
@@ -27,6 +29,7 @@ class VocabViewModel(
 
     init {
         loadSets()
+        loadPublicSets()
     }
 
     fun loadSets(query: String? = null) {
@@ -37,6 +40,27 @@ class VocabViewModel(
                 is VocabResult.Success -> {
                     _uiState.value = _uiState.value.copy(
                         sets = result.data,
+                        isLoading = false
+                    )
+                }
+                is VocabResult.Error -> {
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        errorMessage = result.message
+                    )
+                }
+            }
+        }
+    }
+
+    fun loadPublicSets(query: String? = null) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
+
+            when (val result = repository.getPublicSets(query = query)) {
+                is VocabResult.Success -> {
+                    _uiState.value = _uiState.value.copy(
+                        publicSets = result.data,
                         isLoading = false
                     )
                 }
@@ -75,7 +99,7 @@ class VocabViewModel(
 
                     for (word in words) {
                         if (word.term.isNotBlank() && word.definition.isNotBlank()) {
-                            val req = com.minlish.app.data.remote.AddWordRequest(
+                            val req = AddWordRequest(
                                 word = word.term.trim(),
                                 meaning = word.definition.trim()
                             )

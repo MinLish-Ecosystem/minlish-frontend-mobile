@@ -1,6 +1,6 @@
 package com.minlish.app.data.repository
 
-import com.minlish.app.data.dto.NotificationListDto
+import com.minlish.app.data.dto.response.NotificationListDto
 import com.minlish.app.di.NetworkModule
 
 class NotificationRepository {

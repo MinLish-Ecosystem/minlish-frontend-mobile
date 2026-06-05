@@ -1,5 +1,4 @@
-package com.minlish.app.data.dto
-
+package com.minlish.app.data.dto.response
 
 data class UserDto(
     val id: String,
@@ -10,9 +9,4 @@ data class UserDto(
     val isVerified: Boolean,
     val createdAt: String? = null,
     val updatedAt: String? = null
-)
-
-data class UpdateProfileRequest(
-    val name: String,
-    val avatar: String? = null
 )
