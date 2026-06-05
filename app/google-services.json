@@ -12,7 +12,20 @@
           "package_name": "com.minlish.app"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "831655266341-36p2hsepp00h1as461se7pevep9vm5r7.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.minlish.app",
+            "certificate_hash": "263b6897a0463e5a2282531010a0ef74a5774f87"
+          }
+        },
+        {
+          "client_id": "831655266341-skc5vbq802hj608fv6b65po45e03064j.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyAPCGhbEJaL1EAdQ-q5FkCZ7ouoEhpFwYQ"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "831655266341-skc5vbq802hj608fv6b65po45e03064j.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

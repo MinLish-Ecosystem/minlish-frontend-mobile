@@ -8,6 +8,7 @@ import com.minlish.app.data.dto.response.RegisterData
 import com.minlish.app.data.dto.request.RegisterRequest
 import com.minlish.app.data.dto.request.ResetPasswordRequest
 import com.minlish.app.data.dto.request.VerifyEmailRequest
+import com.minlish.app.data.dto.response.VerifyEmailData
 import retrofit2.http.Body
 import retrofit2.http.POST
 import retrofit2.http.Headers
@@ -24,7 +25,7 @@ interface AuthApi {
 
     @Headers("No-Authentication: true")
     @POST("auth/verify-email")
-    suspend fun verifyEmail(@Body request: VerifyEmailRequest): ApiResponse<String>
+    suspend fun verifyEmail(@Body request: VerifyEmailRequest): ApiResponse<VerifyEmailData>
 
     @Headers("No-Authentication: true")
     @POST("auth/forgot-password")
@@ -33,4 +34,7 @@ interface AuthApi {
     @Headers("No-Authentication: true")
     @POST("auth/reset-password")
     suspend fun resetPassword(@Body request: ResetPasswordRequest): ApiResponse<String>
+
+    @POST("auth/logout")
+    suspend fun logout(): ApiResponse<String>
 }

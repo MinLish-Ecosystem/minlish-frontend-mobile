@@ -1,5 +1,6 @@
 package com.minlish.app.presentation.components
 
+import android.util.Log
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background

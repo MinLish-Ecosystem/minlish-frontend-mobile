@@ -1,6 +1,9 @@
 package com.minlish.app.presentation.navigation
 
+import android.content.Intent
 import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -9,12 +12,12 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.minlish.app.data.local.TokenManager
+import com.minlish.app.GoogleSignInActivity
 import com.minlish.app.presentation.screens.analytics.AnalyticsScreen
 import com.minlish.app.presentation.screens.analytics.AnalyticsViewModel
 import com.minlish.app.presentation.screens.auth.*
-import com.minlish.app.presentation.screens.auth.viewmodels.AuthViewModel
 import com.minlish.app.presentation.screens.auth.viewmodels.ForgetPasswordViewModel
+import com.minlish.app.presentation.screens.auth.viewmodels.RegisterViewModel
 import com.minlish.app.presentation.screens.learning.FlashCardScreen
 import com.minlish.app.presentation.screens.learning.FlashcardViewModel
 import com.minlish.app.presentation.screens.learning.LearningDashBoardScreen
@@ -39,15 +42,19 @@ import com.minlish.app.util.NotificationBadgeManager
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun AuthNavHost(
+fun AppNavHost(
     modifier: Modifier = Modifier,
     navController: NavHostController,
     startDestination: String,
     profileViewModel: ProfileViewModel
 ) {
     val context = LocalContext.current
-    val authViewModel: AuthViewModel = viewModel()
+    val regisViewModel: RegisterViewModel = viewModel()
     val forgotPasswordViewModel: ForgetPasswordViewModel = viewModel()
+
+    val googleLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) {}
 
     NavHost(
         navController = navController,
@@ -56,20 +63,22 @@ fun AuthNavHost(
     ) {
         composable(NavDestinations.Welcome.route) {
             WelcomeScreen(
-                onGetStartedClick = { navController.navigate(NavDestinations.Register.route) },
-                onLogInClick = { navController.navigate(NavDestinations.Login.route) }
+                onGetStartedClick = { navController.navigate(NavDestinations.Login.route) },
             )
         }
 
         composable(NavDestinations.Login.route) {
             LoginScreen(
-                viewModel = authViewModel,
                 onLoginSuccess = {
                     navController.navigate(NavDestinations.Learning.route) {
                         popUpTo(NavDestinations.Welcome.route) { inclusive = true }
                     }
                 },
-                onGoogleSignInClick = {},
+                onGoogleSignInClick = {
+                    googleLauncher.launch(
+                        Intent(context, GoogleSignInActivity::class.java)
+                    )
+                },
                 onForgotPasswordClick = { navController.navigate(NavDestinations.ForgotPassword.route) },
                 onSignUpClick = { navController.navigate(NavDestinations.Register.route) }
             )
@@ -77,7 +86,7 @@ fun AuthNavHost(
 
         composable(NavDestinations.Register.route) {
             RegisterScreen(
-                viewModel = authViewModel,
+                viewModel = regisViewModel,
                 onRegisterSuccess = {
                     navController.navigate(NavDestinations.VerifyEmail.route)
                 },
@@ -87,7 +96,7 @@ fun AuthNavHost(
 
         composable(NavDestinations.VerifyEmail.route) {
             VerifyEmailScreen(
-                viewModel = authViewModel,
+                viewModel = regisViewModel,
                 onBackClick = { navController.popBackStack() },
                 onVerifyEmailSuccess = {
                     navController.navigate(NavDestinations.LearningGoal.route) {
@@ -296,14 +305,12 @@ fun AuthNavHost(
         composable(NavDestinations.Profile.route) {
             ProfileScreen(
                 viewModel = profileViewModel,
-                onLogOutClick = {
+                onLogOutSuccess = {
                     FCMHelper.deleteFCMToken(context) {
-                        TokenManager.clear()
-                        profileViewModel.resetState()
                         navController.clearAllTabStates()
-                        navController.navigate(NavDestinations.Welcome.route) {
-                            popUpTo(0) { inclusive = true }
-                        }
+                    }
+                    navController.navigate(NavDestinations.Welcome.route) {
+                        popUpTo(0) { inclusive = true }
                     }
                 }
             )

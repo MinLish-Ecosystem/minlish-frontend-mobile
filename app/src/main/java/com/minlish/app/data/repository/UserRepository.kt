@@ -1,5 +1,6 @@
 package com.minlish.app.data.repository
 
+import android.util.Log
 import com.minlish.app.data.dto.DeleteFCMTokenRequest
 import com.minlish.app.data.dto.LearningProfileDto
 import com.minlish.app.data.dto.RegisterFCMTokenRequest

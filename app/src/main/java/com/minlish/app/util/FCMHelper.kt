@@ -14,9 +14,6 @@ object FCMHelper {
     private val repository = UserRepository()
     private val scope = CoroutineScope(Dispatchers.IO)
 
-    /**
-     * Lấy token từ Firebase và đăng ký lên API Server
-     */
     fun registerFCMToken(context: Context) {
         FirebaseMessaging.getInstance().token.addOnSuccessListener { token ->
             scope.launch {

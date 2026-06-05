@@ -1,5 +1,6 @@
 package com.minlish.app.presentation.screens.auth
 
+import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -36,11 +37,13 @@ import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.minlish.app.R
-import com.minlish.app.presentation.screens.auth.viewmodels.AuthUiEvent
-import com.minlish.app.presentation.screens.auth.viewmodels.AuthViewModel
+import com.minlish.app.presentation.screens.auth.viewmodels.LoginUiEvent
+import com.minlish.app.presentation.screens.auth.viewmodels.LoginViewModel
 import com.minlish.app.ui.theme.MinlishGradient
 import com.minlish.app.ui.theme.MinlishOnSurface
 import com.minlish.app.ui.theme.MinlishOutline
@@ -50,26 +53,25 @@ import kotlinx.coroutines.flow.collectLatest
 
 @Composable
 fun LoginScreen(
-    viewModel: AuthViewModel = viewModel(),
+    viewModel: LoginViewModel = viewModel(),
     onLoginSuccess: () -> Unit,
     onGoogleSignInClick: () -> Unit,
     onForgotPasswordClick: () -> Unit,
     onSignUpClick: () -> Unit
 ) {
 
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
     var passwordVisible by remember { mutableStateOf(false) }
+    val context = LocalContext.current
 
     LaunchedEffect(Unit) {
         viewModel.uiEvent.collectLatest { event ->
             when (event) {
-                is AuthUiEvent.LoginSuccess -> {
+                is LoginUiEvent.LoginSuccess -> {
                     onLoginSuccess()
                 }
-
-                else -> {
-
+                is LoginUiEvent.ShowError -> {
+                    Toast.makeText(context, event.message, Toast.LENGTH_LONG).show()
                 }
             }
         }
@@ -86,12 +88,12 @@ fun LoginScreen(
     ) {
         BrandingSection()
         Spacer(modifier = Modifier.height(40.dp))
-        EmailField(email = email, onEmailChange = {email = it})
+        EmailField(email = state.email, onEmailChange = {viewModel.updateEmail(it)})
         Spacer(modifier = Modifier.height(16.dp))
         PasswordField(
-            password = password,
+            password = state.password,
             passwordVisible = passwordVisible,
-            onPasswordChange = {password = it},
+            onPasswordChange = {viewModel.updatePassword(it)},
             onToggleVisibility = {passwordVisible = !passwordVisible},
             onForgotPasswordClick = {
                 onForgotPasswordClick()
@@ -99,9 +101,9 @@ fun LoginScreen(
         )
         Spacer(modifier = Modifier.height(24.dp))
         SignInButton(
-            isLoading = viewModel.isLoading,
+            isLoading = state.isLoading,
             onSignInClick = {
-            viewModel.login(email, password)
+            viewModel.login(state.email, state.password)
         })
         Spacer(modifier = Modifier.height(24.dp))
         DividerWithText()
@@ -111,6 +113,7 @@ fun LoginScreen(
         })
         Spacer(modifier = Modifier.height(32.dp))
         SignUpButton(onSignUpClick = {
+            viewModel.resetViewModel()
             onSignUpClick()
         })
     }
@@ -207,9 +210,7 @@ private fun PasswordField(
             )
 
             TextButton(
-                onClick = {
-                    onForgotPasswordClick()
-                },
+                onClick = onForgotPasswordClick,
                 contentPadding = PaddingValues(0.dp)
             ) {
                 Text(

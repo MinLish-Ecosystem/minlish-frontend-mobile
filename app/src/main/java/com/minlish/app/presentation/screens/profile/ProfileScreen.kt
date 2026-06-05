@@ -3,6 +3,7 @@ package com.minlish.app.presentation.screens.profile
 import android.net.Uri
 import android.os.Build
 import android.util.Base64
+import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -51,19 +52,35 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
+import com.minlish.app.presentation.screens.auth.viewmodels.LoginUiEvent
+import kotlinx.coroutines.flow.collectLatest
 
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun ProfileScreen(
-    onLogOutClick: () -> Unit,
+    onLogOutSuccess: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ProfileViewModel = viewModel()
 ) {
-    val state by viewModel.uiState.collectAsState()
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
-    
+
+    LaunchedEffect(Unit) {
+        viewModel.uiEvent.collectLatest { event ->
+            when (event) {
+                is ProfileUiEvent.LogOutSuccess -> {
+                    onLogOutSuccess()
+                }
+                is ProfileUiEvent.ShowError -> {
+                    Toast.makeText(context, event.message, Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+    }
+
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
@@ -156,7 +173,9 @@ fun ProfileScreen(
                             onEmailNotificationsChange = { viewModel.updateEmailNotifications(it) },
                             onReminderTimeChange = { viewModel.updateReminderTime(it) },
                             onDarkModeChange = { viewModel.updateDarkMode(it) },
-                            onLogOutClick = onLogOutClick
+                            onLogOutClick = {
+                                viewModel.logout()
+                            }
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         SaveButton(
@@ -865,5 +884,5 @@ private fun SaveButton(
 @Preview(showBackground = true)
 @Composable
 fun ProfileScreenPreview() {
-    ProfileScreen(onLogOutClick = {})
+    ProfileScreen(onLogOutSuccess = {})
 }
