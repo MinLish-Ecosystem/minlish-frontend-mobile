@@ -31,6 +31,18 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.minlish.app.data.remote.WordResponse
 import com.minlish.app.presentation.screens.library.WordListViewModel
+import android.content.ContentValues
+import android.os.Build
+import android.os.Environment
+import android.provider.MediaStore
+import android.widget.Toast
+import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.Upload
+import com.minlish.app.presentation.components.ImportCsvDialog
+import com.minlish.app.util.CsvParser
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.platform.LocalContext
 
 data class WordItem(
     val word: String,
@@ -77,6 +89,7 @@ fun WordListScreen(
     modifier: Modifier = Modifier
 ) {
     var searchQuery by remember { mutableStateOf("") }
+    val context = LocalContext.current
     var selectedFilter by remember { mutableStateOf("All") }
     var showFilterMenu by remember { mutableStateOf(false) }
 
@@ -99,6 +112,8 @@ fun WordListScreen(
     val isDeleting by remember { viewModel.isDeleting }
     val deleteSuccess by remember { viewModel.deleteSuccess }
     val wordToDelete by remember { viewModel.wordToDelete }
+    var showImportCsvDialog by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
     DisposableEffect(Unit) {
         onDispose {
             mediaPlayer.release()
@@ -181,12 +196,39 @@ fun WordListScreen(
                     style = MaterialTheme.typography.titleMedium
                 )
 
-                IconButton(onClick = {}) {
-                    Icon(
-                        imageVector = Icons.Default.MoreVert,
-                        contentDescription = "More",
-                        tint = onSurfaceVariantColor
-                    )
+                Box{
+                    var showMoreMenu by remember {mutableStateOf(false)}
+                    IconButton(onClick = {showMoreMenu = true}){
+                        Icon(
+                            imageVector = Icons.Default.MoreVert,
+                            contentDescription = "More",
+                            tint = onSurfaceVariantColor
+                        )
+                    }
+                    DropdownMenu(
+                        expanded = showMoreMenu,
+                        onDismissRequest = {showMoreMenu = false}
+                    ){
+                        DropdownMenuItem(
+                            text = { Text("Import CSV") },
+                            leadingIcon = { Icon(imageVector = Icons.Default.Upload, contentDescription = null) },
+                            onClick = {
+                                showMoreMenu = false
+                                showImportCsvDialog = true
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Export CSV") },
+                            leadingIcon = { Icon(imageVector = Icons.Default.Download, contentDescription = null) },
+                            onClick = {
+                                showMoreMenu = false
+                                coroutineScope.launch {
+                                    val csvContent = CsvParser.toCsvString(words)
+                                    saveCsvToDownloads(context, setName, csvContent)
+                                }
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -586,6 +628,15 @@ fun WordListScreen(
                 }
             }
         }
+        ImportCsvDialog(
+            isOpen = showImportCsvDialog,
+            onDismiss = {showImportCsvDialog = false},
+            setId = setId,
+            onImportCompleted = {
+                showImportCsvDialog = false
+                viewModel.loadWords(setId, searchQuery)
+            }
+        )
     }
 }
 
@@ -626,3 +677,34 @@ fun RowScope.CardStats(
         }
     }
 }
+private fun saveCsvToDownloads(context: android.content.Context, setName: String, csvContent: String) {
+    val fileName = "${setName.replace(" ", "_")}_minlish.csv"
+    try {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val values = ContentValues().apply {
+                put(MediaStore.Downloads.DISPLAY_NAME, fileName)
+                put(MediaStore.Downloads.MIME_TYPE, "text/csv")
+                put(MediaStore.Downloads.IS_PENDING, 1)
+            }
+            val resolver = context.contentResolver
+            val uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)
+            uri?.let {
+                resolver.openOutputStream(it)?.use { stream ->
+                    stream.write(csvContent.toByteArray(Charsets.UTF_8))
+                }
+                values.clear()
+                values.put(MediaStore.Downloads.IS_PENDING, 0)
+                resolver.update(it, values, null, null)
+            }
+        } else {
+            val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+            val file = java.io.File(dir, fileName)
+            file.writeText(csvContent, Charsets.UTF_8)
+        }
+        Toast.makeText(context, "Đã lưu: $fileName vào Downloads", Toast.LENGTH_LONG).show()
+    } catch (e: Exception) {
+        Toast.makeText(context, "Lỗi lưu file: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
+    }
+}
+
+

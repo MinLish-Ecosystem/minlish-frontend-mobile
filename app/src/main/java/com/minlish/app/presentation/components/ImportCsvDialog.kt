@@ -22,11 +22,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.minlish.app.data.remote.AddWordRequest
 import com.minlish.app.data.repository.VocabRepository
-import com.minlish.app.data.repository.VocabResult
 import com.minlish.app.util.CsvParser
 import com.minlish.app.util.VocabularyImporter
 import kotlinx.coroutines.launch
@@ -36,29 +36,41 @@ import kotlinx.coroutines.launch
 fun ImportCsvDialog(
     isOpen: Boolean,
     onDismiss: () -> Unit,
-    setId: String? = null, // Nếu truyền: sẽ gọi API nạp trực tiếp qua backend
-    onImportCompleted: () -> Unit = {}, // Callback sau khi import thành công
-    onWordsParsed: ((List<AddWordRequest>) -> Unit)? = null // Callback trả về danh sách để giao diện ngoài tự xử lý (Tạo bộ từ mới)
+    setId: String? = null,
+    onImportCompleted: () -> Unit = {},
+    onWordsParsed: ((List<AddWordRequest>) -> Unit)? = null
 ) {
     if (!isOpen) return
-
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     val repository = remember { VocabRepository() }
-
-    var importSourceTab by remember { mutableStateOf(0) } // 0 = File CSV/TXT, 1 = Dán văn bản
-    var importMode by remember { mutableStateOf(0) } // 0 = Native MinLish (Đầy đủ cột), 1 = Danh sách từ Tiếng Anh (Chỉ có từ thô)
-
+    var importSourceTab by remember { mutableStateOf(0) }
+    var importMode by remember { mutableStateOf(0) }
     var selectedFileName by remember { mutableStateOf("") }
     var rawTextData by remember { mutableStateOf("") }
     var selectedFileUri by remember { mutableStateOf<Uri?>(null) }
-
     var parsedWords by remember { mutableStateOf<List<AddWordRequest>>(emptyList()) }
+    var failedLookupWords by remember { mutableStateOf<List<String>>(emptyList()) }
     var showPreview by remember { mutableStateOf(false) }
-
     var isProcessing by remember { mutableStateOf(false) }
     var importProgress by remember { mutableStateOf<VocabularyImporter.ImportProgress?>(null) }
     var importResult by remember { mutableStateOf<VocabularyImporter.ImportResult?>(null) }
+
+    LaunchedEffect(isOpen) {
+        if (isOpen) {
+            importSourceTab = 0
+            importMode = 0
+            selectedFileName = ""
+            rawTextData = ""
+            selectedFileUri = null
+            parsedWords = emptyList()
+            failedLookupWords = emptyList()
+            showPreview = false
+            isProcessing = false
+            importProgress = null
+            importResult = null
+        }
+    }
 
     fun getFileName(uri: Uri): String {
         var result: String? = null
@@ -75,7 +87,6 @@ fun ImportCsvDialog(
         }
         return result ?: uri.path?.substringAfterLast('/') ?: "vocab.csv"
     }
-
     val fileLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri ->
@@ -85,7 +96,6 @@ fun ImportCsvDialog(
         }
     }
 
-    // ModalBottomSheet hiển thị chính
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -104,15 +114,11 @@ fun ImportCsvDialog(
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth()
             )
-
             if (!showPreview) {
-                // Tab Chọn Nguồn
                 TabRow(selectedTabIndex = importSourceTab) {
                     Tab(selected = importSourceTab == 0, onClick = { importSourceTab = 0 }, text = { Text("Chọn Tệp Tin") })
                     Tab(selected = importSourceTab == 1, onClick = { importSourceTab = 1 }, text = { Text("Dán Văn Bản") })
                 }
-
-                // Giao diện chọn
                 if (importSourceTab == 0) {
                     Box(
                         modifier = Modifier
@@ -145,20 +151,15 @@ fun ImportCsvDialog(
                     )
                 }
 
-                // Tab chọn Định dạng file nạp
                 Text("Chọn cấu trúc dữ liệu tệp nạp vào:", fontSize = 12.sp, fontWeight = FontWeight.Bold)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Card(
-                        colors = CardDefaults.cardColors(
-                            containerColor = if (importMode == 0) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant
-                        ),
+                        colors = CardDefaults.cardColors(containerColor = if (importMode == 0) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant),
                         shape = RoundedCornerShape(8.dp),
-                        modifier = Modifier
-                            .weight(1f)
-                            .clickable { importMode = 0 }
+                        modifier = Modifier.weight(1f).clickable { importMode = 0 }
                     ) {
                         Column(modifier = Modifier.padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                             Text("MinLish Native", fontWeight = FontWeight.Bold, fontSize = 13.sp)
@@ -167,13 +168,9 @@ fun ImportCsvDialog(
                     }
 
                     Card(
-                        colors = CardDefaults.cardColors(
-                            containerColor = if (importMode == 1) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant
-                        ),
+                        colors = CardDefaults.cardColors(containerColor = if (importMode == 1) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant),
                         shape = RoundedCornerShape(8.dp),
-                        modifier = Modifier
-                            .weight(1f)
-                            .clickable { importMode = 1 }
+                        modifier = Modifier.weight(1f).clickable { importMode = 1 }
                     ) {
                         Column(modifier = Modifier.padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                             Text("Danh Sách Từ Thô", fontWeight = FontWeight.Bold, fontSize = 13.sp)
@@ -194,68 +191,58 @@ fun ImportCsvDialog(
                         }
 
                         isProcessing = true
-                        coroutineScope.launch {
-                            try {
+                        coroutineScope.launch{
+                            try{
                                 val contentStream = if (importSourceTab == 0) {
                                     context.contentResolver.openInputStream(selectedFileUri!!)
                                 } else null
-
                                 if (importMode == 0) {
-                                    // LUỒNG 1: Parse trực tiếp file native có sẵn cột
-                                    if (contentStream != null) {
+                                    if (contentStream != null){
                                         parsedWords = CsvParser.parseNativeCsv(contentStream)
                                     } else {
-                                        Toast.makeText(context, "Mẫu native yêu cầu chọn tệp tin CSV thực tế!", Toast.LENGTH_LONG).show()
+                                        Toast.makeText(context, "Mau native yeu cau chon tep csv xuat ra tu he thong", Toast.LENGTH_LONG).show()
                                         isProcessing = false
                                         return@launch
                                     }
                                     showPreview = true
-                                } else {
-                                    // LUỒNG 2: Chỉ lấy danh sách từ tiếng Anh và gọi API của hệ thống
+                                }
+                                else {
                                     val englishWords = if (contentStream != null) {
                                         CsvParser.extractWordsList(contentStream)
                                     } else {
                                         CsvParser.extractWordsList(rawTextData)
                                     }
-
-                                    if (englishWords.isEmpty()) {
-                                        throw Exception("Không tìm thấy từ tiếng Anh hợp lệ nào trong tệp.")
+                                    if (englishWords.isEmpty()){
+                                        throw Exception("Khong tim thay tu tieng Anh hop le nao trong tep")
                                     }
-
-                                    // Gọi API Backend của bạn để phân tích và chuẩn hóa danh sách từ sang DTO
-                                    // Chúng tôi giả lập gọi qua Repository của bạn: parseRawWords(words)
-                                    when (val apiResult = repository.parseRawWords(englishWords)) {
-                                        is VocabResult.Success -> {
-                                            parsedWords = apiResult.data
-                                            showPreview = true
-                                        }
-                                        is VocabResult.Error -> {
-                                            throw Exception(apiResult.message)
-                                        }
+                                    val lookUp = VocabularyImporter.lookupWords(englishWords)
+                                    if (lookUp.successWords.isEmpty()){
+                                        throw Exception("Khong tra duoc nghia cho bat ky tu nao, vui long kiem tra ket noi mang hoac danh sach tu")
                                     }
+                                    parsedWords = lookUp.successWords
+                                    failedLookupWords = lookUp.failedWords
+                                    showPreview = true
                                 }
-                            } catch (e: Exception) {
-                                Toast.makeText(context, "Lỗi phân tích: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
-                            } finally {
+                            }
+                            catch (e: Exception) {
+                                Toast.makeText(context, "Loi phan tich: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
+                            }
+                            finally{
                                 isProcessing = false
                             }
                         }
                     },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(48.dp),
+                    modifier = Modifier.fillMaxWidth().height(48.dp),
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Text("Xem Trước & Tiếp Tục", fontWeight = FontWeight.Bold)
                 }
             } else {
-                // Hiển thị xem trước dữ liệu
                 Text(text = "Đọc thành công ${parsedWords.size} từ vựng. Xem trước 5 từ đầu:", fontSize = 14.sp, fontWeight = FontWeight.Medium)
-                
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .heightIn(max = 160.dp)
+                        .heightIn(max = 240.dp)
                         .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(8.dp))
                         .padding(8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -271,7 +258,17 @@ fun ImportCsvDialog(
                     }
                 }
 
-                // Nút Đảo cột nếu nhận dạng nhầm (chỉ áp dụng khi import file native)
+                if (failedLookupWords.isNotEmpty()) {
+                    Text(
+                        text = "⚠️ Bỏ qua ${failedLookupWords.size} từ không tra được: ${failedLookupWords.joinToString(", ")}",
+                        color = MaterialTheme.colorScheme.error,
+                        fontSize = 12.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp)
+                    )
+                }
+
                 if (importMode == 0) {
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                         TextButton(
@@ -296,9 +293,7 @@ fun ImportCsvDialog(
                 }
 
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    OutlinedButton(onClick = { showPreview = false }, modifier = Modifier.weight(1f).height(48.dp), shape = RoundedCornerShape(12.dp)) {
-                        Text("Quay Lại")
-                    }
+                    OutlinedButton(onClick = { showPreview = false }, modifier = Modifier.weight(1f).height(48.dp), shape = RoundedCornerShape(12.dp)) { Text("Quay Lại") }
                     Button(
                         onClick = {
                             if (setId != null) {
@@ -329,7 +324,6 @@ fun ImportCsvDialog(
         }
     }
 
-    // Dialog xoay tròn chờ API phân tích danh sách thô
     if (isProcessing) {
         AlertDialog(
             onDismissRequest = {},
@@ -345,7 +339,6 @@ fun ImportCsvDialog(
         )
     }
 
-    // Dialog hiển thị tiến trình nạp lên Backend
     if (importProgress != null) {
         AlertDialog(
             onDismissRequest = {},
@@ -353,11 +346,11 @@ fun ImportCsvDialog(
             title = { Text("Đang nạp từ vựng...", fontWeight = FontWeight.Bold, fontSize = 16.sp) },
             text = {
                 val progress = importProgress!!
-                val pct = if (progress.second > 0) (progress.first * 100) / progress.second else 0
+                val pct = if (progress.total > 0) (progress.current * 100) / progress.total else 0
                 Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text("Tiến độ: ${progress.first}/${progress.second} từ ($pct%)", fontSize = 14.sp)
+                    Text("Tiến độ: ${progress.current}/${progress.total} từ ($pct%)", fontSize = 14.sp)
                     LinearProgressIndicator(
-                        progress = { if (progress.second > 0) progress.first.toFloat() / progress.second.toFloat() else 0f },
+                        progress = { if (progress.total > 0) progress.current.toFloat() / progress.total.toFloat() else 0f },
                         modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp))
                     )
                 }
@@ -365,7 +358,6 @@ fun ImportCsvDialog(
         )
     }
 
-    // Dialog báo cáo kết quả nạp Backend
     if (importResult != null) {
         val result = importResult!!
         AlertDialog(
@@ -400,5 +392,4 @@ fun ImportCsvDialog(
         )
     }
 }
-```
 

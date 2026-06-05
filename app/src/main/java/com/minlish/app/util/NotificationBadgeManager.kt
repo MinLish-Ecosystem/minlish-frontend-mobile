@@ -14,9 +14,6 @@ object NotificationBadgeManager {
     private var pollingJob: Job? = null
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
-    /**
-     * Bắt đầu vòng lặp polling mỗi 60 giây khi user đã login
-     */
     fun startPolling() {
         if (pollingJob?.isActive == true) return
         pollingJob = scope.launch {
@@ -27,17 +24,11 @@ object NotificationBadgeManager {
         }
     }
 
-    /**
-     * Dừng polling và reset số badge (gọi khi Logout)
-     */
     fun stopPolling() {
         pollingJob?.cancel()
         _badgeCount.value = 0
     }
 
-    /**
-     * Cập nhật thủ công hoặc gọi ngầm để tải unread count từ API
-     */
     fun refreshBadge() {
         scope.launch {
             repository.getUnreadCount().onSuccess { count ->
@@ -46,9 +37,6 @@ object NotificationBadgeManager {
         }
     }
 
-    /**
-     * Cập nhật nóng số lượng badge từ bên ngoài (ví dụ sau khi markAsRead)
-     */
     fun updateBadgeDirectly(count: Int) {
         _badgeCount.value = count
     }

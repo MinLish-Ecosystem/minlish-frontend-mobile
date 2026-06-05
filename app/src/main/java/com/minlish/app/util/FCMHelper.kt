@@ -13,7 +13,6 @@ object FCMHelper {
     private const val TAG = "FCMHelper"
     private val repository = UserRepository()
     private val scope = CoroutineScope(Dispatchers.IO)
-
     fun registerFCMToken(context: Context) {
         FirebaseMessaging.getInstance().token.addOnSuccessListener { token ->
             scope.launch {
@@ -33,9 +32,6 @@ object FCMHelper {
         }
     }
 
-    /**
-     * Gọi API huỷ token trên server trước khi hoàn tất logout
-     */
     fun deleteFCMToken(context: Context, onComplete: () -> Unit) {
         scope.launch {
             try {
@@ -48,7 +44,6 @@ object FCMHelper {
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to delete FCM Token on server", e)
             } finally {
-                // Đảm bảo luôn tiếp tục flow logout của app
                 onComplete()
             }
         }

@@ -30,20 +30,16 @@ class AnalyticsViewModel : ViewModel() {
                 val weeklyDeferred = async { repository.getWeeklyStats() }
                 val masteryDeferred = async { repository.getMasteryDistribution() }
                 val heatmapDeferred = async { repository.getHeatmap() }
-
                 val dashboardRes = dashboardDeferred.await()
                 val weeklyRes = weeklyDeferred.await()
                 val masteryRes = masteryDeferred.await()
                 val heatmapRes = heatmapDeferred.await()
-
                 if (dashboardRes.isSuccess && weeklyRes.isSuccess && masteryRes.isSuccess && heatmapRes.isSuccess) {
                     val dashboard = dashboardRes.getOrThrow()
                     val weeklyList = weeklyRes.getOrThrow()
                     val mastery = masteryRes.getOrThrow()
                     val heatmapList = heatmapRes.getOrThrow()
-
                     val wordsThisWeek = weeklyList.sumOf { it.newWordsLearned }
-
                     val sdfInput = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
                     val sdfOutput = SimpleDateFormat("E", Locale.getDefault())
                     val weeklyMinutes = weeklyList.map { item ->
@@ -56,23 +52,19 @@ class AnalyticsViewModel : ViewModel() {
                         }
                         dayLabel to (item.timeSpent / 60)
                     }
-
                     val totalWords = mastery.total.toFloat().coerceAtLeast(1f)
                     val beginnerCount = mastery.new + mastery.learning
                     val intermediateCount = mastery.review
                     val advancedCount = mastery.mastered
-
                     val masteryBeginner = MasteryLevel("Beginner", beginnerCount, beginnerCount / totalWords)
                     val masteryIntermediate = MasteryLevel("Intermediate", intermediateCount, intermediateCount / totalWords)
                     val masteryAdvanced = MasteryLevel("Advanced", advancedCount, advancedCount / totalWords)
-
                     val heatmapMap = heatmapList.associate { it.date to it.count }
                     val maxCount = heatmapList.maxOfOrNull { it.count }?.coerceAtLeast(1) ?: 1
                     val calendar = Calendar.getInstance()
                     val activityList = mutableListOf<Float>()
                     calendar.add(Calendar.DAY_OF_YEAR, -34)
                     val sdfHeatmap = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-
                     for (i in 0 until 35) {
                         val dateStr = sdfHeatmap.format(calendar.time)
                         val count = heatmapMap[dateStr] ?: 0
@@ -80,7 +72,6 @@ class AnalyticsViewModel : ViewModel() {
                         activityList.add(intensity.coerceIn(0f, 1f))
                         calendar.add(Calendar.DAY_OF_YEAR, 1)
                     }
-
                     _uiState.update {
                         it.copy(
                             currentStreak = dashboard.streak.current,
@@ -103,22 +94,15 @@ class AnalyticsViewModel : ViewModel() {
                         heatmapRes.exceptionOrNull()?.message
                     ).filterNotNull().joinToString(", ")
                     _uiState.update {
-                        it.copy(
-                            isLoading = false,
-                            errorMessage = if (errorMsg.isNotEmpty()) errorMsg else "Failed to load stats"
-                        )
+                        it.copy(isLoading = false, errorMessage = if (errorMsg.isNotEmpty()) errorMsg else "Failed to load stats")
                     }
                 }
             } catch (e: Exception) {
                 _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        errorMessage = e.message ?: "Failed to fetch analytics"
-                    )
+                    it.copy(isLoading = false, errorMessage = e.message ?: "Failed to fetch analytics")
                 }
             }
         }
     }
-
     fun refresh() = loadAnalytics()
 }

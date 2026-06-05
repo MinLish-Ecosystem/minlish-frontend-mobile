@@ -45,9 +45,7 @@ fun NotificationScreen(
             lastVisibleItem >= totalItems - 3 && state.hasMore && !state.isLoadingMore
         }
     }
-    LaunchedEffect(shouldLoadMore) {
-        if (shouldLoadMore) viewModel.loadMore()
-    }
+    LaunchedEffect(shouldLoadMore) { if (shouldLoadMore) viewModel.loadMore() }
     val unreadNotifications = state.notifications.filter { !it.isRead }
     val readNotifications = state.notifications.filter { it.isRead }
     Scaffold(
@@ -209,9 +207,7 @@ private fun NotificationCard(
 ) {
     val isUnread = !notification.isRead
     Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onClick() },
+        modifier = Modifier.fillMaxWidth().clickable { onClick() },
         shape = RoundedCornerShape(12.dp),
         color = Color.White,
         shadowElevation = if (isUnread) 2.dp else 1.dp,
