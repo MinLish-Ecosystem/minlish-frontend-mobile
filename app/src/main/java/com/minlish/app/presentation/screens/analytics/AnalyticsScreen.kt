@@ -32,6 +32,19 @@ fun AnalyticsScreen(
     viewModel: AnalyticsViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+
+    if (uiState.isLoading) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MinlishSurface),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator(color = MinlishPrimary)
+        }
+        return
+    }
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()

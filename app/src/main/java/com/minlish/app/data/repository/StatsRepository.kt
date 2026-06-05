@@ -1,9 +1,9 @@
 package com.minlish.app.data.repository
 
-import com.minlish.app.data.remote.DailyStatsItemDto
-import com.minlish.app.data.remote.DashboardStatsDto
-import com.minlish.app.data.remote.HeatmapItemDto
-import com.minlish.app.data.remote.MasteryDistributionDto
+import com.minlish.app.data.dto.response.DailyStatsItemDto
+import com.minlish.app.data.dto.response.DashboardStatsDto
+import com.minlish.app.data.dto.response.HeatmapItemDto
+import com.minlish.app.data.dto.response.MasteryDistributionDto
 import com.minlish.app.di.NetworkModule
 
 class StatsRepository {

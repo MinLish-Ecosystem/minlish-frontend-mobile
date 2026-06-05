@@ -25,7 +25,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.minlish.app.data.remote.AddWordRequest
+import com.minlish.app.data.dto.request.AddWordRequest
 import com.minlish.app.data.repository.VocabRepository
 import com.minlish.app.util.CsvParser
 import com.minlish.app.util.VocabularyImporter

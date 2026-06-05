@@ -1,11 +1,11 @@
 package com.minlish.app.data.remote
 
-import com.minlish.app.data.dto.DeleteFCMTokenRequest
-import com.minlish.app.data.dto.LearningProfileDto
-import com.minlish.app.data.dto.RegisterFCMTokenRequest
-import com.minlish.app.data.dto.UpdateLearningProfileRequest
-import com.minlish.app.data.dto.UpdateProfileRequest
-import com.minlish.app.data.dto.UserDto
+import com.minlish.app.data.dto.request.DeleteFCMTokenRequest
+import com.minlish.app.data.dto.request.RegisterFCMTokenRequest
+import com.minlish.app.data.dto.request.UpdateLearningProfileRequest
+import com.minlish.app.data.dto.request.UpdateProfileRequest
+import com.minlish.app.data.dto.response.LearningProfileDto
+import com.minlish.app.data.dto.response.UserDto
 import com.minlish.app.data.dto.response.ApiResponse
 import retrofit2.http.Body
 import retrofit2.http.GET

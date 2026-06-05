@@ -1,7 +1,7 @@
 package com.minlish.app.util
 
-import com.minlish.app.data.remote.AddWordRequest
-import com.minlish.app.data.remote.WordResponse
+import com.minlish.app.data.dto.request.AddWordRequest
+import com.minlish.app.data.dto.response.WordResponse
 import java.io.InputStream
 import java.io.BufferedReader
 import java.io.InputStreamReader

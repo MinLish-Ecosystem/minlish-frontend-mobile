@@ -1,7 +1,7 @@
 package com.minlish.app.util
 
-import com.minlish.app.data.remote.AddWordRequest
-import com.minlish.app.data.remote.DictionaryMeaning
+import com.minlish.app.data.dto.request.AddWordRequest
+import com.minlish.app.data.dto.response.DictionaryMeaning
 import com.minlish.app.data.repository.VocabRepository
 import com.minlish.app.data.repository.VocabResult
 import kotlinx.coroutines.Dispatchers

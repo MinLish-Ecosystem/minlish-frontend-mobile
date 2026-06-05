@@ -23,7 +23,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.minlish.app.data.dto.NotificationItemDto
+import com.minlish.app.data.dto.response.NotificationItemDto
 import com.minlish.app.ui.theme.*
 import java.text.SimpleDateFormat
 import java.util.*
