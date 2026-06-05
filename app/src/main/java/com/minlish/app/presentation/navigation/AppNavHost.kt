@@ -12,7 +12,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.minlish.app.GoogleSignInActivity
 import com.minlish.app.presentation.screens.analytics.AnalyticsScreen
 import com.minlish.app.presentation.screens.analytics.AnalyticsViewModel
 import com.minlish.app.presentation.screens.auth.*
@@ -69,10 +68,6 @@ fun AppNavHost(
                     navController.navigate(NavDestinations.Learning.route) {
                         popUpTo(NavDestinations.Welcome.route) { inclusive = true }
                     }
-                },
-                onGoogleSignInClick = {
-                    val intent = Intent(context, GoogleSignInActivity::class.java)
-                    context.startActivity(intent)
                 },
                 onForgotPasswordClick = { navController.navigate(NavDestinations.ForgotPassword.route) },
                 onSignUpClick = { navController.navigate(NavDestinations.Register.route) }

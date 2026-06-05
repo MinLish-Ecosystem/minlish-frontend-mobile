@@ -1,5 +1,6 @@
 package com.minlish.app.presentation.screens.auth.viewmodels
 
+import android.content.Intent
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -13,6 +14,11 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.common.api.ApiException
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.GoogleAuthProvider
+import kotlinx.coroutines.tasks.await
 
 sealed interface LoginUiEvent {
     object LoginSuccess: LoginUiEvent
@@ -34,6 +40,7 @@ class LoginViewModel: ViewModel() {
     private val _uiState = MutableStateFlow(LoginUIState())
     val uiEvent = _uiEvent.receiveAsFlow()
     val uiState: StateFlow<LoginUIState> = _uiState.asStateFlow()
+    private var auth = FirebaseAuth.getInstance()
 
     fun login(email: String, password: String) {
         viewModelScope.launch {
@@ -54,23 +61,37 @@ class LoginViewModel: ViewModel() {
         }
     }
 
-    fun googleSignIn(idToken: String) {
+    fun googleSignIn(intent: Intent?) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoadingGoogle = true) }
-            withContext(Dispatchers.IO) {
-                repository.signInWithGoogle(idToken)
-                    .onSuccess {
-                        _uiEvent.send(LoginUiEvent.GoogleSignInSuccess)
-                        resetViewModel()
-                    }
-                    .onFailure { e ->
-                        e.message?.let { Log.d("Test", it) }
-                        val errorMessage = e.message ?: "Google Sign-In Failed"
-                        _uiState.update { it.copy(errorMessage = errorMessage) }
-                        _uiEvent.send(LoginUiEvent.ShowError(errorMessage))
-                    }
+            try {
+                val account = GoogleSignIn
+                    .getSignedInAccountFromIntent(intent)
+                    .getResult(ApiException::class.java)
+                val googleCredential = GoogleAuthProvider.getCredential(account.idToken, null)
+                val idToken = withContext(Dispatchers.IO) {
+                    auth.signInWithCredential(googleCredential).await()
+                    auth.currentUser?.getIdToken(true)?.await()?.token
+                        ?: throw Exception("idToken is null")
+                }
+                withContext(Dispatchers.IO) {
+                    repository.signInWithGoogle(idToken)
+                        .onSuccess {
+                            _uiEvent.send(LoginUiEvent.GoogleSignInSuccess)
+                            resetViewModel()
+                        }
+                        .onFailure { e ->
+                            e.message?.let { Log.d("Test", it) }
+                            val errorMessage = e.message ?: "Google Sign-In Failed"
+                            _uiState.update { it.copy(errorMessage = errorMessage) }
+                            _uiEvent.send(LoginUiEvent.ShowError(errorMessage))
+                        }
+                }
+                _uiState.update { it.copy(isLoadingGoogle = false) }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(isLoadingGoogle = false) }
+                _uiEvent.send(LoginUiEvent.ShowError(e.message))
             }
-            _uiState.update { it.copy(isLoadingGoogle = false) }
         }
     }
 

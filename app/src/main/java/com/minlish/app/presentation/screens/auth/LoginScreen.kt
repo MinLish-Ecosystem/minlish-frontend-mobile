@@ -2,6 +2,8 @@ package com.minlish.app.presentation.screens.auth
 
 import android.util.Log
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -41,8 +43,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.minlish.app.R
 import com.minlish.app.presentation.screens.auth.viewmodels.LoginUiEvent
 import com.minlish.app.presentation.screens.auth.viewmodels.LoginViewModel
@@ -58,7 +63,6 @@ import kotlinx.coroutines.flow.collectLatest
 fun LoginScreen(
     viewModel: LoginViewModel = viewModel(),
     onLoginSuccess: () -> Unit,
-    onGoogleSignInClick: () -> Unit,
     onForgotPasswordClick: () -> Unit,
     onSignUpClick: () -> Unit
 ) {
@@ -67,6 +71,22 @@ fun LoginScreen(
     var passwordVisible by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val isError = state.email.isBlank() && state.password.isBlank()
+    val webClientId = stringResource(R.string.Web_Client_ID)
+
+    val googleSignInClient = remember {
+        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+            .requestIdToken(webClientId)
+            .requestEmail()
+            .build()
+        GoogleSignIn.getClient(context, gso)
+    }
+
+    val launcher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        viewModel.googleSignIn(result.data)
+    }
+
 
     LaunchedEffect(Unit) {
         viewModel.uiEvent.collectLatest { event ->
@@ -120,7 +140,7 @@ fun LoginScreen(
         GoogleButton(
             isLoadingGoogle = state.isLoadingGoogle,
             onGoogleSignInClick = {
-            onGoogleSignInClick()
+                launcher.launch(googleSignInClient.signInIntent)
         })
         Spacer(modifier = Modifier.height(32.dp))
         SignUpButton(onSignUpClick = {
@@ -451,7 +471,5 @@ fun LoginScreenPreview() {
         onLoginSuccess = {},
         onForgotPasswordClick = {},
         onSignUpClick = {},
-        onGoogleSignInClick = {}
-
     )
 }
