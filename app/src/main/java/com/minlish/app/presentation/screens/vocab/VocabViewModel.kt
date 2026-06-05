@@ -6,10 +6,12 @@ import com.minlish.app.data.dto.request.AddWordRequest
 import com.minlish.app.data.dto.response.VocabSetResponse
 import com.minlish.app.data.repository.VocabRepository
 import com.minlish.app.data.repository.VocabResult
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 data class LibraryUiState(
     val sets: List<VocabSetResponse> = emptyList(),
@@ -35,8 +37,10 @@ class VocabViewModel(
     fun loadSets(query: String? = null) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
-
-            when (val result = repository.getUserSets(query = query, includeProgress = true)) {
+            val result = withContext(Dispatchers.IO){
+                repository.getUserSets(query = query, includeProgress = true)
+            }
+            when (result) {
                 is VocabResult.Success -> {
                     _uiState.value = _uiState.value.copy(
                         sets = result.data,
@@ -56,8 +60,10 @@ class VocabViewModel(
     fun loadPublicSets(query: String? = null) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
-
-            when (val result = repository.getPublicSets(query = query)) {
+            val result = withContext(Dispatchers.IO){
+                repository.getPublicSets(query = query)
+            }
+            when (result) {
                 is VocabResult.Success -> {
                     _uiState.value = _uiState.value.copy(
                         publicSets = result.data,
@@ -85,13 +91,15 @@ class VocabViewModel(
             _uiState.value = _uiState.value.copy(isCreating = true, errorMessage = null)
 
             val backendCategory = mapCategoryToBackend(category)
-
-            when (val result = repository.createSet(
-                name = title,
-                description = description.ifBlank { null },
-                category = backendCategory,
-                isPublic = isPublic
-            )) {
+            val result = withContext(Dispatchers.IO){
+                repository.createSet(
+                    name = title,
+                    description = description.ifBlank { null },
+                    category = backendCategory,
+                    isPublic = isPublic
+                )
+            }
+            when (result) {
                 is VocabResult.Success -> {
                     val setId = result.data.id
                     var hasError = false
@@ -103,7 +111,10 @@ class VocabViewModel(
                                 word = word.term.trim(),
                                 meaning = word.definition.trim()
                             )
-                            when (val wordResult = repository.addWord(setId, req)) {
+                            val wordResult = withContext(Dispatchers.IO){
+                                repository.addWord(setId, req)
+                            }
+                            when (wordResult) {
                                 is VocabResult.Error -> {
                                     hasError = true
                                     errorMsg = wordResult.message
@@ -148,13 +159,16 @@ class VocabViewModel(
     ) {
         viewModelScope.launch {
             val backendCategory = mapCategoryToBackend(category)
-            when (val result = repository.updateSet(
-                setId = setId,
-                name = title,
-                description = description.ifBlank { null },
-                category = backendCategory,
-                isPublic = isPublic
-            )) {
+            val result = withContext(Dispatchers.IO){
+                repository.updateSet(
+                    setId = setId,
+                    name = title,
+                    description = description.ifBlank { null },
+                    category = backendCategory,
+                    isPublic = isPublic
+                )
+            }
+            when (result ) {
                 is VocabResult.Success -> {
                     val updatedSets = _uiState.value.sets.map {
                         if (it.id == setId) result.data else it
@@ -170,7 +184,10 @@ class VocabViewModel(
 
     fun deleteSet(setId: String) {
         viewModelScope.launch {
-            when (repository.deleteSet(setId)) {
+            val result = withContext(Dispatchers.IO){
+                repository.deleteSet(setId)
+            }
+            when (result) {
                 is VocabResult.Success -> {
                     _uiState.value = _uiState.value.copy(
                         sets = _uiState.value.sets.filter { it.id != setId }

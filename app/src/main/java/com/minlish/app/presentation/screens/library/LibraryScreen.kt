@@ -312,7 +312,16 @@ fun LibraryScreen(
                                     onClick = { onSetClick(setItem.id, setItem.title, true) },
                                     onRename = { _, _ -> },
                                     onDelete = {},
-                                    isEditable = false
+                                    isEditable = false,
+                                    onTogglePublic = {
+                                        viewModel.updateSet(
+                                            setId = setItem.id,
+                                            title = setItem.title,
+                                            description = setItem.description,
+                                            category = setItem.category,
+                                            isPublic = !setItem.isPublic
+                                        )
+                                    }
                                 )
                             }
                         }
@@ -374,6 +383,15 @@ fun LibraryScreen(
                                     },
                                     onDelete = {
                                         viewModel.deleteSet(setItem.id)
+                                    },
+                                    onTogglePublic = {
+                                        viewModel.updateSet(
+                                            setId = setItem.id,
+                                            title = setItem.title,
+                                            description = setItem.description,
+                                            category = setItem.category,
+                                            isPublic = !setItem.isPublic
+                                        )
                                     }
                                 )
                             }
@@ -416,6 +434,7 @@ fun VocabularySetCard(
     onClick: () -> Unit,
     onRename: (newName: String, newDesc: String) -> Unit,
     onDelete: () -> Unit,
+    onTogglePublic: () -> Unit,
     isEditable: Boolean = true
 ) {
     var showMenu by remember { mutableStateOf(false) }
@@ -557,6 +576,13 @@ fun VocabularySetCard(
                                     }
                                 )
                                 DropdownMenuItem(
+                                    text = { Text(if (data.isPublic) "Make Private" else "Make Public") },
+                                    onClick = {
+                                        showMenu = false
+                                        onTogglePublic()
+                                    }
+                                )
+                                DropdownMenuItem(
                                     text = { Text("Delete") },
                                     onClick = {
                                         showMenu = false
@@ -604,6 +630,23 @@ fun VocabularySetCard(
                         Text(
                             text = data.statusText,
                             color = data.statusColor,
+                            fontWeight = FontWeight.Medium,
+                            fontSize = 14.sp
+                        )
+                    }
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = if (data.isPublic) Icons.Default.Public else Icons.Default.Lock,
+                            contentDescription = null,
+                            tint = if (data.isPublic) Color(0xFF10B981) else Color(0xFF6B7280),
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Text(
+                            text = if (data.isPublic) "Public" else "Private",
+                            color = if (data.isPublic) Color(0xFF10B981) else Color(0xFF6B7280),
                             fontWeight = FontWeight.Medium,
                             fontSize = 14.sp
                         )

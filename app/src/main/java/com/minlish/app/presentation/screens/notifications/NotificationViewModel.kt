@@ -4,11 +4,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.minlish.app.data.dto.response.NotificationItemDto
 import com.minlish.app.data.repository.NotificationRepository
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 data class NotificationUiState(
     val notifications: List<NotificationItemDto> = emptyList(),
@@ -32,8 +34,10 @@ class NotificationViewModel : ViewModel() {
     fun loadNotifications() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
-            repository.getNotifications(page = 1)
-                .onSuccess { result ->
+            val result = withContext(Dispatchers.IO){
+                repository.getNotifications(page=1)
+            }
+            result.onSuccess { result ->
                     _uiState.update {
                         it.copy(
                             notifications = result.data,

@@ -176,7 +176,9 @@ class ProfileViewModel(
         viewModelScope.launch {
             _uiState.update { it.copy(isSaving = true, saveSuccess = false, errorMessage = null) }
             try {
-                val result = userRepo.updateProfile(_uiState.value.displayName, base64Image)
+                val result = withContext(Dispatchers.IO) {
+                    userRepo.updateProfile(_uiState.value.displayName, base64Image)
+                }
                 if (result.isSuccess) {
                     val user = result.getOrThrow()
                     _uiState.update {
@@ -187,7 +189,9 @@ class ProfileViewModel(
                         )
                     }
                     // Đồng bộ lưu ảnh mới vào DB cục bộ
-                    userRepo.refreshUserProfile()
+                    withContext(Dispatchers.IO) {
+                        userRepo.refreshUserProfile()
+                    }
                 } else {
                     _uiState.update {
                         it.copy(
