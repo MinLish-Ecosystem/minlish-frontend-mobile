@@ -16,6 +16,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -53,6 +54,7 @@ fun ResetPasswordScreen(
     val hasNumberOrSymbol = state.newPassword.any {!it.isLetterOrDigit() || it.isDigit()}
     val passwordsMatch = state.newPassword == state.confirmPassword && state.confirmPassword.isNotEmpty()
     val otpComplete = state.otpValue.length == 6
+    val isBlank = state.newPassword.isBlank() && state.confirmPassword.isBlank()
 
     val context = LocalContext.current
 
@@ -123,6 +125,7 @@ fun ResetPasswordScreen(
                 hasNumberOrSymbol = hasNumberOrSymbol,
                 passwordsMatch = passwordsMatch,
                 otpComplete = otpComplete,
+                isBlank = isBlank,
                 onNewPasswordChange = { viewModel.updatePassword(it) },
                 onConfirmPasswordChange = { viewModel.updateConfirmPassword(it) },
                 onToggleNewPassword = { newPasswordVisible = !newPasswordVisible },
@@ -147,6 +150,7 @@ private fun ResetPasswordCard(
     hasNumberOrSymbol: Boolean,
     passwordsMatch: Boolean,
     otpComplete: Boolean,
+    isBlank: Boolean,
     onNewPasswordChange: (String) -> Unit,
     onConfirmPasswordChange: (String) -> Unit,
     onToggleNewPassword: () -> Unit,
@@ -159,6 +163,7 @@ private fun ResetPasswordCard(
         color = MinlishSurfaceLowest,
         shadowElevation = 8.dp
     ) {
+        val isEnable = hasMinLength && hasUppercase && hasNumberOrSymbol && passwordsMatch && otpComplete && !isLoading && !isBlank
         Column(
             modifier = Modifier.padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -171,7 +176,8 @@ private fun ResetPasswordCard(
                 onValueChange = onNewPasswordChange,
                 visible = newPasswordVisible,
                 onToggleVisibility = onToggleNewPassword,
-                imeAction = ImeAction.Next
+                imeAction = ImeAction.Next,
+                isMatch = false
             )
             PasswordInputField(
                 label = "Confirm Password",
@@ -180,7 +186,7 @@ private fun ResetPasswordCard(
                 visible = confirmPasswordVisible,
                 onToggleVisibility = onToggleConfirmPassword,
                 imeAction = ImeAction.Done,
-                isError = confirmPassword.isNotEmpty() && !passwordsMatch
+                isMatch = confirmPassword.isNotEmpty() && !passwordsMatch
              )
             SecurityCheckList(
                 hasMinLength = hasMinLength,
@@ -193,13 +199,14 @@ private fun ResetPasswordCard(
                     .fillMaxWidth()
                     .height(52.dp)
                     .clip(RoundedCornerShape(12.dp))
+                    .alpha(if (!isEnable) 0.4f else 1f)
                     .background(MinlishGradient),
                 contentAlignment = Alignment.Center
             ) {
                 Button(
                     onClick = onResetPassword,
                     modifier = Modifier.fillMaxSize(),
-                    enabled = hasMinLength && hasUppercase && hasNumberOrSymbol && passwordsMatch && otpComplete && !isLoading,
+                    enabled = isEnable,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color.Transparent,
                         disabledContentColor = Color.Transparent
@@ -275,8 +282,15 @@ private fun PasswordInputField(
     visible: Boolean,
     onToggleVisibility: () -> Unit,
     imeAction: ImeAction = ImeAction.Done,
-    isError: Boolean = false
+    isMatch: Boolean = false
 ) {
+    var isTouched by remember { mutableStateOf(false) }
+    val isError = isTouched && value.isBlank()
+    val errorMessage = when {
+        isTouched && isError -> "$label is required"
+        isError && !isMatch -> "Password do not match"
+        else -> null
+    }
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(4.dp)
@@ -289,7 +303,10 @@ private fun PasswordInputField(
         )
         OutlinedTextField(
             value = value,
-            onValueChange = onValueChange,
+            onValueChange = {
+                isTouched = true
+                onValueChange(it)
+            },
             modifier = Modifier.fillMaxWidth(),
             placeholder = { Text("••••••••", color = MinlishOutline) },
             leadingIcon = {
@@ -320,7 +337,12 @@ private fun PasswordInputField(
                 imeAction = imeAction
             ),
             singleLine = true,
-            isError = isError,
+            isError = isError || !isMatch,
+            supportingText = {
+                if (errorMessage != null) {
+                    Text(errorMessage, color = MinlishError)
+                }
+            },
             shape = RoundedCornerShape(12.dp),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = MinlishPrimary,
@@ -331,13 +353,6 @@ private fun PasswordInputField(
                 cursorColor = MinlishPrimary
             )
         )
-        if (isError) {
-            Text(
-                text = "Password do not match",
-                fontSize = 12.sp,
-                color = MinlishError
-            )
-        }
     }
 }
 

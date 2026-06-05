@@ -14,6 +14,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -43,6 +44,7 @@ fun ForgotPasswordScreen(
 
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val isError = state.email.isBlank()
 
     LaunchedEffect(Unit) {
         viewModel.uiEvent.collectLatest { event ->
@@ -83,7 +85,8 @@ fun ForgotPasswordScreen(
                 onSendResetLink = {email ->
                     viewModel.forgotPassword(email)
                 },
-                onReturnToLogin = onReturnToLogin
+                onReturnToLogin = onReturnToLogin,
+                isError = isError
             )
         }
     }
@@ -95,7 +98,8 @@ private fun ForgotPasswordCard(
     email: String,
     onEmailChange: (String) -> Unit,
     onSendResetLink: (String) -> Unit,
-    onReturnToLogin: () -> Unit
+    onReturnToLogin: () -> Unit,
+    isError: Boolean
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -119,6 +123,7 @@ private fun ForgotPasswordCard(
                     .fillMaxWidth()
                     .height(52.dp)
                     .clip(RoundedCornerShape(12.dp))
+                    .alpha(if (isError) 0.4f else 1f)
                     .background(MinlishGradient),
                 contentAlignment = Alignment.Center
             ) {
@@ -130,35 +135,35 @@ private fun ForgotPasswordCard(
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color.Transparent
                     ),
-                    elevation = null
+                    elevation = null,
+                    enabled = !isLoading && !isError
                 ) {
-                    Text(
-                        text = "Send Reset Link",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = Color.White
-                    )
+                    if (isLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            color = Color.White.copy(alpha = 0.5f),
+                            strokeWidth = 2.5.dp
+                        )
+                    }
+                    else {
+                        Text(
+                            text = "Send Reset Link",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = Color.White
+                        )
+                    }
                 }
             }
-            TextButton(
-                onClick = onReturnToLogin,
-                enabled = !isLoading
-                ) {
-                if (isLoading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        color = Color.White.copy(alpha = 0.5f),
-                        strokeWidth = 2.5.dp
-                    )
-                }
-                else {
-                    Text(
-                        text = "Return to Log In",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MinlishPrimary,
-                    )
-                }
+        TextButton(
+            onClick = onReturnToLogin
+            ) {
+                Text(
+                    text = "Return to Log In",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MinlishPrimary,
+                )
             }
         }
     }
@@ -208,6 +213,8 @@ private fun ForgotPasswordEmailField(
     email: String,
     onEmailChange: (String) -> Unit
 ) {
+    var isTouched by remember { mutableStateOf(false) }
+    val isError = isTouched && email.isBlank()
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(4.dp)
@@ -220,7 +227,16 @@ private fun ForgotPasswordEmailField(
         )
         OutlinedTextField(
             value = email,
-            onValueChange = onEmailChange,
+            onValueChange = {
+                isTouched = true
+                onEmailChange(it)
+            },
+            isError = isError,
+            supportingText = {
+                if (isError) {
+                    Text("Email is required", color = MaterialTheme.colorScheme.error)
+                }
+            },
             modifier = Modifier.fillMaxWidth(),
             placeholder = {
                 Text("Enter your email", color = MinlishOutline)
@@ -239,7 +255,7 @@ private fun ForgotPasswordEmailField(
             singleLine = true,
             shape = RoundedCornerShape(12.dp),
             colors = OutlinedTextFieldDefaults.colors(
-                focusedTextColor = MinlishPrimary,
+                focusedTextColor = MinlishOnSurface,
                 unfocusedBorderColor = MinlishOutlineVariant,
                 focusedContainerColor = Color.White,
                 unfocusedTextColor = Color.White,
