@@ -1,9 +1,12 @@
 package com.minlish.app.data.repository
 
-import com.minlish.app.data.remote.CreateSetRequest
+import com.minlish.app.data.dto.request.AddWordRequest
+import com.minlish.app.data.dto.request.CreateSetRequest
+import com.minlish.app.data.dto.response.DictionaryResponse
+import com.minlish.app.data.dto.response.VocabSetResponse
+import com.minlish.app.data.dto.response.WordResponse
+import com.minlish.app.data.remote.DictionaryApi
 import com.minlish.app.data.remote.VocabApi
-import com.minlish.app.data.remote.VocabSetResponse
-import com.minlish.app.data.remote.WordResponse
 import com.minlish.app.di.NetworkModule
 
 sealed class VocabResult<out T> {
@@ -11,15 +14,16 @@ sealed class VocabResult<out T> {
     data class Error(val message: String) : VocabResult<Nothing>()
 }
 
-class VocabRepository(private val api: VocabApi = NetworkModule.vocabApi) {
-
+class VocabRepository() {
+    private val vocabApi: VocabApi = NetworkModule.vocabApi
+    private val dictionaryApi: DictionaryApi = NetworkModule.dictionaryApi
     suspend fun getUserSets(
         query: String? = null,
         page: Int = 1,
         includeProgress: Boolean? = null
     ): VocabResult<List<VocabSetResponse>> {
         return try {
-            val response = api.getUserSets(
+            val response = vocabApi.getUserSets(
                 q = query?.ifBlank { null },
                 page = page,
                 includeProgress = includeProgress
@@ -39,7 +43,7 @@ class VocabRepository(private val api: VocabApi = NetworkModule.vocabApi) {
         query: String? = null
     ): VocabResult<List<WordResponse>> {
         return try {
-            val response = api.getWords(setId = setId, q = query?.ifBlank { null })
+            val response = vocabApi.getWords(setId = setId, q = query?.ifBlank { null })
             if (response.success && response.data != null) {
                 VocabResult.Success(response.data)
             } else {
@@ -65,7 +69,7 @@ class VocabRepository(private val api: VocabApi = NetworkModule.vocabApi) {
                 isPublic = isPublic,
                 colorTheme = colorTheme
             )
-            val response = api.createSet(body)
+            val response = vocabApi.createSet(body)
             if (response.success && response.data != null) {
                 VocabResult.Success(response.data)
             } else {
@@ -78,7 +82,7 @@ class VocabRepository(private val api: VocabApi = NetworkModule.vocabApi) {
 
     suspend fun deleteSet(setId: String): VocabResult<Unit> {
         return try {
-            val response = api.deleteSet(setId)
+            val response = vocabApi.deleteSet(setId)
             if (response.success) {
                 VocabResult.Success(Unit)
             } else {
@@ -105,7 +109,7 @@ class VocabRepository(private val api: VocabApi = NetworkModule.vocabApi) {
                 isPublic = isPublic,
                 colorTheme = colorTheme
             )
-            val response = api.updateSet(setId, body)
+            val response = vocabApi.updateSet(setId, body)
             if (response.success && response.data != null) {
                 VocabResult.Success(response.data)
             } else {
@@ -118,10 +122,10 @@ class VocabRepository(private val api: VocabApi = NetworkModule.vocabApi) {
 
     suspend fun addWord(
         setId: String,
-        request: com.minlish.app.data.remote.AddWordRequest
+        request: AddWordRequest
     ): VocabResult<WordResponse> {
         return try {
-            val response = api.addWord(setId, request)
+            val response = vocabApi.addWord(setId, request)
             if (response.success && response.data != null) {
                 VocabResult.Success(response.data)
             } else {
@@ -132,22 +136,22 @@ class VocabRepository(private val api: VocabApi = NetworkModule.vocabApi) {
         }
     }
 
-    suspend fun lookupWord(word: String): VocabResult<com.minlish.app.data.remote.DictionaryResponse> {
+    suspend fun lookupWord(word: String): VocabResult<DictionaryResponse> {
         return try {
-            val response = NetworkModule.dictionaryApi.lookupWord(word)
+            val response = dictionaryApi.lookupWord(word)
             if (response.success && response.data != null) {
-                VocabResult.Success(response.data)
+                VocabResult.Success(response.data!!)
             } else {
-                VocabResult.Error(response.message)
+                VocabResult.Error(response.message ?: "Word not found")
             }
         } catch (e: Exception) {
-            VocabResult.Error(e.localizedMessage ?: "Không tìm thấy từ vựng trong từ điển")
+            VocabResult.Error(e.localizedMessage ?: "Dictionary lookup failed")
         }
     }
 
     suspend fun deleteWord(setId: String, wordId: String): VocabResult<Unit> {
         return try {
-            val response = api.deleteWord(setId, wordId)
+            val response = vocabApi.deleteWord(setId, wordId)
             if (response.success) {
                 VocabResult.Success(Unit)
             } else {

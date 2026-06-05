@@ -1,8 +1,8 @@
 package com.minlish.app.data.mapper
 
 import com.minlish.app.R
-import com.minlish.app.data.dto.FlashcardContentDto
-import com.minlish.app.data.remote.LearningCardDto
+import com.minlish.app.data.dto.response.FlashcardContentDto
+import com.minlish.app.data.dto.response.LearningCardDto
 import com.minlish.app.presentation.screens.learning.FlashcardData
 
 object FlashCardMapper{

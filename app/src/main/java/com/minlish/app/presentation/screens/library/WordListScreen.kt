@@ -29,7 +29,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.minlish.app.data.remote.WordResponse
 import com.minlish.app.presentation.screens.library.WordListViewModel
 import android.content.ContentValues
 import android.os.Build
@@ -110,7 +109,6 @@ fun WordListScreen(
     val learningCount by viewModel.learningCount
     val mediaPlayer = remember { MediaPlayer() }
     val isDeleting by remember { viewModel.isDeleting }
-    val deleteSuccess by remember { viewModel.deleteSuccess }
     val wordToDelete by remember { viewModel.wordToDelete }
     var showImportCsvDialog by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
