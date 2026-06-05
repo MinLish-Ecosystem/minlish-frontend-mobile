@@ -38,6 +38,7 @@ import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -71,6 +72,7 @@ fun RegisterScreen(
     val hasNumberOrSymbol = state.password.any {!it.isLetterOrDigit() || it.isDigit()}
     val passwordsMatch = state.password == state.confirmPassword && state.confirmPassword.isNotEmpty()
     val context = LocalContext.current
+    val isBlank = state.password.isBlank() || state.confirmPassword.isBlank() || state.email.isBlank() || state.name.isBlank()
 
     LaunchedEffect(Unit) {
         viewModel.uiEvent.collectLatest { event ->
@@ -118,9 +120,9 @@ fun RegisterScreen(
         ConfirmPasswordField(
             password = state.confirmPassword,
             passwordVisible = confirmPasswordVisible,
-            onPasswordChange = {viewModel.updatePassword(it)},
+            onPasswordChange = {viewModel.updateConfirmPassword(it)},
             onToggleVisibility = {confirmPasswordVisible = !confirmPasswordVisible},
-            isError = state.confirmPassword.isEmpty() && !passwordsMatch
+            isMatch = passwordsMatch
         )
         SecurityCheckList(
             hasMinLength = hasMinLength,
@@ -141,6 +143,7 @@ fun RegisterScreen(
             hasUppercase = hasUppercase,
             hasNumberOrSymbol = hasNumberOrSymbol,
             passwordsMatch = passwordsMatch,
+            isBlank = isBlank,
             isLoading = state.isLoading
         )
         SignInButton(onSignInClick = {
@@ -178,6 +181,8 @@ private fun FullNameField(
     fullName: String,
     onFullNameChange: (String) -> Unit
 ) {
+    var isTouched by remember { mutableStateOf(false) }
+    val isError = isTouched && fullName.isBlank()
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(
             text = "Full Name",
@@ -188,7 +193,17 @@ private fun FullNameField(
 
         OutlinedTextField(
             value = fullName,
-            onValueChange = onFullNameChange,
+            onValueChange = {
+                isTouched = true
+                onFullNameChange(it)
+            },
+            isError = isError,
+            supportingText = {
+                if (isError) {
+                    Text("Full name is required", color = MinlishError)
+                }
+            },
+
             modifier = Modifier.fillMaxWidth(),
             placeholder = {
                 Text("e.g. Jane Doe", color = MinlishOutline)
@@ -222,6 +237,8 @@ private fun EmailField(
     email: String,
     onEmailChange: (String) -> Unit
 ) {
+    var isTouched by remember { mutableStateOf(false) }
+    val isError = isTouched && email.isBlank()
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(
             text = "Email",
@@ -232,7 +249,16 @@ private fun EmailField(
 
         OutlinedTextField(
             value = email,
-            onValueChange = onEmailChange,
+            onValueChange = {
+                isTouched = true
+                onEmailChange(it)
+            },
+            isError = isError,
+            supportingText = {
+                if (isError) {
+                    Text("Email is required", color = MinlishError)
+                }
+            },
             modifier = Modifier.fillMaxWidth(),
             placeholder = {
                 Text("you@example.com", color = MinlishOutline)
@@ -268,8 +294,9 @@ private fun PasswordField(
     onPasswordChange: (String) -> Unit,
     onToggleVisibility: () -> Unit
 ) {
+    var isTouched by remember { mutableStateOf(false) }
+    val isError = isTouched && password.isBlank()
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-
         Text(
             text = "Password",
             fontSize = 14.sp,
@@ -279,7 +306,17 @@ private fun PasswordField(
 
         OutlinedTextField(
             value = password,
-            onValueChange = onPasswordChange,
+            onValueChange = {
+                isTouched = true
+                onPasswordChange(it)
+                            },
+            isError = isError,
+            supportingText = {
+                if (isError) {
+                    Text("Password is required", color = MinlishError)
+                }
+            },
+
             modifier = Modifier.fillMaxWidth(),
             placeholder = {
                 Text("••••••••", color = Color(0xFF767586))
@@ -325,8 +362,17 @@ private fun ConfirmPasswordField(
     passwordVisible: Boolean,
     onPasswordChange: (String) -> Unit,
     onToggleVisibility: () -> Unit,
-    isError: Boolean,
+    isMatch: Boolean,
 ) {
+
+    var isTouched by remember { mutableStateOf(false) }
+    val isError = isTouched && password.isBlank()
+    val errorMessage = when {
+        isTouched && isError -> "Confirm Password is required"
+        isError && !isMatch -> "Password do not match"
+        else -> null
+    }
+
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
 
         Text(
@@ -338,7 +384,10 @@ private fun ConfirmPasswordField(
 
         OutlinedTextField(
             value = password,
-            onValueChange = onPasswordChange,
+            onValueChange = {
+                isTouched = true
+                onPasswordChange(it)
+            },
             modifier = Modifier.fillMaxWidth(),
             placeholder = {
                 Text("••••••••", color = Color(0xFF767586))
@@ -374,15 +423,13 @@ private fun ConfirmPasswordField(
                 unfocusedContainerColor = Color.White,
                 cursorColor = MinlishPrimary
             ),
-            isError = isError,
+            isError = isError || (!isMatch && isTouched),
+            supportingText = {
+                if (errorMessage != null) {
+                    Text(errorMessage, color = MinlishError)
+                }
+            },
         )
-        if (isError) {
-            Text(
-                text = "Password do not match",
-                fontSize = 12.sp,
-                color = MinlishError
-            )
-        }
     }
 }
 
@@ -393,13 +440,16 @@ private fun SignUpButton(
     hasNumberOrSymbol: Boolean,
     passwordsMatch: Boolean,
     onSignUpClick: () -> Unit,
+    isBlank: Boolean,
     isLoading: Boolean,
 ) {
+    val isEnable = hasMinLength && hasUppercase && hasNumberOrSymbol && !isLoading && passwordsMatch && !isBlank
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(52.dp)
             .clip(RoundedCornerShape(12.dp))
+            .alpha(if (!isEnable) 0.4f else 1f)
             .background(MinlishGradient)
             .clickable { onSignUpClick() },
         contentAlignment = Alignment.Center,
@@ -407,7 +457,7 @@ private fun SignUpButton(
         Button(
             onClick = onSignUpClick,
             modifier = Modifier.fillMaxSize(),
-            enabled = hasMinLength && hasUppercase && hasNumberOrSymbol && !isLoading && passwordsMatch,
+            enabled = isEnable,
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color.Transparent,
                 disabledContentColor = Color.Transparent

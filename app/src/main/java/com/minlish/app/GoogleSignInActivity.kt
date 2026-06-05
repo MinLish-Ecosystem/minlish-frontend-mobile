@@ -4,6 +4,7 @@ package com.minlish.app;
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.credentials.*
@@ -85,7 +86,7 @@ class GoogleSignInActivity : ComponentActivity() {
 
                             finish()
                         }
-                        else -> finish()
+                        else -> {}
                     }
                 }
             }

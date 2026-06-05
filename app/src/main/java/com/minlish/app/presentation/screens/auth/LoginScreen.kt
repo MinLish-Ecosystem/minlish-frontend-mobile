@@ -38,6 +38,7 @@ import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -45,6 +46,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.minlish.app.R
 import com.minlish.app.presentation.screens.auth.viewmodels.LoginUiEvent
 import com.minlish.app.presentation.screens.auth.viewmodels.LoginViewModel
+import com.minlish.app.ui.theme.MinlishError
 import com.minlish.app.ui.theme.MinlishGradient
 import com.minlish.app.ui.theme.MinlishOnSurface
 import com.minlish.app.ui.theme.MinlishOutline
@@ -64,6 +66,7 @@ fun LoginScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     var passwordVisible by remember { mutableStateOf(false) }
     val context = LocalContext.current
+    val isError = state.email.isBlank() && state.password.isBlank()
 
     LaunchedEffect(Unit) {
         viewModel.uiEvent.collectLatest { event ->
@@ -107,6 +110,7 @@ fun LoginScreen(
         Spacer(modifier = Modifier.height(24.dp))
         SignInButton(
             isLoading = state.isLoading,
+            isError = isError,
             onSignInClick = {
             viewModel.login(state.email, state.password)
         })
@@ -154,6 +158,9 @@ private fun EmailField(
     email: String,
     onEmailChange: (String) -> Unit
 ) {
+    var isTouched by remember { mutableStateOf(false) }
+    val isError = isTouched && email.isBlank()
+
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
 
         Text (
@@ -165,7 +172,16 @@ private fun EmailField(
 
         OutlinedTextField(
             value = email,
-            onValueChange = onEmailChange,
+            onValueChange = {
+                isTouched = true
+                onEmailChange(it)
+            },
+            isError = isError,
+            supportingText = {
+                if (isError) {
+                    Text("Email is required", color = MinlishError)
+                }
+            },
             modifier = Modifier.fillMaxWidth(),
             placeholder = {
                 Text("you@example.com", color = MinlishOutline)
@@ -202,6 +218,8 @@ private fun PasswordField(
     onToggleVisibility: () -> Unit,
     onForgotPasswordClick: () -> Unit
 ) {
+    var isTouched by remember { mutableStateOf(false) }
+    val isError = isTouched && password.isBlank()
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
 
         Row(
@@ -231,7 +249,16 @@ private fun PasswordField(
 
         OutlinedTextField(
             value = password,
-            onValueChange = onPasswordChange,
+            onValueChange = {
+                isTouched = true
+                onPasswordChange(it)
+            },
+            isError = isError,
+            supportingText = {
+                if (isError) {
+                    Text("Password is required", color = MinlishError)
+                }
+            },
             modifier = Modifier.fillMaxWidth(),
             placeholder = {
                 Text("••••••••", color = MinlishOutline)
@@ -277,6 +304,7 @@ private fun PasswordField(
 @Composable
 private fun SignInButton(
     onSignInClick: () -> Unit,
+    isError: Boolean,
     isLoading: Boolean
 ) {
     Box(
@@ -284,9 +312,10 @@ private fun SignInButton(
             .fillMaxWidth()
             .height(52.dp)
             .clip(RoundedCornerShape(12.dp))
+            .alpha(if (isError) 0.4f else 1f)
             .background(MinlishGradient)
             .clickable(
-                enabled = !isLoading,
+                enabled = !isLoading && !isError,
                 onClick = {onSignInClick()}
             ),
         contentAlignment = Alignment.Center
@@ -307,7 +336,7 @@ private fun SignInButton(
                     text = "Sign In",
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium,
-                    color = Color.White,
+                    color = Color.White ,
                     letterSpacing = 0.1.sp
                 )
                 Icon(
