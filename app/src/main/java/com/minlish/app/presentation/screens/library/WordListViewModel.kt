@@ -36,7 +36,10 @@ class WordListViewModel(
         viewModelScope.launch {
             isLoading.value = true
             errorMessage.value = null
-            when (val result = repository.getWords(setId, query)) {
+            val result = withContext(Dispatchers.IO){
+                repository.getWords(setId, query)
+            }
+            when (result) {
                 is VocabResult.Success -> {
                     words.value = result.data
                     totalCount.value = result.data.size
@@ -58,6 +61,7 @@ class WordListViewModel(
         setId: String,
         word: String,
         pronunciation: String,
+        parOfSpeech: String,
         meaning: String,
         descriptionEN: String,
         example: String,
@@ -65,7 +69,7 @@ class WordListViewModel(
         relatedWord: String,
         note: String,
         audioUrl: String? = null,
-        imageUrl: String? = null
+        imageUrl: String? = null,
     ) {
         viewModelScope.launch {
             isAdding.value = true
@@ -82,10 +86,13 @@ class WordListViewModel(
                 relatedWords = if (relatedWord.isNotBlank()) listOf(relatedWord.trim()) else null,
                 note = note.trim().ifBlank { null },
                 audioUrl = audioUrl?.trim()?.ifBlank { null },
-                imageUrl = imageUrl?.trim()?.ifBlank { null }
+                imageUrl = imageUrl?.trim()?.ifBlank { null },
+                partOfSpeech = parOfSpeech.trim().ifBlank { null },
             )
-
-            when (val result = repository.addWord(setId, request)) {
+            val result = withContext(Dispatchers.IO){
+                repository.addWord(setId, request)
+            }
+            when (result) {
                 is VocabResult.Success -> {
                     addSuccess.value = true
                     loadWords(setId)
@@ -127,6 +134,12 @@ class WordListViewModel(
     }
     fun resetAddSuccess() {
         addSuccess.value = false
+        resetLookupResult()
+    }
+
+    fun resetLookupResult() {
+        lookupResult.value = null
+        errorMessage.value = null
     }
     fun requestDeleteWord(word: WordResponse) {
         wordToDelete.value = word

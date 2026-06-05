@@ -45,6 +45,7 @@ fun AddWordScreen(
 
     var word            by remember { mutableStateOf("") }
     var pronunciation   by remember { mutableStateOf("") }
+    var partOfSpeech    by remember { mutableStateOf("") }
     var meaning         by remember { mutableStateOf("") }
     var descriptionEN   by remember { mutableStateOf("") }
     var example         by remember { mutableStateOf("") }
@@ -59,17 +60,10 @@ fun AddWordScreen(
     val lookupResult by remember { viewModel.lookupResult }
     var audioUrl        by remember { mutableStateOf("") }
     var imageUrl        by remember { mutableStateOf("") }
-
-    LaunchedEffect(addSuccess) {
-        if (addSuccess) {
-            Toast.makeText(context, "Word added successfully!", Toast.LENGTH_SHORT).show()
-            viewModel.resetAddSuccess()
-            onBack()
-        }
-    }
     fun clearForm() {
         pronunciation = ""
         meaning = ""
+        partOfSpeech = ""
         descriptionEN = ""
         example = ""
         collocation = ""
@@ -77,6 +71,15 @@ fun AddWordScreen(
         note = ""
         audioUrl = ""
         imageUrl = ""
+    }
+    LaunchedEffect(addSuccess) {
+        if (addSuccess) {
+            Toast.makeText(context, "Word added successfully!", Toast.LENGTH_SHORT).show()
+            viewModel.resetAddSuccess()
+            word = ""
+            clearForm()
+            onBack()
+        }
     }
     LaunchedEffect(errorMessage) {
         errorMessage?.let { msg ->
@@ -99,7 +102,7 @@ fun AddWordScreen(
             val def = response.meanings?.firstOrNull()?.definitions?.firstOrNull()
             meaning = def?.definition ?: ""
             descriptionEN = def?.definition ?: ""
-
+            partOfSpeech = response.meanings?.firstOrNull()?.partOfSpeech ?: ""
             example = response.meanings?.flatMap { it.definitions }
                 ?.firstOrNull { !it.example.isNullOrBlank() }?.example ?: ""
 
@@ -120,7 +123,14 @@ fun AddWordScreen(
                         .padding(horizontal = 8.dp, vertical = 12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    IconButton(onClick = onBack) {
+                    IconButton(
+                        onClick = {
+                            clearForm()
+                            word=""
+                            viewModel.resetLookupResult()
+                            onBack()
+                        }
+                    ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back",
@@ -164,7 +174,8 @@ fun AddWordScreen(
                                     relatedWord = relatedWord,
                                     note = note,
                                     audioUrl = audioUrl,
-                                    imageUrl = imageUrl
+                                    imageUrl = imageUrl,
+                                    parOfSpeech = partOfSpeech,
                                 )
                             }
                         },

@@ -48,7 +48,8 @@ data class WordItem(
     val phonetic: String,
     val status: WordStatus,
     val definition: String,
-    val audioUrl: String = ""
+    val audioUrl: String = "",
+    val partOfSpeech: String = ""
 )
 
 enum class WordStatus(
@@ -135,6 +136,7 @@ fun WordListScreen(
                 status = status,
                 definition = response.meaning,
                 audioUrl = response.audioUrl ?: "" ,
+                partOfSpeech = response.partOfSpeech ?: ""
             )
         }
     }
@@ -499,6 +501,21 @@ fun WordListScreen(
                                                 fontWeight = FontWeight.Bold,
                                                 fontSize = 18.sp
                                             )
+                                            if (item.partOfSpeech.isNotBlank()) {
+                                                Surface(
+                                                    modifier = Modifier,
+                                                    shape = RoundedCornerShape(6.dp),
+                                                    color = Color(0xFFEEF2FF),
+                                                    contentColor = Color(0xFF4F46E5)
+                                                ) {
+                                                    Text(
+                                                        text = item.partOfSpeech.uppercase(),
+                                                        fontSize = 10.sp,
+                                                        fontWeight = FontWeight.Bold,
+                                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                                    )
+                                                }
+                                            }
 
                                             IconButton(
                                                 onClick = {
