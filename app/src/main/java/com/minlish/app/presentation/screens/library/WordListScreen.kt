@@ -85,7 +85,8 @@ fun WordListScreen(
     onStartSession: (String) -> Unit = {},
     onAddWordClick: (String) -> Unit = {},
     viewModel: WordListViewModel = viewModel(),
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isReadOnly: Boolean = false
 ) {
     var searchQuery by remember { mutableStateOf("") }
     val context = LocalContext.current
@@ -207,14 +208,16 @@ fun WordListScreen(
                         expanded = showMoreMenu,
                         onDismissRequest = {showMoreMenu = false}
                     ){
-                        DropdownMenuItem(
-                            text = { Text("Import CSV") },
-                            leadingIcon = { Icon(imageVector = Icons.Default.Upload, contentDescription = null) },
-                            onClick = {
-                                showMoreMenu = false
-                                showImportCsvDialog = true
-                            }
-                        )
+                        if (!isReadOnly) {
+                            DropdownMenuItem(
+                                text = { Text("Import CSV") },
+                                leadingIcon = { Icon(imageVector = Icons.Default.Upload, contentDescription = null) },
+                                onClick = {
+                                    showMoreMenu = false
+                                    showImportCsvDialog = true
+                                }
+                            )
+                        }
                         DropdownMenuItem(
                             text = { Text("Export CSV") },
                             leadingIcon = { Icon(imageVector = Icons.Default.Download, contentDescription = null) },
@@ -315,34 +318,36 @@ fun WordListScreen(
                                 }
                             }
 
-                            Button(
-                                onClick = { onAddWordClick(setId) },
-                                modifier = Modifier
-                                    .height(48.dp)
-                                    .border(
-                                        width = 1.dp,
-                                        color = primaryColor.copy(alpha = 0.2f),
-                                        shape = RoundedCornerShape(12.dp)
-                                    ),
-                                shape = RoundedCornerShape(12.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = primaryContainerColor,
-                                    contentColor = onPrimaryContainerColor
-                                )
-                            ) {
-                                Row(
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                    verticalAlignment = Alignment.CenterVertically
+                            if (!isReadOnly) {
+                                Button(
+                                    onClick = { onAddWordClick(setId) },
+                                    modifier = Modifier
+                                        .height(48.dp)
+                                        .border(
+                                            width = 1.dp,
+                                            color = primaryColor.copy(alpha = 0.2f),
+                                            shape = RoundedCornerShape(12.dp)
+                                        ),
+                                    shape = RoundedCornerShape(12.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = primaryContainerColor,
+                                        contentColor = onPrimaryContainerColor
+                                    )
                                 ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Add,
-                                        contentDescription = null
-                                    )
-                                    Text(
-                                        text = "Add Word",
-                                        fontWeight = FontWeight.SemiBold,
-                                        fontSize = 14.sp
-                                    )
+                                    Row(
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Add,
+                                            contentDescription = null
+                                        )
+                                        Text(
+                                            text = "Add Word",
+                                            fontWeight = FontWeight.SemiBold,
+                                            fontSize = 14.sp
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -531,13 +536,15 @@ fun WordListScreen(
                                         verticalAlignment = Alignment.CenterVertically,
                                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                                     ) {
-                                        IconButton(onClick = {val originalWord = words.find { it.word == item.word }
-                                            originalWord?.let { viewModel.requestDeleteWord(it) }}) {
-                                            Icon(
-                                                imageVector = Icons.Filled.Delete,
-                                                contentDescription = "Delete word",
-                                                tint = onSurfaceVariantColor
-                                            )
+                                        if (!isReadOnly) {
+                                            IconButton(onClick = {val originalWord = words.find { it.word == item.word }
+                                                originalWord?.let { viewModel.requestDeleteWord(it) }}) {
+                                                Icon(
+                                                    imageVector = Icons.Filled.Delete,
+                                                    contentDescription = "Delete word",
+                                                    tint = onSurfaceVariantColor
+                                                )
+                                            }
                                         }
                                         wordToDelete?.let { word ->
                                             AlertDialog(

@@ -12,6 +12,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.onSuccess
+import com.minlish.app.data.repository.VocabRepository
 
 
 data class FlashcardData(
@@ -28,6 +29,7 @@ data class FlashcardData(
 )
 class FlashcardViewModel(): ViewModel() {
     val flashCardRepository = FlashCardRepository()
+    val vocabRepository = VocabRepository()
     val flashcards = mutableStateOf<List<FlashcardData>>(emptyList())
     val currentIndex = mutableStateOf(0)
     val isLoading = mutableStateOf(false)
@@ -50,47 +52,44 @@ class FlashcardViewModel(): ViewModel() {
             isLoading.value = true
             errorMessage.value = null
             try {
-                val result = withContext(Dispatchers.IO) {
-                    flashCardRepository.getLearningSet()
-                }
-                result.onSuccess { dto ->
-                    val newList = FlashCardMapper.mapToUiList(
-                        dtoList = dto.flashCardSets,
-                    )
-                    if (newList.isEmpty()) {
-                        errorMessage.value = "Không có từ nào cần ôn hôm nay"
-                        flashcards.value = emptyList()
-                    } else {
-                        flashcards.value = newList
-                        currentIndex.value = 0
-                        cardStartTime = System.currentTimeMillis()
+                if (setId != null) {
+                    val result = withContext(Dispatchers.IO) {
+                        vocabRepository.getWords(setId)
                     }
-                }.onFailure { error ->
-                    errorMessage.value = error.message ?: "Lỗi không xác định"
-                    if (setId != null) {
-                        val result = withContext(Dispatchers.IO) {
-                            flashCardRepository.getSetLearningQueue(setId)
+                    when (result) {
+                        is com.minlish.app.data.repository.VocabResult.Success -> {
+                            val newList = FlashCardMapper.mapWordResponseListToUiList(result.data)
+                            if (newList.isEmpty()) {
+                                errorMessage.value = "Không có từ nào trong bộ từ này"
+                                flashcards.value = emptyList()
+                            } else {
+                                flashcards.value = newList
+                                currentIndex.value = 0
+                                cardStartTime = System.currentTimeMillis()
+                            }
                         }
-                        result.onSuccess { queueResponse ->
-                            val allCards = queueResponse.newCards + queueResponse.reviewCards
-                            flashcards.value =
-                                FlashCardMapper.mapLearningCardDtoListToUiList(allCards)
+                        is com.minlish.app.data.repository.VocabResult.Error -> {
+                            errorMessage.value = result.message
+                        }
+                    }
+                } else {
+                    val result = withContext(Dispatchers.IO) {
+                        flashCardRepository.getLearningSet()
+                    }
+                    result.onSuccess { dto ->
+                        val newList = FlashCardMapper.mapToUiList(
+                            dtoList = dto.flashCardSets,
+                        )
+                        if (newList.isEmpty()) {
+                            errorMessage.value = "Không có từ nào cần ôn hôm nay"
+                            flashcards.value = emptyList()
+                        } else {
+                            flashcards.value = newList
                             currentIndex.value = 0
-                        }.onFailure { error ->
-                            errorMessage.value = error.message ?: "Lỗi không xác định"
+                            cardStartTime = System.currentTimeMillis()
                         }
-                    } else {
-                        val result = withContext(Dispatchers.IO) {
-                            flashCardRepository.getLearningSet()
-                        }
-                        result.onSuccess { dto ->
-                            flashcards.value = FlashCardMapper.mapToUiList(
-                                dtoList = dto.flashCardSets,
-                            )
-                            currentIndex.value = 0
-                        }.onFailure { error ->
-                            errorMessage.value = error.message ?: "Lỗi không xác định"
-                        }
+                    }.onFailure { error ->
+                        errorMessage.value = error.message ?: "Lỗi không xác định"
                     }
                 }
             } finally {

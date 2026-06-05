@@ -23,6 +23,16 @@ interface VocabApi {
         @Query("includeProgress") includeProgress: Boolean? = null
     ): ApiResponse<PaginatedData<VocabSetResponse>>
 
+    @GET("vocab/sets/public")
+    suspend fun getPublicSets(
+        @Query("q") q: String? = null,
+        @Query("category") category: String? = null,
+        @Query("level") level: String? = null,
+        @Query("sortBy") sortBy: String? = null,
+        @Query("page") page: Int = 1,
+        @Query("limit") limit: Int = 20
+    ): ApiResponse<PaginatedData<VocabSetResponse>>
+
     @POST("vocab/sets")
     suspend fun createSet(
         @Body body: CreateSetRequest

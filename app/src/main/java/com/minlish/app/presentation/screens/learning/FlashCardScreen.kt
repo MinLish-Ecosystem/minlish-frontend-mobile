@@ -510,7 +510,8 @@ fun CompletionScreen(onDoneClick: () -> Unit) {
 fun FlashCardScreen(
     viewModel: FlashcardViewModel,
     onExitClick: () -> Unit,
-    onMoreClick: () -> Unit
+    onMoreClick: () -> Unit,
+    setId: String? = null
 ) {
     val isLoading by viewModel.isLoading
     val error by viewModel.errorMessage
@@ -518,8 +519,8 @@ fun FlashCardScreen(
     val currentCardData by viewModel.currentCard
     val totalCards by viewModel.totalCards
     val isCompleted by viewModel.isCompleted
-    LaunchedEffect(Unit) {
-        viewModel.loadFlashcardSet()
+    LaunchedEffect(setId) {
+        viewModel.loadFlashcardSet(setId)
     }
     // Thành công
     if (isCompleted) {
