@@ -34,6 +34,16 @@ class TokenAuthenticator : Authenticator {
     }
 
     override fun authenticate(route: Route?, response: Response): Request? {
+        val url = response.request.url.toString()
+        if (url.contains("/auth/login") ||
+            url.contains("/auth/register") ||
+            url.contains("/auth/forgot-password") ||
+            url.contains("auth/google-login") ||
+            url.contains("/auth/reset-password") ||
+            url.contains("/auth//verify-email")) {
+            return null
+        }
+
         val currentToken = TokenManager.getAccessToken()
         val refreshToken = TokenManager.getRefreshToken()
 

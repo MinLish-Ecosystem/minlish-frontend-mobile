@@ -76,9 +76,9 @@ fun LoginScreen(
                 }
                 is LoginUiEvent.ShowError -> {
                     Toast.makeText(context, event.message, Toast.LENGTH_LONG).show()
+                    viewModel.resetViewModel()
                 }
                 is LoginUiEvent.GoogleSignInSuccess -> {
-                    Log.d("Test", "CheckMate")
                     onLoginSuccess()
                 }
             }

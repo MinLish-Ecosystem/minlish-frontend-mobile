@@ -86,7 +86,7 @@ class GoogleSignInActivity : ComponentActivity() {
 
                             finish()
                         }
-                        else -> {}
+                        else -> finish()
                     }
                 }
             }

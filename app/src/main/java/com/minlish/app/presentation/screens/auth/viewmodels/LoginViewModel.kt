@@ -51,7 +51,6 @@ class LoginViewModel: ViewModel() {
                         _uiEvent.send(LoginUiEvent.ShowError(errorMessage))
                     }
             }
-            _uiState.update { it.copy(isLoading = false) }
         }
     }
 
@@ -61,9 +60,8 @@ class LoginViewModel: ViewModel() {
             withContext(Dispatchers.IO) {
                 repository.signInWithGoogle(idToken)
                     .onSuccess {
-                        Log.d("Test", "Loi")
-                        resetViewModel()
                         _uiEvent.send(LoginUiEvent.GoogleSignInSuccess)
+                        resetViewModel()
                     }
                     .onFailure { e ->
                         e.message?.let { Log.d("Test", it) }
