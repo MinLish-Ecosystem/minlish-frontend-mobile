@@ -2,6 +2,7 @@ package com.minlish.app.data.repository
 
 
 import android.app.Activity.RESULT_CANCELED
+import android.util.Log
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialException
 import androidx.lifecycle.lifecycleScope
@@ -10,6 +11,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import com.minlish.app.R
 import com.minlish.app.data.dto.request.ForgotPasswordRequest
+import com.minlish.app.data.dto.request.GoogleSignInRequest
 import com.minlish.app.data.dto.response.ApiResponse
 import com.minlish.app.data.dto.response.LoginData
 import com.minlish.app.data.local.TokenManager
@@ -22,6 +24,7 @@ import com.minlish.app.data.dto.response.VerifyEmailData
 import com.minlish.app.di.NetworkModule
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import kotlin.coroutines.cancellation.CancellationException
 
 class AuthRepository {
     private val authApi = NetworkModule.authApi
@@ -42,12 +45,23 @@ class AuthRepository {
         }
     }
 
-    suspend fun signInWithGoogle(idToken: String): Result<Unit> {
+    suspend fun signInWithGoogle(idToken: String): Result<ApiResponse<LoginData>> {
         return try {
-            val credential = GoogleAuthProvider.getCredential(idToken, null)
-            authGoogle.signInWithCredential(credential).await()
-            Result.success(Unit)
+            val response = authApi.googleSignIn(
+                GoogleSignInRequest(
+                    idToken = idToken
+                )
+            )
+            Log.d("Hui", response.data?.user?.name ?: "Not Found")
+            val loginData = response.data ?: throw Exception("Login data is null")
+            TokenManager.saveTokens(
+                accessToken =  loginData.accessToken,
+                refreshToken = loginData.refreshToken,
+                userId = loginData.user.id
+            )
+            Result.success(response)
         } catch (e: Exception) {
+            Log.e("API_ERROR", "Lỗi kết nối hoặc server: ${e.message}")
             Result.failure(e)
         }
     }

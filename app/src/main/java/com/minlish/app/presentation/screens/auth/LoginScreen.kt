@@ -1,5 +1,6 @@
 package com.minlish.app.presentation.screens.auth
 
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -73,6 +74,10 @@ fun LoginScreen(
                 is LoginUiEvent.ShowError -> {
                     Toast.makeText(context, event.message, Toast.LENGTH_LONG).show()
                 }
+                is LoginUiEvent.GoogleSignInSuccess -> {
+                    Log.d("Test", "CheckMate")
+                    onLoginSuccess()
+                }
             }
         }
     }
@@ -108,7 +113,9 @@ fun LoginScreen(
         Spacer(modifier = Modifier.height(24.dp))
         DividerWithText()
         Spacer(modifier = Modifier.height(16.dp))
-        GoogleButton(onGoogleSignInClick = {
+        GoogleButton(
+            isLoadingGoogle = state.isLoadingGoogle,
+            onGoogleSignInClick = {
             onGoogleSignInClick()
         })
         Spacer(modifier = Modifier.height(32.dp))
@@ -341,10 +348,12 @@ private fun DividerWithText() {
 
 @Composable
 private fun GoogleButton(
-    onGoogleSignInClick: () -> Unit
+    onGoogleSignInClick: () -> Unit,
+    isLoadingGoogle: Boolean,
 ) {
     OutlinedButton(
         onClick =  onGoogleSignInClick,
+        enabled = !isLoadingGoogle,
         modifier = Modifier
             .fillMaxWidth()
             .height(52.dp),
@@ -358,17 +367,26 @@ private fun GoogleButton(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Image(
-                painter = painterResource(id = R.drawable.ic_google),
-                contentDescription = "Google Logo",
-                modifier = Modifier.size(20.dp)
-            )
-            Text(
-                text = "Continue with Google",
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Medium,
-                color = Color(0xFF1B1B23)
-            )
+            if (isLoadingGoogle) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(24.dp),
+                    color = MinlishPrimary.copy(alpha = 0.5f),
+                    strokeWidth = 2.5.dp
+                )
+            }
+            else {
+                Image(
+                    painter = painterResource(id = R.drawable.ic_google),
+                    contentDescription = "Google Logo",
+                    modifier = Modifier.size(20.dp)
+                )
+                Text(
+                    text = "Continue with Google",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = Color(0xFF1B1B23)
+                )
+            }
         }
     }
 }

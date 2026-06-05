@@ -1,47 +1,71 @@
 package com.minlish.app;
 
 
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.credentials.*
-import androidx.credentials.exceptions.GetCredentialException
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
-import com.google.android.gms.common.api.ApiException
-import com.google.android.libraries.identity.googleid.GetGoogleIdOption
-import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.minlish.app.presentation.screens.auth.viewmodels.LoginViewModel
+import androidx.activity.viewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.NavHost
+import com.google.android.gms.common.api.ApiException
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.GoogleAuthProvider
+import com.minlish.app.presentation.screens.auth.viewmodels.LoginUiEvent
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
 
 
 class GoogleSignInActivity : ComponentActivity() {
 
+    private lateinit var auth: FirebaseAuth
+    private lateinit var viewModel: LoginViewModel
     private lateinit var googleSignInClient: GoogleSignInClient
-
-    // 1. Khai báo cái Launcher này ở cấp độ lớp (Class level)
     private val signInLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
-        // Xử lý kết quả tại đây thay cho onActivityResult
-        val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
-        try {
-            val account = task.getResult(ApiException::class.java)
-            val idToken = account.idToken
-            Log.d("SUCCESS", "Đã lấy được token: $idToken")
-            finish()
-        } catch (e: ApiException) {
-            Log.e("AUTH_ERROR", "Lỗi: ${e.statusCode}")
-            finish()
+        lifecycleScope.launch {
+            try {
+                val account = GoogleSignIn
+                    .getSignedInAccountFromIntent(result.data)
+                    .getResult(ApiException::class.java)
+
+                val googleCredential = GoogleAuthProvider.getCredential(account.idToken, null)
+
+                val idToken = withContext(Dispatchers.IO) {
+                    auth.signInWithCredential(googleCredential).await()
+                    auth.currentUser
+                        ?.getIdToken(true)
+                        ?.await()
+                        ?.token ?: throw Exception("idToken is null")
+                }
+                viewModel.googleSignIn(idToken)
+
+            } catch (e: ApiException) {
+                Log.e("GoogleSignIn", "Google sign in thất bại: ${e.message}")
+                finish()
+            } catch (e: Exception) {
+                Log.e("GoogleSignIn", "Lỗi: ${e.message}")
+                finish()
+            }
         }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        auth = FirebaseAuth.getInstance()
+        viewModel = ViewModelProvider(this)[LoginViewModel::class.java]
 
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
             .requestIdToken(getString(R.string.Web_Client_ID))
@@ -49,7 +73,22 @@ class GoogleSignInActivity : ComponentActivity() {
             .build()
         googleSignInClient = GoogleSignIn.getClient(this, gso)
 
-        // 2. Thay vì startActivityForResult, hãy dùng signInLauncher.launch()
         signInLauncher.launch(googleSignInClient.signInIntent)
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.uiEvent.collect { event ->
+                    when (event) {
+                        is LoginUiEvent.GoogleSignInSuccess -> {
+                            val intent = Intent(this@GoogleSignInActivity, MainActivity::class.java)
+                            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                            startActivity(intent)
+
+                            finish()
+                        }
+                        else -> finish()
+                    }
+                }
+            }
+        }
     }
 }

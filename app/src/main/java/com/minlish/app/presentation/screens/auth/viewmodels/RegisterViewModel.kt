@@ -27,6 +27,7 @@ data class RegisterUIState(
     val name: String = "",
     val email: String = "",
     val password: String = "",
+    val confirmPassword: String = "",
     val otpValue: String = "",
     val secondsLeft: Int = 599,
     val isLoading: Boolean = false,
@@ -118,6 +119,10 @@ class RegisterViewModel: ViewModel() {
 
     fun updateSecondsLeft(secondsLeft: Int) {
         _uiState.update { it.copy(secondsLeft = secondsLeft) }
+    }
+
+    fun updateConfirmPassword(confirmPassword: String) {
+        _uiState.update { it.copy(confirmPassword = confirmPassword) }
     }
 
     fun decrementSeconds() {

@@ -1,5 +1,6 @@
 package com.minlish.app.presentation.screens.auth.viewmodels
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.minlish.app.data.repository.AuthRepository
@@ -15,6 +16,7 @@ import kotlinx.coroutines.withContext
 
 sealed interface LoginUiEvent {
     object LoginSuccess: LoginUiEvent
+    object GoogleSignInSuccess: LoginUiEvent
     data class ShowError(val message: String?) : LoginUiEvent
 }
 
@@ -22,6 +24,7 @@ data class LoginUIState(
     val email: String = "",
     val password: String = "",
     val isLoading: Boolean = false,
+    val isLoadingGoogle: Boolean = false,
     val errorMessage: String? = null
 )
 
@@ -54,20 +57,22 @@ class LoginViewModel: ViewModel() {
 
     fun googleSignIn(idToken: String) {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
+            _uiState.update { it.copy(isLoadingGoogle = true) }
             withContext(Dispatchers.IO) {
                 repository.signInWithGoogle(idToken)
                     .onSuccess {
-                        _uiEvent.send(LoginUiEvent.LoginSuccess)
+                        Log.d("Test", "Loi")
                         resetViewModel()
+                        _uiEvent.send(LoginUiEvent.GoogleSignInSuccess)
                     }
                     .onFailure { e ->
+                        e.message?.let { Log.d("Test", it) }
                         val errorMessage = e.message ?: "Google Sign-In Failed"
                         _uiState.update { it.copy(errorMessage = errorMessage) }
                         _uiEvent.send(LoginUiEvent.ShowError(errorMessage))
                     }
             }
-            _uiState.update { it.copy(isLoading = false) }
+            _uiState.update { it.copy(isLoadingGoogle = false) }
         }
     }
 

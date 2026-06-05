@@ -4,6 +4,7 @@ import com.minlish.app.data.dto.response.ApiResponse
 import com.minlish.app.data.dto.response.LoginData
 import com.minlish.app.data.dto.request.LoginRequest
 import com.minlish.app.data.dto.request.ForgotPasswordRequest
+import com.minlish.app.data.dto.request.GoogleSignInRequest
 import com.minlish.app.data.dto.response.RegisterData
 import com.minlish.app.data.dto.request.RegisterRequest
 import com.minlish.app.data.dto.request.ResetPasswordRequest
@@ -34,6 +35,11 @@ interface AuthApi {
     @Headers("No-Authentication: true")
     @POST("auth/reset-password")
     suspend fun resetPassword(@Body request: ResetPasswordRequest): ApiResponse<String>
+
+
+    @Headers("No-Authentication: true")
+    @POST("auth/google-login")
+    suspend fun googleSignIn(@Body request: GoogleSignInRequest): ApiResponse<LoginData>
 
     @POST("auth/logout")
     suspend fun logout(): ApiResponse<String>

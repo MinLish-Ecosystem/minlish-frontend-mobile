@@ -22,6 +22,14 @@
           }
         },
         {
+          "client_id": "831655266341-v8t5pjior805tk96la4frt3ftkcb6t71.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.minlish.app",
+            "certificate_hash": "ea200d837944cd3bfa96c067ea2bb1db94113eb6"
+          }
+        },
+        {
           "client_id": "831655266341-skc5vbq802hj608fv6b65po45e03064j.apps.googleusercontent.com",
           "client_type": 3
         }

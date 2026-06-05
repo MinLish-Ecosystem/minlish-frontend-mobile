@@ -52,10 +52,6 @@ fun AppNavHost(
     val regisViewModel: RegisterViewModel = viewModel()
     val forgotPasswordViewModel: ForgetPasswordViewModel = viewModel()
 
-    val googleLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.StartActivityForResult()
-    ) {}
-
     NavHost(
         navController = navController,
         startDestination = startDestination,
@@ -75,9 +71,8 @@ fun AppNavHost(
                     }
                 },
                 onGoogleSignInClick = {
-                    googleLauncher.launch(
-                        Intent(context, GoogleSignInActivity::class.java)
-                    )
+                    val intent = Intent(context, GoogleSignInActivity::class.java)
+                    context.startActivity(intent)
                 },
                 onForgotPasswordClick = { navController.navigate(NavDestinations.ForgotPassword.route) },
                 onSignUpClick = { navController.navigate(NavDestinations.Register.route) }

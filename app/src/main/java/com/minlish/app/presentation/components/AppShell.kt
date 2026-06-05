@@ -28,7 +28,7 @@ fun AppShell(
     startDestination: String = NavDestinations.Welcome.route,
 ) {
     val currentBackStack by navController.currentBackStackEntryAsState()
-    val currentRoute = currentBackStack?.destination?.route ?: NavDestinations.Learning.route
+    val currentRoute = currentBackStack?.destination?.route ?: NavDestinations.Welcome.route
     val context = LocalContext.current
 
     val globalProfileViewModel: ProfileViewModel = viewModel()
@@ -48,7 +48,7 @@ fun AppShell(
         SessionExpiredEvent.flow.collect {
             globalProfileViewModel.resetState()
             navController.clearAllTabStates()
-            navController.navigate(NavDestinations.Login.route) {
+            navController.navigate(NavDestinations.Welcome.route) {
                 popUpTo(0) { inclusive = true }
             }
         }
