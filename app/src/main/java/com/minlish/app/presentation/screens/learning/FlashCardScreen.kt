@@ -40,6 +40,11 @@ import androidx.compose.material3.Text
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Error
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -590,4 +595,369 @@ fun FlashCardScreen(
 
     }
 }
+data class QuizQuestion(
+    val id: Int,
+    val type: String,
+    val question: String,
+    val options: List<String>,
+    val answer: String,
+    val explanation: String
+)
 
+@Composable
+fun QuizQuestionCard(
+    question: QuizQuestion,
+    selectedAnswer: String?,
+    isAnswered: Boolean,
+    onOptionClick: (String) -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(24.dp)
+        ) {
+            // Question type badge
+            Surface(
+                modifier = Modifier.padding(bottom = 16.dp),
+                shape = RoundedCornerShape(50.dp),
+                color = Color(0xFFF0F4FF)
+            ) {
+                Text(
+                    text = question.type.replace("_", " ").uppercase(),
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 10.sp
+                    ),
+                    color = Color(0xFF4648D4),
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                )
+            }
+
+            // Question text
+            Text(
+                text = question.question,
+                style = MaterialTheme.typography.headlineSmall.copy(
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp
+                ),
+                color = Color(0xFF1B1B23),
+                lineHeight = 28.sp,
+                modifier = Modifier.padding(bottom = 24.dp)
+            )
+
+            // Options
+            Column(
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                question.options.forEachIndexed { index, option ->
+                    val isSelected = selectedAnswer == option
+                    val isCorrect = option == question.answer
+                    val backgroundColor = when {
+                        !isAnswered -> Color(0xFFF5F2FE)
+                        isSelected && isCorrect -> Color(0xFFD1FAE5)
+                        isSelected && !isCorrect -> Color(0xFFFEE2E2)
+                        !isSelected && isCorrect -> Color(0xFFD1FAE5)
+                        else -> Color(0xFFF5F2FE)
+                    }
+                    val borderColor = when {
+                        !isAnswered -> Color(0xFFE4E1ED)
+                        isSelected && isCorrect -> Color(0xFF10B981)
+                        isSelected && !isCorrect -> Color(0xFFEF4444)
+                        !isSelected && isCorrect -> Color(0xFF10B981)
+                        else -> Color(0xFFE4E1ED)
+                    }
+
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable(enabled = !isAnswered) { onOptionClick(option) },
+                        shape = RoundedCornerShape(12.dp),
+                        color = backgroundColor,
+                        border = BorderStroke(2.dp, borderColor)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = option,
+                                style = MaterialTheme.typography.bodyLarge.copy(
+                                    fontWeight = FontWeight.Medium,
+                                    fontSize = 16.sp
+                                ),
+                                color = Color(0xFF1B1B23),
+                                modifier = Modifier.weight(1f)
+                            )
+                            if (isAnswered && isCorrect) {
+                                Icon(
+                                    imageVector = Icons.Default.CheckCircle,
+                                    contentDescription = "Correct",
+                                    tint = Color(0xFF10B981),
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            } else if (isAnswered && isSelected && !isCorrect) {
+                                Icon(
+                                    imageVector = Icons.Default.Error,
+                                    contentDescription = "Wrong",
+                                    tint = Color(0xFFEF4444),
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Explanation (show after answered)
+            if (isAnswered) {
+                Spacer(modifier = Modifier.height(20.dp))
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    color = Color(0xFFFCF8FF),
+                    border = BorderStroke(1.dp, Color(0xFFE4E1ED))
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp)
+                    ) {
+                        Text(
+                            text = "Giải thích:",
+                            style = MaterialTheme.typography.labelMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 12.sp
+                            ),
+                            color = Color(0xFF4648D4)
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = question.explanation,
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                fontSize = 14.sp,
+                                lineHeight = 20.sp
+                            ),
+                            color = Color(0xFF464554)
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun QuizCompletionScreen(
+    score: Int,
+    totalQuestions: Int,
+    onDoneClick: () -> Unit
+) {
+    val percentage = (score.toFloat() / totalQuestions * 100).toInt()
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text("🎉", fontSize = 64.sp)
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            "Hoàn thành!",
+            style = MaterialTheme.typography.headlineLarge,
+            fontWeight = FontWeight.Bold
+        )
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F2FE))
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "$score / $totalQuestions",
+                    style = MaterialTheme.typography.displayLarge.copy(
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 48.sp
+                    ),
+                    color = Color(0xFF4648D4)
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "$percentage% chính xác",
+                    style = MaterialTheme.typography.headlineSmall.copy(
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 20.sp
+                    ),
+                    color = Color(0xFF464554)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        Button(
+            onClick = onDoneClick,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp),
+            shape = RoundedCornerShape(12.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4648D4))
+        ) {
+            Text(
+                "Quay về Dashboard",
+                style = MaterialTheme.typography.labelLarge.copy(
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp
+                ),
+                color = Color.White
+            )
+        }
+    }
+}
+
+@Composable
+fun QuizScreen(
+    questions: List<QuizQuestion>,
+    onExitClick: () -> Unit,
+    onComplete: () -> Unit
+) {
+    var currentIndex by remember { mutableStateOf(0) }
+    var selectedAnswer by remember { mutableStateOf<String?>(null) }
+    var isAnswered by remember { mutableStateOf(false) }
+    var score by remember { mutableStateOf(0) }
+    var isCompleted by remember { mutableStateOf(false) }
+
+    if (isCompleted) {
+        QuizCompletionScreen(
+            score = score,
+            totalQuestions = questions.size,
+            onDoneClick = onComplete
+        )
+        return
+    }
+
+    val currentQuestion = questions[currentIndex]
+
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        topBar = {
+            // ✅ REUSE FlashCardTopBar từ FlashCardScreen
+            FlashCardTopBar(
+                currentProgress = currentIndex + 1,
+                totalQuestion = questions.size,
+                onExitClick = onExitClick,
+                onMoreClick = { /* TODO: Handle more options */ }
+            )
+        },
+        bottomBar = {
+            // ✅ Footer giống FlashCardBottomBar nhưng với nút Next
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                    .clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)),
+                color = Color.White.copy(alpha = 0.98f),
+                shadowElevation = 24.dp,
+                border = BorderStroke(
+                    width = 1.dp,
+                    color = Color(0xFFE4E1ED).copy(alpha = 0.5f)
+                )
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 16.dp)
+                ) {
+                    Button(
+                        onClick = {
+                            if (currentIndex < questions.size - 1) {
+                                currentIndex++
+                                selectedAnswer = null
+                                isAnswered = false
+                            } else {
+                                isCompleted = true
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp),
+                        enabled = isAnswered,
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF4648D4),
+                            disabledContainerColor = Color(0xFFE4E1ED)
+                        )
+                    ) {
+                        Text(
+                            text = if (currentIndex == questions.size - 1) "Hoàn thành" else "Câu tiếp theo",
+                            style = MaterialTheme.typography.labelLarge.copy(
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp
+                            ),
+                            color = Color.White
+                        )
+                    }
+                }
+            }
+        }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .background(Color(0xFFF5F2FE))
+                .verticalScroll(rememberScrollState())
+        ) {
+            QuizQuestionCard(
+                question = currentQuestion,
+                selectedAnswer = selectedAnswer,
+                isAnswered = isAnswered,
+                onOptionClick = { answer ->
+                    selectedAnswer = answer
+                    isAnswered = true
+                    if (answer == currentQuestion.answer) {
+                        score++
+                    }
+                }
+            )
+        }
+    }
+}
+
+// Preview với data mẫu
+@Composable
+fun QuizScreenPreview() {
+    val sampleQuestions = List(20) { index ->
+        QuizQuestion(
+            id = index + 1,
+            type = if (index % 2 == 0) "fill_blank" else "multiple_choice",
+            question = "Question ${index + 1}: She decided to ____ her old car because it was no longer safe.",
+            options = listOf("abandon", "repair", "improve", "achieve"),
+            answer = "abandon",
+            explanation = "The verb 'abandon' means to leave something behind permanently."
+        )
+    }
+
+    QuizScreen(
+        questions = sampleQuestions,
+        onExitClick = {},
+        onComplete = {}
+    )
+}

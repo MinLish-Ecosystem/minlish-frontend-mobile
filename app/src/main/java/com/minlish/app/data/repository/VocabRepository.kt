@@ -181,37 +181,4 @@ class VocabRepository() {
         }
     }
 
-    suspend fun cloneSet(setId: String): VocabResult<VocabSetResponse> {
-        return try {
-            val response = vocabApi.cloneSet(setId)
-            if (response.success && response.data != null) {
-                VocabResult.Success(response.data)
-            } else {
-                VocabResult.Error(response.message ?: "Failed to clone set")
-            }
-        } catch (e: Exception) {
-            VocabResult.Error(e.localizedMessage ?: "Network error")
-        }
-    }
-
-    suspend fun getPublicSets(
-        category: String? = null,
-        search: String? = null,
-        limit: Int = 20
-    ): VocabResult<List<VocabSetResponse>> {
-        return try {
-            val response = vocabApi.getPublicSets(
-                category = category?.ifBlank { null },
-                search = search?.ifBlank { null },
-                limit = limit
-            )
-            if (response.success && response.data != null) {
-                VocabResult.Success(response.data)
-            } else {
-                VocabResult.Error(response.message ?: "Failed to load public sets")
-            }
-        } catch (e: Exception) {
-            VocabResult.Error(e.localizedMessage ?: "Network error")
-        }
-    }
 }
